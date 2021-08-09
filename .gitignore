@@ -15,3 +15,7 @@ Cargo.lock
 
 /target
 #Cargo.lock
+
+/neardev
+out/*
+!.gitkeep
