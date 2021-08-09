@@ -30,9 +30,9 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 
 This contract has to be initialized with the following parameters:
 
-* `oct_token_account`: The account id of OCT token contract on NEAR network.
+* `oct_token_contract`: The account id of OCT token contract.
 
-The `oct_token_account` should be stored in this contract for using in [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
+The `oct_token_contract` should be stored in this contract for using in [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
 
 ### Register an appchain
 
@@ -66,9 +66,9 @@ The value of `initial deposit` is set to `value`.
 
 > The default value of `initial deposit` is **100 OCT**.
 
-### Confirm and record OCT token deposit
+### Callback function 'ft_on_transfer'
 
-This contract has a callback interface `FungibleTokenReceiver::ft_on_transfer` for contract `fungible_token` of `near-contract-standards`. It will confirm and record the transfer of OCT token from other accounts to this contract.
+This contract has a callback interface `FungibleTokenReceiver::ft_on_transfer` for contract `fungible_token` of `near-contract-standards`.
 
 The callback function `ft_on_transfer` needs the following parameters:
 
@@ -76,9 +76,13 @@ The callback function `ft_on_transfer` needs the following parameters:
 * `amount`: The amount of the transfer.
 * `msg`: The message attached to the transfer, which indicates the purpose of the deposit.
 
-If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_account` which initialized at construction time of this contract, throws an error.
+If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which initialized at construction time of this contract, perform [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
 
-The `msg` can be one of the following patterns:
+Otherwise, throws an error.
+
+### Confirm and record OCT token deposit
+
+This action will parse parameter `msg` of callback function `ft_on_transfer` and perform additional operations related to the deposit. The `msg` can be one of the following patterns:
 
 * `initial deposit for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `registered`. Otherwise, the deposit will be considered as `invalid deposit`.
@@ -96,7 +100,7 @@ The `msg` can be one of the following patterns:
 * other cases:
   * The deposit will be considered as `invalid deposit`.
 
-For `invalid deposit` case, this contract will save the amount of the deposit to `invalid deposit` of `sender_id`. The sender can withdraw the deposit at anytime.
+For `invalid deposit` case, this contract will store the amount of the deposit to `invalid deposit` of `sender_id`. The sender can withdraw the deposit at anytime.
 
 This action should generate log: `Received invalid deposit <amount> from <sender_id>.`
 
