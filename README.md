@@ -76,7 +76,7 @@ The callback function `ft_on_transfer` needs the following parameters:
 * `amount`: The amount of the transfer.
 * `msg`: The message attached to the transfer, which indicates the purpose of the deposit.
 
-If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which initialized at construction time of this contract, perform [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
+If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, perform [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
 
 Otherwise, throws an error.
 
@@ -100,9 +100,7 @@ This action will parse parameter `msg` of callback function `ft_on_transfer` and
 * other cases:
   * The deposit will be considered as `invalid deposit`.
 
-For `invalid deposit` case, this contract will store the amount of the deposit to `invalid deposit` of `sender_id`. The sender can withdraw the deposit at anytime.
-
-This action should generate log: `Received invalid deposit <amount> from <sender_id>.`
+For `invalid deposit` case, this contract will store the amount of the deposit to `invalid deposit` of `sender_id`, and generate log: `Received invalid deposit <amount> from <sender_id>.`
 
 ### Withdraw OCT token deposit
 
