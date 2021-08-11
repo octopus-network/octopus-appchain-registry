@@ -222,10 +222,12 @@ This action will calculate `voting result` of all appchains whose `appchain stat
 
 The `appchain state` of appchain with the largest `voting result` will become `staging`. Then:
 
-* Deploy the code of `appchain anchor` of the appchain to the subaccount `<appchain_id>` of the account of this contract.
+* Create subaccount `<appchain_id>.<account id of this contract>`.
+* Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
+* Deploy the code of `appchain anchor` of the appchain to the account `<appchain_id>.<account id of this contract>`.
 * Initialize new `appchain anchor` by the metadata of the appchain.
-* Add a new full access-key to the new `appchain anchor` for the `owner`.
-* Add a new access-key to this contract for the new `appchain anchor`, to allow it syncing its state to this contract.
+* Add a new full access key to the new `appchain anchor` for the `owner`.
+* Add a new access key to this contract for the new `appchain anchor`, to allow it syncing its state to this contract.
 * Save the account of new `appchain anchor` to the metadata of the appchain.
 
 The `voting result` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
