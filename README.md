@@ -55,20 +55,6 @@ If the parameters are all valid, the appchain will be registered to this contrac
 
 This action should generate log: `Appchain <appchain_id> is registered by <sender>.`
 
-### Change value of initial deposit
-
-This action needs the following parameters:
-
-* `value`: The new value of `initial deposit`.
-
-Qualification of this action:
-
-* The `sender` must be the `owner`.
-
-The value of `initial deposit` is set to `value`.
-
-> The default value of `initial deposit` is **100 OCT**.
-
 ### Callback function 'ft_on_transfer'
 
 This contract has a callback interface `FungibleTokenReceiver::ft_on_transfer` for contract `fungible_token` of `near-contract-standards`.
@@ -79,31 +65,29 @@ The callback function `ft_on_transfer` needs the following parameters:
 * `amount`: The amount of the transfer.
 * `msg`: The message attached to the transfer, which indicates the purpose of the deposit.
 
-If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, perform [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
-
-Otherwise, throws an error.
-
-### Confirm and record OCT token deposit
-
-This action will parse parameter `msg` of callback function `ft_on_transfer` and perform additional operations related to the deposit. The `msg` can be one of the following patterns:
+If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` with the following patterns:
 
 * `initial deposit for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `registered`. Otherwise, the deposit will be considered as `invalid deposit`.
   * The amount of deposit must not be less than `minimum initial deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The state of the given appchain changes to `auditing`.
+  * The `initial deposit` of the appchain must be 0. Otherwise, the deposit will be considered as `invalid deposit`.
+  * The `initial deposit` of the appchain is set to `amount`.
+  * The `appchain state` of the appchain is set to `auditing`.
   * Generate log: `Received initial deposit <amount> for appchain <appchain_id> from <sender_id>.`
 * `upvote for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The amount of deposit will be added to `upvote balance` of the appchain corresponding to `appchain_id`.
+  * Add `amount` to `upvote balance` of `sender_id` for the appchain corresponding to `appchain_id`.
   * Generate log: `Received upvote <amount> for appchain <appchain_id> from <sender_id>.`
 * `downvote for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The amount of deposit will be added to `downvote balance` of the appchain corresponding to `appchain_id`.
+  * Add `amount` to `downvote balance` of `sender_id` for the appchain corresponding to `appchain_id`.
   * Generate log: `Received downvote <amount> for appchain <appchain_id> from <sender_id>.`
 * other cases:
   * The deposit will be considered as `invalid deposit`.
 
-For `invalid deposit` case, this contract will store the amount of the deposit to `invalid deposit` of `sender_id`, and generate log: `Received invalid deposit <amount> from <sender_id>.`
+For `invalid deposit` case, add `amount` to `invalid deposit` of `sender_id`, and generate log: `Received invalid deposit <amount> from <sender_id>.`
+
+If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_contract` , throws an error.
 
 ### Withdraw a certain amount of upvote deposit
 
@@ -200,13 +184,17 @@ Qualification of this action:
 
 The `appchain state` of the appchain corresponding to `appchain_id` is set to `dead`.
 
-### Vote for appchains
+### Apply initial deposit for an appchain
 
-Anyone can transfer a certain amount of OCT token to this contract (using function `ft_transfer_call`), with the message `upvote for appchain <appchain_id>` attached to the transfer call, to upvote an appchain.
+The `appchain owner` can transfer a certain amount (not less than `minimum initial deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `initial deposit for appchain <appchain_id>`.
 
-Anyone can transfer a certain amount of OCT token to this contract (using function `ft_transfer_call`), with the message `downvote for appchain <appchain_id>` attached to the transfer call, to downvote an appchain.
+### Upvote for an appchain
 
-> Refer to [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit)
+Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `upvote for appchain <appchain_id>`.
+
+### Downvote for an appchain
+
+Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `downvote for appchain <appchain_id>`.
 
 ### Count daily voting result
 
