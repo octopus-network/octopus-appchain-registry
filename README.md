@@ -4,10 +4,10 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 
 ## Terminology
 
-* `owner`: The owner of this contract, which is the Octopus Foundation.
-* `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, and providing the security and governance ability for the appchain. The anchor contracts are controlled by the `owner` (Octopus Foundation) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Network.
-* `octopus relayer`: A standalone service which will monitor the state change of the validators of an appchain and facts happened on an appchain. It is controlled by the Octopus Foundation, and will relay messages between an appchain and its `appchain anchor`.
-* `appchain owner`: The owner of an appchain.
+* `owner`: The owner of this contract, which is the Octopus DAO.
+* `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, providing security and interoperatability for the appchain. The anchor contracts are controlled by the `owner` (Octopus DAO) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Network.
+* `octopus relayer`: A standalone service which will monitor the state change of the validators of an appchain and facts happened on an appchain. It relays messages between an appchain and corresponding `appchain anchor`.
+* `appchain team`: The developer team of an appchain.
 * `initial deposit`: An appchain has to deposit a certain amount of OCT token to this contract for going live in Octopus Network.
 * `minimum initial deposit`: The minimum amount of `initial deposit` which is specified by Octopus Network.
 * `appchain state`: The state of an appchain, which is one of the following:
