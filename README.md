@@ -7,9 +7,9 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 * `owner`: The owner of this contract, which is the Octopus DAO.
 * `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, providing security and interoperatability for the appchain. The anchor contracts are controlled by the `owner` (Octopus DAO) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Network.
 * `octopus relayer`: A standalone service which will monitor the state change of the validators of an appchain and facts happened on an appchain. It relays messages between an appchain and corresponding `appchain anchor`.
-* `appchain team`: The developer team of an appchain.
-* `initial deposit`: An appchain has to deposit a certain amount of OCT token to this contract for going live in Octopus Network.
-* `minimum initial deposit`: The minimum amount of `initial deposit` which is specified by Octopus Network.
+* `appchain owner`: The owner of an appchain, ususally the developer or somenone who represent the developer team.
+* `register deposit`: To prevent abuse of audit services, an appchain has to deposit a small amount of OCT token when register.
+* `minimum register deposit`: The minimum amount of `register deposit` which is specified by Octopus Network.
 * `appchain state`: The state of an appchain, which is one of the following:
   * `registered`: The initial state of an appchain, after it is successfully registered.
   * `auditing`: The state while the appchain is under auditing by Octopus Foundation.
@@ -22,7 +22,7 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 * `voter`: Who can `upvote` or `downvote` an appchain when its `appchain state` is `inQueue`.
 * `upvote deposit`: The total amount of OCT token which a `voter` deposited to this contract for upvoting an appchain.
 * `downvote deposit`: The total amount of OCT token which a `voter` deposited to this contract for downvoting an appchain.
-* `voting result`: A value representing the result of appchain voting. It is calculated by the total upvote and downvote amount for an appchain.
+* `voting score`: A value representing the result of appchain voting. It is calculated by the total upvote and downvote amount for an appchain.
 * `validator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to be the validator of an appchain after the appchain goes `booting` state.
 * `delegator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to delegate his/her voting rights to an validator of an appchain after the appchain goes `booting` state.
 * `sender`: A NEAR transaction sender, that is the account which perform actions (call functions) on this contract.
@@ -67,13 +67,13 @@ The callback function `ft_on_transfer` needs the following parameters:
 
 If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` with the following patterns:
 
-* `initial deposit for appchain <appchain_id>`:
+* `register deposit for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `registered`. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The amount of deposit must not be less than `minimum initial deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The `initial deposit` of the appchain must be 0. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The `initial deposit` of the appchain is set to `amount`.
+  * The amount of deposit must not be less than `minimum register deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
+  * The `register deposit` of the appchain must be 0. Otherwise, the deposit will be considered as `invalid deposit`.
+  * The `register deposit` of the appchain is set to `amount`.
   * The `appchain state` of the appchain is set to `auditing`.
-  * Generate log: `Received initial deposit <amount> for appchain <appchain_id> from <sender_id>.`
+  * Generate log: `Received register deposit <amount> for appchain <appchain_id> from <sender_id>.`
 * `upvote for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
   * Add `amount` to `upvote balance` of `sender_id` for the appchain corresponding to `appchain_id`.
@@ -152,9 +152,9 @@ Qualification of this action:
 
 The `appchain state` of the appchain corresponding to `appchain_id` is set to `inQueue`. The value of `code` is staged to the metadata of the appchain corresponding to `appchain_id` in this contract.
 
-This action should generate log: `Appchain <appchain_id> is audited by Octopus Foundation.`
+This action should generate log: `Appchain <appchain_id> is in queue.`
 
-> The auditing of appchain code is an off-line action which will be completed by Octopus Foundation.
+> The auditing of appchain code is an off-line action which will be completed by the task force assigned by Octopus DAO.
 
 ### Reject an appchain
 
@@ -169,7 +169,7 @@ Qualification of this action:
 
 The `appchain state` of the appchain corresponding to `appchain_id` is set to `dead`.
 
-This action should generate log: `Appchain <appchain_id> is rejected by Octopus Foundation.`
+This action should generate log: `Appchain <appchain_id> is rejected.`
 
 ### Cancel an appchain
 
@@ -184,9 +184,9 @@ Qualification of this action:
 
 The `appchain state` of the appchain corresponding to `appchain_id` is set to `dead`.
 
-### Apply initial deposit for an appchain
+### Apply register deposit for an appchain
 
-The `appchain owner` can transfer a certain amount (not less than `minimum initial deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `initial deposit for appchain <appchain_id>`.
+The `appchain owner` can transfer a certain amount (not less than `minimum register deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `register deposit for appchain <appchain_id>`.
 
 ### Upvote for an appchain
 
@@ -196,36 +196,36 @@ Any `voter` can transfer a certain amount of OCT token to this contract by calli
 
 Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `downvote for appchain <appchain_id>`.
 
-### Count daily voting result
+### Count daily voting score
 
 Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-This action will count daily `voting result` of all appchains whose `appchain state` is `inQueue`, and store the results in this contract.
+This action will count daily `voting score` of all appchains whose `appchain state` is `inQueue`, and store the results in this contract.
 
-The `voting result` of an appchain is calculated by:
+The `voting score` of an appchain is calculated by:
 
 ```js
-voting_result_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) - sum(downvote_amount_from_a_voter_of_the_appchain);
+voting_score_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) - sum(downvote_amount_from_a_voter_of_the_appchain);
 ```
 
-> This action should be performed every day by an standalone service or manually.
+> This action should be performed every day by an offchain daemon or an operatoer.
 
-### Conclude voting result
+### Conclude voting score
 
 This action needs the following parameters:
 
 * `duration_of_next_period`: Count of days which the next appchain selection period will last.
-* `vote_result_reduction_percent`: The percent which all appchains' voting result will be reduced in the next voting period.
+* `vote_result_reduction_percent`: The percent which all appchains' voting score will be reduced in the next voting period.
 
 Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-This action will calculate `voting result` of all appchains whose `appchain state` is `inQueue`.
+This action will calculate `voting score` of all appchains whose `appchain state` is `inQueue`.
 
-The `appchain state` of appchain with the largest `voting result` will become `staging`. Then:
+The `appchain state` of appchain with the largest `voting score` will become `staging`. Then:
 
 * Create subaccount `<appchain_id>.<account id of this contract>`.
 * Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
@@ -235,7 +235,7 @@ The `appchain state` of appchain with the largest `voting result` will become `s
 * Add a new access key to this contract for the new `appchain anchor`, to allow it syncing its state to this contract.
 * Store the account of new `appchain anchor` for the appchain in this contract.
 
-The `voting result` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
+The `voting score` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
 
 This action should generate log: `Appchain <appchain_id> goes staging at <account>.`
 
@@ -273,3 +273,4 @@ Qualification of this action:
 This action will remove the appchain corresponding to `appchain_id` from this contract, and delete the account of its `appchain anchor`.
 
 This action should generate log: `Appchain <appchain_id> and its anchor is removed.`
+
