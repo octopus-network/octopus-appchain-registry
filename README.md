@@ -35,7 +35,7 @@ This contract has to be initialized with the following parameters:
 
 * `oct_token_contract`: The account id of OCT token contract.
 
-The `oct_token_contract` should be stored in this contract for using in [Confirm and record OCT token deposit](#confirm-and-record-oct-token-deposit).
+The `oct_token_contract` should be stored in this contract for using in [Callback function 'ft_on_transfer'](#callback-function-'ft_on_transfer').
 
 ### Register an appchain
 
@@ -85,7 +85,7 @@ If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_c
 * other cases:
   * The deposit will be considered as `invalid deposit`.
 
-For `invalid deposit` case, add `amount` to `invalid deposit` of `sender_id`, and generate log: `Received invalid deposit <amount> from <sender_id>.`
+For `invalid deposit` case, return `amount` back to `oct_token_contract`, and generate log: `Invalid deposit <amount> from <sender_id> returned.`
 
 If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_contract` , throws an error.
 
@@ -216,8 +216,7 @@ voting_score_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) -
 
 This action needs the following parameters:
 
-* `duration_of_next_period`: Count of days which the next appchain selection period will last.
-* `vote_result_reduction_percent`: The percent which all appchains' voting score will be reduced in the next voting period.
+* `vote_result_reduction_percent`: The percent (unsigned integer not bigger than 100) which all appchains' voting score will be reduced in the next voting period.
 
 Qualification of this action:
 
@@ -238,8 +237,6 @@ The `appchain state` of appchain with the largest `voting score` will become `st
 The `voting score` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
 
 This action should generate log: `Appchain <appchain_id> goes staging at <account>.`
-
-The duration of next period is specified by `duration_of_next_period`. (Normally, the duration is 14 days. The `owner` can change it based on the total number of appchains with state `inQueue`.)
 
 > This action should be performed when the period of appchain selection for `staging` ends.
 
@@ -273,4 +270,3 @@ Qualification of this action:
 This action will remove the appchain corresponding to `appchain_id` from this contract, and delete the account of its `appchain anchor`.
 
 This action should generate log: `Appchain <appchain_id> and its anchor is removed.`
-
