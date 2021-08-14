@@ -361,9 +361,9 @@ pub trait RegistryStatus {
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
     /// Get upvote deposit of the caller for a certain appchain
-    fn get_upvote_for(&self, appchain_id: AppchainId) -> Balance;
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId) -> Balance;
     /// Get downvote deposit of the caller for a certain appchain
-    fn get_downvote_for(&self, appchain_id: AppchainId) -> Balance;
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId) -> Balance;
 }
 ```
 
@@ -373,15 +373,15 @@ pub trait RegistryStatus {
 /// The actions which the owner of appchain registry can perform
 pub trait RegistryOwnerAction {
     /// Pass auditing of an appchain
-    fn pass_auditing(&mut self, appchain_id: AppchainId, code: Vec<u8>);
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, code: Vec<u8>);
     /// Reject an appchain
-    fn reject(&mut self, appchain_id: AppchainId);
+    fn reject_appchain(&mut self, appchain_id: AppchainId);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
     fn conclude_voting_score(&mut self);
     /// Remove an appchain from registry
-    fn remove(&mut self, appchain_id: AppchainId);
+    fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
 ```
 
@@ -401,7 +401,7 @@ pub trait AppchainOwnerAction {
         contact_email: String,
     );
     /// Transfer ownership of an appchain to another account
-    fn transfer_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
+    fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
     /// Cancel an appchain
     fn cancel_appchain(&mut self, appchain_id: AppchainId);
 }
