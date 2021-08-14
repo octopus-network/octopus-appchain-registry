@@ -122,12 +122,6 @@ Reduce `amount` from `downvote deposit` of `sender`, and send `amount` of OCT to
 
 Generate log: `Downvote deposit <amount> for appchain <appchain_id> is withdrawed by <sender>.`
 
-### Withdraw invalid deposit
-
-Send `invalid deposit` of `sender` of OCT token back to `sender`.
-
-Generate log: `Invalid deposit <amount> is withdrawed by <sender>.`
-
 ### Transfer the ownership of an appchain
 
 This action needs the following parameters:
@@ -199,7 +193,7 @@ Any `voter` can transfer a certain amount of OCT token to this contract by calli
 
 Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `downvote for appchain <appchain_id>`.
 
-### Count daily voting score
+### Count voting score
 
 Qualification of this action:
 
