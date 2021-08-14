@@ -74,20 +74,23 @@ If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_c
   * The `register deposit` of the appchain is set to `amount`.
   * The `appchain state` of the appchain is set to `auditing`.
   * Generate log: `Received register deposit <amount> for appchain <appchain_id> from <sender_id>.`
+  * Return 0.
 * `upvote for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
   * Add `amount` to `upvote balance` of `sender_id` for the appchain corresponding to `appchain_id`.
   * Generate log: `Received upvote <amount> for appchain <appchain_id> from <sender_id>.`
+  * Return 0.
 * `downvote for appchain <appchain_id>`:
   * The `appchain state` of the appchain corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
   * Add `amount` to `downvote balance` of `sender_id` for the appchain corresponding to `appchain_id`.
   * Generate log: `Received downvote <amount> for appchain <appchain_id> from <sender_id>.`
+  * Return 0.
 * other cases:
   * The deposit will be considered as `invalid deposit`.
 
-For `invalid deposit` case, return `amount` back to `oct_token_contract`, and generate log: `Invalid deposit <amount> from <sender_id> returned.`
+For `invalid deposit` case, generate log: `Invalid deposit <amount> of OCT token from <sender_id> returned.` and return `amount`.
 
-If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_contract` , throws an error.
+If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_contract`, generate log: `Invalid deposit <amount> of unknown NEP-141 asset from <sender_id> returned.` and return `amount`.
 
 ### Withdraw a certain amount of upvote deposit
 
