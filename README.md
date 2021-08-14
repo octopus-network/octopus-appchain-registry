@@ -2,6 +2,34 @@
 
 This contract provides a registry for appchains of [Octopus Network](https://oct.network). It contains the metadata of the appchains and manage their lifecycle in Octopus Network.
 
+Contents:
+
+* [Teminology](#terminology)
+* [Implementation details](#implementation-details)
+  * [Initialization](#initialization)
+  * [Register an appchain](#register-an-appchain)
+  * [Callback function of token transfer](#callback-function-of-token-transfer)
+  * [Withdraw a certain amount of upvote deposit](#withdraw-a-certain-amount-of-upvote-deposit)
+  * [Withdraw a certain amount of downvote deposit](#withdraw-a-certain-amount-of-downvote-deposit)
+  * [Transfer the ownership of an appchain](#transfer-the-ownership-of-an-appchain)
+  * [Pass auditing of an appchain](#pass-auditing-of-an-appchain)
+  * [Reject an appchain](#reject-an-appchain)
+  * [Cancel an appchain](#cancel-an-appchain)
+  * [Apply register deposit for an appchain](#apply-register-deposit-for-an-appchain)
+  * [Upvote for an appchain](#upvote-for-an-appchain)
+  * [Downvote for an appchain](#downvote-for-an-appchain)
+  * [Count voting score](#count-voting-score)
+  * [Conclude voting score](#conclude-voting-score)
+  * [Sync state of an appchain](#sync-state-of-an-appchain)
+  * [Remove an appchain](#remove-an-appchain)
+* [Interfaces](#interfaces)
+  * [Custom types](#custom-types)
+  * [Registry status](#registry-status)
+  * [Registry owner action](#registry-owner-action)
+  * [Appchain owner action](#appchain-owner-action)
+  * [Voter action](#voter-action)
+  * [Appchain anchor callback](#appchain-anchor-callback)
+
 ## Terminology
 
 * `owner`: The owner of this contract, which is the Octopus DAO.
@@ -55,7 +83,7 @@ If the parameters are all valid, the appchain will be registered to this contrac
 
 This action should generate log: `Appchain <appchain_id> is registered by <sender>.`
 
-### Callback function 'ft_on_transfer'
+### Callback function of token transfer
 
 This contract has a callback interface `FungibleTokenReceiver::ft_on_transfer` for contract `fungible_token` of `near-contract-standards`.
 
@@ -267,3 +295,136 @@ Qualification of this action:
 This action will remove the appchain corresponding to `appchain_id` from this contract, and delete the account of its `appchain anchor`.
 
 This action should generate log: `Appchain <appchain_id> and its anchor is removed.`
+
+## Interfaces
+
+### Custom Types
+
+```rust
+/// Appchain metadata
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AppchainMetadata {
+    pub website_url: String,
+    pub github_address: String,
+    pub github_release: String,
+    pub commit_id: String,
+    pub contact_email: String,
+}
+
+/// The state of an appchain
+#[derive(Clone, Serialize, Deserialize, BorshDeserialize, BorshSerialize, Debug, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+pub enum AppchainState {
+    Registered,
+    Auditing,
+    InQueue,
+    Staging,
+    Booting,
+    Active,
+    Broken,
+    Dead,
+}
+
+/// Appchain status
+///
+/// This struct should NOT be used in storage on chain
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub struct AppchainStatus {
+    pub appchain_id: AppchainId,
+    pub appchain_metadata: AppchainMetadata,
+    pub appchain_anchor: AccountId,
+    pub appchain_owner: AccountId,
+    pub initial_deposit: Balance,
+    pub appchain_state: AppchainState,
+    pub upvote_deposit: Balance,
+    pub downvote_deposit: Balance,
+    pub voting_score: u128,
+    pub registered_time: Timestamp,
+    pub go_live_time: Timestamp,
+}
+```
+
+### Registry status
+
+```rust
+/// The interface for querying status of appchain registry
+pub trait RegistryStatus {
+    /// Get appchains whose state is equal to the given AppchainState
+    ///
+    /// If param `appchain_state` is `Option::None`, return all appchains in registry
+    fn get_appchains_with_state_of(
+        &self,
+        appchain_state: Option<AppchainState>,
+    ) -> Vec<AppchainStatus>;
+    /// Get status of an appchain
+    fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
+    /// Get upvote deposit of the caller for a certain appchain
+    fn get_upvote_for(&self, appchain_id: AppchainId) -> Balance;
+    /// Get downvote deposit of the caller for a certain appchain
+    fn get_downvote_for(&self, appchain_id: AppchainId) -> Balance;
+}
+```
+
+### Registry owner action
+
+```rust
+/// The actions which the owner of appchain registry can perform
+pub trait RegistryOwnerAction {
+    /// Pass auditing of an appchain
+    fn pass_auditing(&mut self, appchain_id: AppchainId, code: Vec<u8>);
+    /// Reject an appchain
+    fn reject(&mut self, appchain_id: AppchainId);
+    /// Count voting score of appchains
+    fn count_voting_score(&mut self);
+    /// Conclude voting score of appchains
+    fn conclude_voting_score(&mut self);
+    /// Remove an appchain from registry
+    fn remove(&mut self, appchain_id: AppchainId);
+}
+```
+
+### Appchain owner action
+
+```rust
+/// The actions which the owner of an appchain can perform
+pub trait AppchainOwnerAction {
+    /// Register an appchain
+    fn register_appchain(
+        &mut self,
+        appchain_id: AppchainId,
+        website_url: String,
+        github_address: String,
+        github_release: String,
+        commit_id: String,
+        contact_email: String,
+    );
+    /// Transfer ownership of an appchain to another account
+    fn transfer_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
+    /// Cancel an appchain
+    fn cancel_appchain(&mut self, appchain_id: AppchainId);
+}
+```
+
+### Voter action
+
+```rust
+/// The actions which the voter can perform
+pub trait VoterAction {
+    /// Withdraw a certain amount of upvote deposit for an appchain
+    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+    /// Withdraw a certain amount of downvote deposit for an appchain
+    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+}
+```
+
+### Appchain anchor callback
+
+```rust
+/// The callback interface for appchain anchor
+pub trait AppchainAnchorCallback {
+    /// Sync state of an appchain to registry
+    fn sync_state_of(&mut self, appchain_id: AppchainId, appchain_state: AppchainState);
+}
+```
