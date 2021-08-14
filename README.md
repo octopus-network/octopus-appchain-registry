@@ -5,9 +5,9 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 ## Terminology
 
 * `owner`: The owner of this contract, which is the Octopus DAO.
-* `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, providing security and interoperatability for the appchain. The anchor contracts are controlled by the `owner` (Octopus DAO) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Core Team.
+* `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, providing security and interoperability for the appchain. The anchor contracts are controlled by the `owner` (Octopus DAO) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Core Team.
 * `octopus relayer`: A standalone service which will monitor the state change of the validators of an appchain and facts happened on an appchain. It relays messages between an appchain and corresponding `appchain anchor`.
-* `appchain owner`: The owner of an appchain, ususally the developer or somenone who represent the developer team.
+* `appchain owner`: The owner of an appchain, ususally the developer or someone who represent the developer team.
 * `register deposit`: To prevent abuse of audit services, an appchain has to deposit a small amount of OCT token when register.
 * `minimum register deposit`: The minimum amount of `register deposit` which is specified by Octopus DAO.
 * `appchain state`: The state of an appchain, which is one of the following:
