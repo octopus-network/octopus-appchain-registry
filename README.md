@@ -35,7 +35,7 @@ This contract has to be initialized with the following parameters:
 
 * `oct_token_contract`: The account id of OCT token contract.
 
-The `oct_token_contract` should be stored in this contract for using in [Callback function 'ft_on_transfer'](#callback-function-'ft_on_transfer').
+The `oct_token_contract` should be stored in this contract for using in [Callback function 'ft_on_transfer'](#callback-function-ft_on_transfer).
 
 ### Register an appchain
 
