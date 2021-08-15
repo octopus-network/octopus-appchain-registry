@@ -416,10 +416,12 @@ pub trait RegistryStatus {
 ```rust
 /// The actions which the owner of appchain registry can perform
 pub trait RegistryOwnerAction {
+    /// Start auditing of an appchain
+    fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, code: Vec<u8>);
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
     /// Reject an appchain
-    fn reject_appchain(&mut self, appchain_id: AppchainId);
+    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: u8);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
@@ -434,8 +436,8 @@ pub trait RegistryOwnerAction {
 ```rust
 /// The actions which the owner of an appchain can perform
 pub trait AppchainOwnerAction {
-    /// Register an appchain
-    fn register_appchain(
+    /// Update metadata of an appchain
+    fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
         website_url: String,
@@ -446,8 +448,6 @@ pub trait AppchainOwnerAction {
     );
     /// Transfer ownership of an appchain to another account
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
-    /// Cancel an appchain
-    fn cancel_appchain(&mut self, appchain_id: AppchainId);
 }
 ```
 
