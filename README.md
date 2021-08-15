@@ -4,7 +4,7 @@ This contract provides a registry for appchains of [Octopus Network](https://oct
 
 Contents:
 
-* [Teminology](#terminology)
+* [Terminology](#terminology)
 * [Implementation details](#implementation-details)
   * [Initialization](#initialization)
   * [Change value of minimum register deposit](#change-value-of-minimum-register-deposit)
@@ -37,7 +37,7 @@ Contents:
 * `owner`: The owner of this contract, which is the Octopus DAO.
 * `appchain anchor`: A NEAR contract which is deployed in a subaccount of the account of this contract. It is in charge of managing the necessary data of an appchain on NEAR protocol, providing security and interoperability for the appchain. The anchor contracts are controlled by the `owner` (Octopus DAO) too, and the [octopus-appchain-anchor](https://github.com/octopus-network/octopus-appchain-anchor) is the standard implementation provided by Octopus Core Team.
 * `appchain basedata`: The basedata of an appchain, which contains the following fields:
-  * `appchain owner`: The owner of an appchain, ususally the developer or someone who represent the developer team.
+  * `appchain owner`: The owner of an appchain, usually the developer or someone who represent the developer team.
   * `appchain metadata`: The metadata of an appchain. Refer to [Custom types](#custom-types).
   * `appchain anchor code`: The WASM code of the `appchain anchor` of an appchain.
   * `appchain state`: The state of an appchain, which is one of the following:
@@ -89,7 +89,7 @@ This action needs the following parameters:
 * `website_url`: The url of the official website of the appchain.
 * `github_address`: The address of the github repository of the appchain.
 * `github_release`: The release vesion of the github repository of the appchain.
-* `commit_id`: The commit id of source code of the github repository of the appchain, if it is an open-source project.
+* `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
 
 Qualification of this action:
@@ -118,15 +118,15 @@ Generate log: `Appchain <appchain_id> starts auditing.`
 
 ### Register an appchain
 
-The `appchain owner` can transfer a certain amount (not less than `minimum register deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `register appchain <appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`.
+The `appchain owner` can transfer a certain amount (not less than `minimum register deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`.
 
 ### Upvote for an appchain
 
-Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `upvote for appchain <appchain_id>`.
+Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `upvote_appchain,<appchain_id>`.
 
 ### Downvote for an appchain
 
-Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `downvote for appchain <appchain_id>`.
+Any `voter` can transfer a certain amount of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `downvote_appchain,<appchain_id>`.
 
 ### Callback function of token transfer
 
@@ -140,7 +140,7 @@ The callback function `ft_on_transfer` needs the following parameters:
 
 If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` with the following patterns:
 
-* `register appchain <appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`:
+* `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`:
   * Parse the fields of `appchain metadata` from `msg`. If missing one or more, the deposit will be considered as `invalid deposit`.
   * The `appchain_id` must NOT be registered in this contract. Otherwise, the deposit will be considered as `invalid deposit`.
   * The amount of deposit must not be less than `minimum register deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
@@ -150,13 +150,13 @@ If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_c
   * The `sender_id` will be registered as the owner of the appchain.
   * Generate log: `Appchain <appchain_id> is registered by <sender_id> with <amount> OCT token deposited.`
   * Return 0.
-* `upvote for appchain <appchain_id>`:
+* `upvote_appchain,<appchain_id>`:
   * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
   * Add `amount` to `upvote deposit` of `sender_id` for `appchain_id`.
   * Add `amount` to `upvote deposit` of `appchain basedata` for `appchain_id`.
   * Generate log: `Received upvote <amount> for appchain <appchain_id> from <sender_id>.`
   * Return 0.
-* `downvote for appchain <appchain_id>`:
+* `downvote_appchain,<appchain_id>`:
   * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `inQueue`. Otherwise, the deposit will be considered as `invalid deposit`.
   * Add `amount` to `downvote deposit` of `sender_id` for `appchain_id`.
   * Add `amount` to `downvote deposit` of `appchain basedata` for `appchain_id`.
@@ -380,7 +380,7 @@ pub struct AppchainStatus {
     pub appchain_metadata: AppchainMetadata,
     pub appchain_anchor: AccountId,
     pub appchain_owner: AccountId,
-    pub initial_deposit: Balance,
+    pub register_deposit: Balance,
     pub appchain_state: AppchainState,
     pub upvote_deposit: Balance,
     pub downvote_deposit: Balance,
