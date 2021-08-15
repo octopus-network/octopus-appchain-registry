@@ -7,9 +7,10 @@ mod storage_key;
 pub mod types;
 mod voter_action;
 use crate::storage_key::StorageKey;
+use crate::types::AppchainMetadata;
 use appchain_basedata::AppchainBasedata;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, UnorderedMap, Vector};
+use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, Vector};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
@@ -18,6 +19,13 @@ use near_sdk::{
 };
 use types::{AppchainId, AppchainState};
 
+const NO_DEPOSIT: Balance = 0;
+const T_GAS: u64 = 1_000_000_000_000;
+const FT_TRANSFER_GAS: u64 = 5 * T_GAS;
+const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
+const SINGLE_CALL_GAS: u64 = 50 * T_GAS;
+const COMPLEX_CALL_GAS: u64 = 120 * T_GAS;
+const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
 const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000_000_000;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
@@ -29,12 +37,27 @@ pub trait FungibleToken {
     fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
 }
 
+#[ext_contract(ext_self)]
+pub trait CrossContractResultResolver {
+    /// Resolver for refunding to the owner of an appchain when reject it to go-live
+    fn resolve_appchain_refunding(&mut self, appchain_id: AppchainId, amount: Balance);
+    /// Resolver for deletion of an appchain anchor
+    fn resolve_appchain_anchor_deletion(&mut self, appchain_id: AppchainId);
+    /// Resolver for withdrawing the upvote deposit of a voter
+    fn resolve_withdraw_upvote_deposit(&mut self, appchain_id: AppchainId, account_id: AccountId, amount: Balance);
+    /// Resolver for withdrawing the downvote deposit of a voter
+    fn resolve_withdraw_downvote_deposit(&mut self, appchain_id: AppchainId, account_id: AccountId, amount: Balance);
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainRegistry {
     pub owner: AccountId,
     pub oct_token: AccountId,
+    pub minimum_register_deposit: Balance,
     pub appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    pub upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    pub downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
 }
 
 impl Default for AppchainRegistry {
@@ -52,7 +75,10 @@ impl AppchainRegistry {
         Self {
             owner: env::current_account_id(),
             oct_token,
+            minimum_register_deposit: 100 * OCT_DECIMALS_BASE,
             appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),
+            upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
+            downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
         }
     }
     // Assert that the contract called by the owner.
@@ -100,6 +126,135 @@ impl AppchainRegistry {
             .get(appchain_id)
             .expect(APPCHAIN_NOT_FOUND)
             .set(appchain_basedata);
+    }
+    /// Callback function for `ft_transfer_call` of NEP-141 compatible contracts
+    pub fn ft_on_transfer(
+        &mut self,
+        sender_id: AccountId,
+        amount: U128,
+        msg: String,
+    ) -> PromiseOrValue<U128> {
+        log!(
+            "Deposit {} from @{} received. msg: {}",
+            amount.0,
+            &sender_id,
+            msg
+        );
+        assert_eq!(
+            &env::predecessor_account_id(),
+            &self.oct_token,
+            "Invalid deposit '{}' of unknown NEP-141 asset from '{}' received. Return deposit.",
+            amount.0,
+            sender_id,
+        );
+
+        let msg_vec: Vec<String> = msg.split(",").map(|s| s.to_string()).collect();
+
+        match msg_vec.get(0).unwrap().as_str() {
+            "register_appchain" => {
+                assert_eq!(
+                    msg_vec.len(),
+                    7,
+                    "Invalid params for `register_appchain`. Return deposit."
+                );
+                self.register_appchain(
+                    msg_vec.get(1).unwrap().to_string(),
+                    amount.into(),
+                    msg_vec.get(2).unwrap().to_string(),
+                    msg_vec.get(3).unwrap().to_string(),
+                    msg_vec.get(4).unwrap().to_string(),
+                    msg_vec.get(5).unwrap().to_string(),
+                    msg_vec.get(6).unwrap().to_string(),
+                );
+                PromiseOrValue::Value(0.into())
+            }
+            "upvote_appchain" => {
+                assert_eq!(
+                    msg_vec.len(),
+                    3,
+                    "Invalid params for `upvote_appchain`. Return deposit."
+                );
+                let appchain_id = msg_vec.get(1).unwrap().to_string();
+                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+                let voter_upvote = self
+                    .upvote_deposits
+                    .get(&(appchain_id.clone(), sender_id.clone()))
+                    .unwrap_or_default();
+                appchain_basedata.increase_upvote_deposit(amount.0);
+                self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+                self.upvote_deposits
+                    .insert(&(appchain_id, sender_id), &(voter_upvote + amount.0));
+                PromiseOrValue::Value(0.into())
+            }
+            "downvote_appchain" => {
+                assert_eq!(
+                    msg_vec.len(),
+                    3,
+                    "Invalid params for `downvote_appchain`. Return deposit."
+                );
+                let appchain_id = msg_vec.get(1).unwrap().to_string();
+                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+                let voter_downvote = self
+                    .downvote_deposits
+                    .get(&(appchain_id.clone(), sender_id.clone()))
+                    .unwrap_or_default();
+                appchain_basedata.increase_downvote_deposit(amount.0);
+                self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+                self.downvote_deposits
+                    .insert(&(appchain_id, sender_id), &(voter_downvote + amount.0));
+                PromiseOrValue::Value(0.into())
+            }
+            _ => {
+                log!(
+                    "Invalid msg '{}' attached in `ft_transfer_call`. Return deposit.",
+                    msg
+                );
+                PromiseOrValue::Value(amount)
+            }
+        }
+    }
+    //
+    fn register_appchain(
+        &mut self,
+        appchain_id: AppchainId,
+        register_deposit: Balance,
+        website_url: String,
+        github_address: String,
+        github_release: String,
+        commit_id: String,
+        contact_email: String,
+    ) {
+        assert!(
+            self.appchain_basedatas.get(&appchain_id).is_none(),
+            "Appchain already registered."
+        );
+        let appchain_basedata = AppchainBasedata::new(
+            appchain_id.clone(),
+            AppchainMetadata {
+                website_url,
+                github_address,
+                github_release,
+                commit_id,
+                contact_email,
+            },
+            env::predecessor_account_id(),
+            register_deposit,
+        );
+        self.appchain_basedatas.insert(
+            &appchain_id,
+            &LazyOption::new(
+                StorageKey::AppchainBasedata(appchain_id.clone()).into_bytes(),
+                Option::from(&appchain_basedata),
+            ),
+        );
+        env::log(
+            format!(
+                "Appchain '{}' is registered by '{}'.",
+                appchain_basedata.id(),
+                appchain_basedata.owner()
+            )
+            .as_bytes(),
+        )
     }
 }
 

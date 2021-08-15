@@ -41,11 +41,11 @@ pub struct AppchainStatus {
     pub appchain_metadata: AppchainMetadata,
     pub appchain_anchor: AccountId,
     pub appchain_owner: AccountId,
-    pub initial_deposit: Balance,
+    pub register_deposit: Balance,
     pub appchain_state: AppchainState,
     pub upvote_deposit: Balance,
     pub downvote_deposit: Balance,
-    pub voting_score: u128,
+    pub voting_score: i128,
     pub registered_time: Timestamp,
     pub go_live_time: Timestamp,
 }

@@ -1,64 +1,73 @@
 use near_sdk::{env, near_bindgen, AccountId};
 
-use crate::types::{AppchainMetadata, AppchainState};
 use crate::*;
 
 /// The actions which the owner of an appchain can perform
 pub trait AppchainOwnerAction {
-    /// Register an appchain
-    fn register_appchain(
+    /// Update metadata of an appchain
+    fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
-        website_url: String,
-        github_address: String,
-        github_release: String,
-        commit_id: String,
-        contact_email: String,
+        website_url: Option<String>,
+        github_address: Option<String>,
+        github_release: Option<String>,
+        commit_id: Option<String>,
+        contact_email: Option<String>,
     );
     /// Transfer ownership of an appchain to another account
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
-    /// Cancel an appchain
-    fn cancel_appchain(&mut self, appchain_id: AppchainId);
 }
 
 #[near_bindgen]
 impl AppchainOwnerAction for AppchainRegistry {
-    fn register_appchain(
+    fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
-        website_url: String,
-        github_address: String,
-        github_release: String,
-        commit_id: String,
-        contact_email: String,
+        website_url: Option<String>,
+        github_address: Option<String>,
+        github_release: Option<String>,
+        commit_id: Option<String>,
+        contact_email: Option<String>,
     ) {
-        assert!(
-            self.appchain_basedatas.get(&appchain_id).is_none(),
-            "Appchain already registered."
-        );
-        let appchain_basedata = AppchainBasedata::new(
-            appchain_id.clone(),
-            AppchainMetadata {
-                website_url,
-                github_address,
-                github_release,
-                commit_id,
-                contact_email,
-            },
-            env::predecessor_account_id(),
-        );
-        self.appchain_basedatas.insert(
-            &appchain_id,
-            &LazyOption::new(
-                StorageKey::AppchainBasedata(appchain_id.clone()).into_bytes(),
-                Option::from(&appchain_basedata),
-            ),
-        );
+        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        if let Some(website_url) = website_url {
+            appchain_basedata.metadata().website_url.clear();
+            appchain_basedata
+                .metadata()
+                .website_url
+                .push_str(&website_url);
+        }
+        if let Some(github_address) = github_address {
+            appchain_basedata.metadata().github_address.clear();
+            appchain_basedata
+                .metadata()
+                .github_address
+                .push_str(&github_address);
+        }
+        if let Some(github_release) = github_release {
+            appchain_basedata.metadata().github_release.clear();
+            appchain_basedata
+                .metadata()
+                .github_release
+                .push_str(&github_release);
+        }
+        if let Some(commit_id) = commit_id {
+            appchain_basedata.metadata().commit_id.clear();
+            appchain_basedata.metadata().commit_id.push_str(&commit_id);
+        }
+        if let Some(contact_email) = contact_email {
+            appchain_basedata.metadata().contact_email.clear();
+            appchain_basedata
+                .metadata()
+                .contact_email
+                .push_str(&contact_email);
+        }
+        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         env::log(
             format!(
-                "Appchain '{}' is registered by '{}'.",
+                "The metadata of appchain '{}' is updated by '{}'.",
                 appchain_basedata.id(),
-                appchain_basedata.owner()
+                env::predecessor_account_id()
             )
             .as_bytes(),
         )
@@ -72,26 +81,6 @@ impl AppchainOwnerAction for AppchainRegistry {
         env::log(
             format!(
                 "The ownership of appchain '{}' is transfered to '{}'.",
-                appchain_basedata.id(),
-                appchain_basedata.owner()
-            )
-            .as_bytes(),
-        )
-    }
-
-    fn cancel_appchain(&mut self, appchain_id: AppchainId) {
-        self.assert_appchain_owner(&appchain_id);
-        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        assert!(
-            appchain_basedata.state() == AppchainState::Registered
-                || appchain_basedata.state() == AppchainState::Auditing,
-            "Can not be cancelled now"
-        );
-        appchain_basedata.change_state(AppchainState::Dead);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
-        env::log(
-            format!(
-                "Appchain '{}' is cancelled by '{}'.",
                 appchain_basedata.id(),
                 appchain_basedata.owner()
             )

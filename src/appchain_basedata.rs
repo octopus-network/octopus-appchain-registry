@@ -11,11 +11,11 @@ pub struct AppchainBasedata {
     appchain_anchor: AccountId,
     appchain_anchor_code: Vec<u8>,
     appchain_owner: AccountId,
-    initial_deposit: Balance,
+    register_deposit: Balance,
     appchain_state: AppchainState,
     upvote_deposit: Balance,
     downvote_deposit: Balance,
-    voting_score: u128,
+    voting_score: i128,
     registered_time: Timestamp,
     go_live_time: Timestamp,
 }
@@ -26,6 +26,7 @@ impl AppchainBasedata {
         appchain_id: AppchainId,
         appchain_metadata: AppchainMetadata,
         appchain_owner: AccountId,
+        register_deposit: Balance,
     ) -> Self {
         Self {
             appchain_id,
@@ -33,7 +34,7 @@ impl AppchainBasedata {
             appchain_anchor: String::new(),
             appchain_anchor_code: Vec::<u8>::new(),
             appchain_owner,
-            initial_deposit: 0,
+            register_deposit,
             appchain_state: AppchainState::Registered,
             upvote_deposit: 0,
             downvote_deposit: 0,
@@ -59,12 +60,24 @@ impl AppchainBasedata {
         &self.appchain_owner
     }
     /// Get initial deposit
-    pub fn initial_deposit(&self) -> Balance {
-        self.initial_deposit
+    pub fn register_deposit(&self) -> Balance {
+        self.register_deposit
     }
     /// Get state
     pub fn state(&self) -> AppchainState {
         self.appchain_state.clone()
+    }
+    /// Get upvote deposit
+    pub fn upvote_deposit(&self) -> Balance {
+        self.upvote_deposit
+    }
+    /// Get downvote deposit
+    pub fn downvote_deposit(&self) -> Balance {
+        self.downvote_deposit
+    }
+    /// Get voting score
+    pub fn voting_score(&self) -> i128 {
+        self.voting_score
     }
     /// Get full status
     pub fn status(&self) -> AppchainStatus {
@@ -73,7 +86,7 @@ impl AppchainBasedata {
             appchain_metadata: self.appchain_metadata.clone(),
             appchain_anchor: self.appchain_anchor.clone(),
             appchain_owner: self.appchain_owner.clone(),
-            initial_deposit: self.initial_deposit,
+            register_deposit: self.register_deposit,
             appchain_state: self.appchain_state.clone(),
             upvote_deposit: self.upvote_deposit,
             downvote_deposit: self.downvote_deposit,
@@ -94,7 +107,7 @@ impl AppchainBasedata {
     }
     /// Set initial deposit
     pub fn set_initial_deposit(&mut self, deposit: Balance) {
-        self.initial_deposit = deposit;
+        self.register_deposit = deposit;
     }
     /// Set code of anchor
     pub fn set_anchor_code(&mut self, mut code: Vec<u8>) {
@@ -105,6 +118,30 @@ impl AppchainBasedata {
     pub fn change_state(&mut self, new_state: AppchainState) {
         assert_ne!(self.appchain_state, new_state, "The state not changed.");
         self.appchain_state = new_state;
+    }
+    /// Increase upvote deposit
+    pub fn increase_upvote_deposit(&mut self, value: Balance) {
+        self.upvote_deposit += value;
+    }
+    /// Decrease upvote deposit
+    pub fn decrease_upvote_deposit(&mut self, value: Balance) {
+        self.upvote_deposit
+            .checked_sub(value)
+            .expect("Upvote deposit is not big enough to decrease.");
+    }
+    /// Increase upvote deposit
+    pub fn increase_downvote_deposit(&mut self, value: Balance) {
+        self.downvote_deposit += value;
+    }
+    /// Decrease upvote deposit
+    pub fn decrease_downvote_deposit(&mut self, value: Balance) {
+        self.downvote_deposit
+            .checked_sub(value)
+            .expect("Downvote deposit is not big enough to decrease.");
+    }
+    /// Count voting score
+    pub fn count_voting_score(&mut self) {
+        self.voting_score += self.upvote_deposit as i128 - self.downvote_deposit as i128;
     }
     /// Deploy anchor
     pub fn deploy_anchor(&mut self) {}
