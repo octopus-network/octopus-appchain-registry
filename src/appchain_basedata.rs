@@ -55,6 +55,10 @@ impl AppchainBasedata {
     pub fn anchor(&self) -> &AccountId {
         &self.appchain_anchor
     }
+    /// Get code of anchor
+    pub fn anchor_code(&self) -> Vec<u8> {
+        self.appchain_anchor_code.iter().map(|f| f.clone()).collect()
+    }
     /// Get account id of owner
     pub fn owner(&self) -> &AccountId {
         &self.appchain_owner
@@ -142,6 +146,11 @@ impl AppchainBasedata {
     /// Count voting score
     pub fn count_voting_score(&mut self) {
         self.voting_score += self.upvote_deposit as i128 - self.downvote_deposit as i128;
+    }
+    /// Reduce voting score by the given percent
+    pub fn reduce_voting_score_by_percent(&mut self, percent: u8) {
+        assert!(percent <= 100, "Invalid value of percent.");
+        self.voting_score -= self.voting_score * percent as i128 / 100;
     }
     /// Deploy anchor
     pub fn deploy_anchor(&mut self) {}

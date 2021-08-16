@@ -19,7 +19,7 @@ pub trait RegistryOwnerAction {
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self);
+    fn conclude_voting_score(&mut self, vote_result_reduction_percent: u8);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
@@ -77,11 +77,52 @@ impl RegistryOwnerAction for AppchainRegistry {
     }
 
     fn count_voting_score(&mut self) {
-        todo!()
+        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        for id in ids {
+            let mut appchain_basedata = self.get_appchain_basedata(&id);
+            if appchain_basedata.state().eq(&AppchainState::InQueue) {
+                appchain_basedata.count_voting_score();
+                self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
+                let top_appchain_basedata =
+                    self.get_appchain_basedata(&self.top_appchain_id_in_queue);
+                if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
+                    self.top_appchain_id_in_queue.clear();
+                    self.top_appchain_id_in_queue.push_str(&id);
+                }
+            }
+        }
     }
 
-    fn conclude_voting_score(&mut self) {
-        todo!()
+    fn conclude_voting_score(&mut self, voting_result_reduction_percent: u8) {
+        assert!(
+            !self.top_appchain_id_in_queue.is_empty(),
+            "There is no appchain on the top of queue yet."
+        );
+        // Set the appchain with the largest voting score to go `staging`
+        let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
+        top_appchain_basedata.change_state(AppchainState::Staging);
+        self.set_appchain_basedata(top_appchain_basedata.id(), &top_appchain_basedata);
+        // Reduce the voting score of all appchains in queue by the given percent
+        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        for id in ids {
+            let mut appchain_basedata = self.get_appchain_basedata(&id);
+            if appchain_basedata.state().eq(&AppchainState::InQueue) {
+                appchain_basedata.reduce_voting_score_by_percent(voting_result_reduction_percent);
+                self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
+            }
+        }
+        // Deploy contract of anchor of the appchain with the largest voting score, and initialize it.
+        let sub_account_id = format!(
+            "{}.{}",
+            self.top_appchain_id_in_queue,
+            env::current_account_id()
+        );
+        Promise::new(sub_account_id)
+            .create_account()
+            .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
+            .add_full_access_key(self.owner_pk.clone())
+            .deploy_contract(top_appchain_basedata.anchor_code())
+            .function_call(b"new".to_vec(), b"{}".to_vec(), NO_DEPOSIT, SINGLE_CALL_GAS);
     }
 
     fn remove_appchain(&mut self, appchain_id: AppchainId) {

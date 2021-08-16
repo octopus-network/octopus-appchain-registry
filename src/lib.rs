@@ -13,13 +13,12 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, Vector};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{
-    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, BlockHeight, Promise,
-    PromiseOrValue, PromiseResult,
-};
+use near_sdk::{AccountId, Balance, BlockHeight, Promise, PromiseOrValue, PromiseResult, PublicKey, assert_self, env, ext_contract, log, near_bindgen};
 use types::{AppchainId, AppchainState};
 
 const NO_DEPOSIT: Balance = 0;
+/// Initial balance for the AppchainAnchor contract to cover storage and related.
+const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 3_000_000_000_000_000_000_000_000; // 3e24yN, 3N
 const T_GAS: u64 = 1_000_000_000_000;
 const FT_TRANSFER_GAS: u64 = 5 * T_GAS;
 const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
@@ -53,11 +52,13 @@ pub trait CrossContractResultResolver {
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainRegistry {
     pub owner: AccountId,
+    pub owner_pk: PublicKey,
     pub oct_token: AccountId,
     pub minimum_register_deposit: Balance,
     pub appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
     pub upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     pub downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    pub top_appchain_id_in_queue: AppchainId,
 }
 
 impl Default for AppchainRegistry {
@@ -73,12 +74,14 @@ impl AppchainRegistry {
         assert!(!env::state_exists(), "The contract is already initialized.");
         assert_self();
         Self {
-            owner: env::current_account_id(),
+            owner: env::signer_account_id(),
+            owner_pk: env::signer_account_pk(),
             oct_token,
             minimum_register_deposit: 100 * OCT_DECIMALS_BASE,
             appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
+            top_appchain_id_in_queue: String::new(),
         }
     }
     // Assert that the contract called by the owner.
@@ -171,7 +174,7 @@ impl AppchainRegistry {
             "upvote_appchain" => {
                 assert_eq!(
                     msg_vec.len(),
-                    3,
+                    2,
                     "Invalid params for `upvote_appchain`. Return deposit."
                 );
                 let appchain_id = msg_vec.get(1).unwrap().to_string();
@@ -189,7 +192,7 @@ impl AppchainRegistry {
             "downvote_appchain" => {
                 assert_eq!(
                     msg_vec.len(),
-                    3,
+                    2,
                     "Invalid params for `downvote_appchain`. Return deposit."
                 );
                 let appchain_id = msg_vec.get(1).unwrap().to_string();
