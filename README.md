@@ -9,6 +9,7 @@ Contents:
   * [Initialization](#initialization)
   * [Change value of minimum register deposit](#change-value-of-minimum-register-deposit)
   * [Update metadata of an appchain](#update-metadata-of-an-appchain)
+  * [Update custom metadata of an appchain](#update-custom-metadata-of-an-appchain)
   * [Approve an appchain to start auditing](#approve-an-appchain-to-start-auditing)
   * [Register an appchain](#register-an-appchain)
   * [Upvote for an appchain](#upvote-for-an-appchain)
@@ -91,15 +92,29 @@ This action needs the following parameters:
 * `github_release`: The release vesion of the github repository of the appchain.
 * `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
+* `custom_metadata`: The extra custom metadata organized by a key-value map.
+
+Qualification of this action:
+
+* The `sender` must be the `owner`.
+
+The metadata will be updated to `appchain basedata` corresponding to `appchain_id`.
+
+Generate log: `The metadata of appchain <appchain_id> is updated by manager.`
+
+### Update custom metadata of an appchain
+
+This action needs the following parameters:
+
+* `custom_metadata`: The extra custom metadata organized by a key-value map.
 
 Qualification of this action:
 
 * The `sender` must be current `appchain owner` of `appchain basedata` corresponding to `appchain_id`.
-* The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `registered`.
 
-The metadata will be updated to `appchain basedata` corresponding to `appchain_id`.
+The custom metadata will be updated to `appchain metadata` of `appchain basedata` corresponding to `appchain_id`.
 
-Generate log: `The metadata of appchain <appchain_id> is updated.`
+Generate log: `The custom metadata of appchain <appchain_id> is updated by <sender>.`
 
 ### Approve an appchain to start auditing
 
@@ -118,7 +133,7 @@ Generate log: `Appchain <appchain_id> starts auditing.`
 
 ### Register an appchain
 
-The `appchain owner` can transfer a certain amount (not less than `minimum register deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`.
+The `appchain owner` can transfer a certain amount (which must be equal to `minimum register deposit`) of OCT token to this contract by calling function `ft_transfer_call` of `oct_token_contract`. And the calling param `msg` MUST be `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`.
 
 ### Upvote for an appchain
 
@@ -143,7 +158,7 @@ If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_c
 * `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`:
   * Parse the fields of `appchain metadata` from `msg`. If missing one or more, the deposit will be considered as `invalid deposit`.
   * The `appchain_id` must NOT be registered in this contract. Otherwise, the deposit will be considered as `invalid deposit`.
-  * The amount of deposit must not be less than `minimum register deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
+  * The amount of deposit must be equal to `minimum register deposit`. Otherwise, the deposit will be considered as `invalid deposit`.
   * The `register deposit` of `appchain basedata` must be 0. Otherwise, the deposit will be considered as `invalid deposit`.
   * The `register deposit` of `appchain basedata` is set to `amount`.
   * The `appchain state` of `appchain basedata` is set to `registered`.
@@ -354,6 +369,7 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub custom_metadata: Map<String, String>,
 }
 
 /// The state of an appchain
@@ -416,6 +432,17 @@ pub trait RegistryStatus {
 ```rust
 /// The actions which the owner of appchain registry can perform
 pub trait RegistryOwnerAction {
+    /// Update metadata of an appchain
+    fn update_appchain_metadata(
+        &mut self,
+        appchain_id: AppchainId,
+        website_url: Option<String>,
+        github_address: Option<String>,
+        github_release: Option<String>,
+        commit_id: Option<String>,
+        contact_email: Option<String>,
+        custom_metadata: Option<Map<String, String>>,
+    );
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -436,16 +463,8 @@ pub trait RegistryOwnerAction {
 ```rust
 /// The actions which the owner of an appchain can perform
 pub trait AppchainOwnerAction {
-    /// Update metadata of an appchain
-    fn update_appchain_metadata(
-        &mut self,
-        appchain_id: AppchainId,
-        website_url: String,
-        github_address: String,
-        github_release: String,
-        commit_id: String,
-        contact_email: String,
-    );
+    /// Update custom metadata of an appchain
+    fn update_appchain_custom_metadata(&mut self, custom_metadata: Map<String, String>);
     /// Transfer ownership of an appchain to another account
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
 }
