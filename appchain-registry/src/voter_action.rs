@@ -11,6 +11,7 @@ pub trait VoterAction {
     fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
 }
 
+#[near_bindgen]
 impl VoterAction for AppchainRegistry {
     fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance) {
         let voter = env::predecessor_account_id();

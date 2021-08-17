@@ -176,8 +176,9 @@ impl AppchainRegistry {
                     "Invalid params for `register_appchain`. Return deposit."
                 );
                 self.register_appchain(
+                    sender_id,
                     msg_vec.get(1).unwrap().to_string(),
-                    amount.into(),
+                    amount.0,
                     msg_vec.get(2).unwrap().to_string(),
                     msg_vec.get(3).unwrap().to_string(),
                     msg_vec.get(4).unwrap().to_string(),
@@ -234,6 +235,7 @@ impl AppchainRegistry {
     //
     fn register_appchain(
         &mut self,
+        sender_id: AccountId,
         appchain_id: AppchainId,
         register_deposit: Balance,
         website_url: String,
@@ -256,7 +258,7 @@ impl AppchainRegistry {
                 contact_email,
                 custom_metadata: HashMap::new(),
             },
-            env::predecessor_account_id(),
+            sender_id,
             register_deposit,
         );
         self.appchain_basedatas.insert(

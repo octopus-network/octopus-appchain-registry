@@ -155,6 +155,4 @@ impl AppchainBasedata {
         assert!(percent <= 100, "Invalid value of percent.");
         self.voting_score -= self.voting_score * percent as i128 / 100;
     }
-    /// Deploy anchor
-    pub fn deploy_anchor(&mut self) {}
 }

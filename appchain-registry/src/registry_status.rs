@@ -12,12 +12,13 @@ pub trait RegistryStatus {
     ) -> Vec<AppchainStatus>;
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
-    /// Get upvote deposit of the caller for a certain appchain
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId) -> Balance;
-    /// Get downvote deposit of the caller for a certain appchain
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId) -> Balance;
+    /// Get upvote deposit of a given account id for a certain appchain
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
+    /// Get downvote deposit of a given account id for a certain appchain
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
 }
 
+#[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
     fn get_appchains_with_state_of(
         &self,
@@ -28,8 +29,10 @@ impl RegistryStatus for AppchainRegistry {
         for id in ids {
             let appchain_basedata = self.get_appchain_basedata(&id);
             match appchain_state {
-                Some(ref state) => if appchain_basedata.state().eq(state) {
-                    results.push(appchain_basedata.status());
+                Some(ref state) => {
+                    if appchain_basedata.state().eq(state) {
+                        results.push(appchain_basedata.status());
+                    }
                 }
                 None => results.push(appchain_basedata.status()),
             }
@@ -42,21 +45,15 @@ impl RegistryStatus for AppchainRegistry {
         appchain_basedata.status()
     }
 
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId) -> Balance {
-        match self
-            .upvote_deposits
-            .get(&(appchain_id, env::predecessor_account_id()))
-        {
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance {
+        match self.upvote_deposits.get(&(appchain_id, account_id)) {
             Some(value) => value,
             None => 0,
         }
     }
 
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId) -> Balance {
-        match self
-            .downvote_deposits
-            .get(&(appchain_id, env::predecessor_account_id()))
-        {
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance {
+        match self.downvote_deposits.get(&(appchain_id, account_id)) {
             Some(value) => value,
             None => 0,
         }
