@@ -13,9 +13,9 @@ pub trait RegistryStatus {
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
     /// Get upvote deposit of a given account id for a certain appchain
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
     /// Get downvote deposit of a given account id for a certain appchain
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
 }
 
 #[near_bindgen]
@@ -45,17 +45,17 @@ impl RegistryStatus for AppchainRegistry {
         appchain_basedata.status()
     }
 
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance {
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128 {
         match self.upvote_deposits.get(&(appchain_id, account_id)) {
-            Some(value) => value,
-            None => 0,
+            Some(value) => value.into(),
+            None => 0.into(),
         }
     }
 
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance {
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128 {
         match self.downvote_deposits.get(&(appchain_id, account_id)) {
-            Some(value) => value,
-            None => 0,
+            Some(value) => value.into(),
+            None => 0.into(),
         }
     }
 }

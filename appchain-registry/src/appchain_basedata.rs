@@ -93,13 +93,13 @@ impl AppchainBasedata {
             appchain_metadata: self.appchain_metadata.clone(),
             appchain_anchor: self.appchain_anchor.clone(),
             appchain_owner: self.appchain_owner.clone(),
-            register_deposit: self.register_deposit,
+            register_deposit: self.register_deposit.into(),
             appchain_state: self.appchain_state.clone(),
-            upvote_deposit: self.upvote_deposit,
-            downvote_deposit: self.downvote_deposit,
-            voting_score: self.voting_score,
-            registered_time: self.registered_time,
-            go_live_time: self.go_live_time,
+            upvote_deposit: self.upvote_deposit.into(),
+            downvote_deposit: self.downvote_deposit.into(),
+            voting_score: self.voting_score.into(),
+            registered_time: self.registered_time.into(),
+            go_live_time: self.go_live_time.into(),
         }
     }
     /// Change owner
