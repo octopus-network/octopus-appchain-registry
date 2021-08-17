@@ -8,4 +8,4 @@ if [ ! -d "res" ]; then
     mkdir -p "res"
 fi
 cp target/wasm32-unknown-unknown/release/*.wasm ./res/
-cp target/wasm32-unknown-unknown/release/octopus_appchain_registry.wasm ./out/main.wasm
+cp target/wasm32-unknown-unknown/release/appchain_registry.wasm ./out/main.wasm

@@ -1,0 +1,12 @@
+[package]
+name = "mock-oct-token"
+version = "0.1.0"
+authors = ["Octopus Network"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+near-sdk = "3.1.0"
+near-contract-standards = "3.1.0"

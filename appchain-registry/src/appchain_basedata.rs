@@ -57,7 +57,10 @@ impl AppchainBasedata {
     }
     /// Get code of anchor
     pub fn anchor_code(&self) -> Vec<u8> {
-        self.appchain_anchor_code.iter().map(|f| f.clone()).collect()
+        self.appchain_anchor_code
+            .iter()
+            .map(|f| f.clone())
+            .collect()
     }
     /// Get account id of owner
     pub fn owner(&self) -> &AccountId {

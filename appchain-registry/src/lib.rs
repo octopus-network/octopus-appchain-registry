@@ -13,7 +13,10 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, Vector};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{AccountId, Balance, BlockHeight, Promise, PromiseOrValue, PromiseResult, PublicKey, assert_self, env, ext_contract, log, near_bindgen};
+use near_sdk::{
+    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, BlockHeight, Promise,
+    PromiseOrValue, PromiseResult, PublicKey,
+};
 use types::{AppchainId, AppchainState};
 
 const NO_DEPOSIT: Balance = 0;
@@ -43,9 +46,19 @@ pub trait CrossContractResultResolver {
     /// Resolver for deletion of an appchain anchor
     fn resolve_appchain_anchor_deletion(&mut self, appchain_id: AppchainId);
     /// Resolver for withdrawing the upvote deposit of a voter
-    fn resolve_withdraw_upvote_deposit(&mut self, appchain_id: AppchainId, account_id: AccountId, amount: Balance);
+    fn resolve_withdraw_upvote_deposit(
+        &mut self,
+        appchain_id: AppchainId,
+        account_id: AccountId,
+        amount: Balance,
+    );
     /// Resolver for withdrawing the downvote deposit of a voter
-    fn resolve_withdraw_downvote_deposit(&mut self, appchain_id: AppchainId, account_id: AccountId, amount: Balance);
+    fn resolve_withdraw_downvote_deposit(
+        &mut self,
+        appchain_id: AppchainId,
+        account_id: AccountId,
+        amount: Balance,
+    );
 }
 
 #[near_bindgen]
