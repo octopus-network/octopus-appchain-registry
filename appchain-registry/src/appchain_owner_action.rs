@@ -4,15 +4,11 @@ use crate::*;
 
 /// The actions which the owner of an appchain can perform
 pub trait AppchainOwnerAction {
-    /// Update metadata of an appchain
-    fn update_appchain_metadata(
+    /// Update custom metadata of an appchain
+    fn update_appchain_custom_metadata(
         &mut self,
         appchain_id: AppchainId,
-        website_url: Option<String>,
-        github_address: Option<String>,
-        github_release: Option<String>,
-        commit_id: Option<String>,
-        contact_email: Option<String>,
+        custom_metadata: HashMap<String, String>,
     );
     /// Transfer ownership of an appchain to another account
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
@@ -20,52 +16,23 @@ pub trait AppchainOwnerAction {
 
 #[near_bindgen]
 impl AppchainOwnerAction for AppchainRegistry {
-    fn update_appchain_metadata(
+    fn update_appchain_custom_metadata(
         &mut self,
         appchain_id: AppchainId,
-        website_url: Option<String>,
-        github_address: Option<String>,
-        github_release: Option<String>,
-        commit_id: Option<String>,
-        contact_email: Option<String>,
+        custom_metadata: HashMap<String, String>,
     ) {
+        self.assert_appchain_owner(&appchain_id);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        if let Some(website_url) = website_url {
-            appchain_basedata.metadata().website_url.clear();
+        custom_metadata.keys().for_each(|key| {
             appchain_basedata
                 .metadata()
-                .website_url
-                .push_str(&website_url);
-        }
-        if let Some(github_address) = github_address {
-            appchain_basedata.metadata().github_address.clear();
-            appchain_basedata
-                .metadata()
-                .github_address
-                .push_str(&github_address);
-        }
-        if let Some(github_release) = github_release {
-            appchain_basedata.metadata().github_release.clear();
-            appchain_basedata
-                .metadata()
-                .github_release
-                .push_str(&github_release);
-        }
-        if let Some(commit_id) = commit_id {
-            appchain_basedata.metadata().commit_id.clear();
-            appchain_basedata.metadata().commit_id.push_str(&commit_id);
-        }
-        if let Some(contact_email) = contact_email {
-            appchain_basedata.metadata().contact_email.clear();
-            appchain_basedata
-                .metadata()
-                .contact_email
-                .push_str(&contact_email);
-        }
+                .custom_metadata
+                .insert(key.clone(), custom_metadata.get(key).unwrap().clone());
+        });
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         env::log(
             format!(
-                "The metadata of appchain '{}' is updated by '{}'.",
+                "The custom metadata of appchain '{}' is updated by '{}'.",
                 appchain_basedata.id(),
                 env::predecessor_account_id()
             )

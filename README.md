@@ -369,7 +369,7 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
-    pub custom_metadata: Map<String, String>,
+    pub custom_metadata: HashMap<String, String>,
 }
 
 /// The state of an appchain
@@ -441,7 +441,7 @@ pub trait RegistryOwnerAction {
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
-        custom_metadata: Option<Map<String, String>>,
+        custom_metadata: Option<HashMap<String, String>>,
     );
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
@@ -464,7 +464,11 @@ pub trait RegistryOwnerAction {
 /// The actions which the owner of an appchain can perform
 pub trait AppchainOwnerAction {
     /// Update custom metadata of an appchain
-    fn update_appchain_custom_metadata(&mut self, custom_metadata: Map<String, String>);
+    fn update_appchain_custom_metadata(
+        &mut self,
+        appchain_id: AppchainId,
+        custom_metadata: HashMap<String, String>,
+    );
     /// Transfer ownership of an appchain to another account
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
 }

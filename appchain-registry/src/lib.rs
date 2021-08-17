@@ -6,16 +6,18 @@ mod registry_status;
 mod storage_key;
 pub mod types;
 mod voter_action;
+use std::collections::HashMap;
+
 use crate::storage_key::StorageKey;
 use crate::types::AppchainMetadata;
 use appchain_basedata::AppchainBasedata;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap, Vector};
+use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, BlockHeight, Promise,
-    PromiseOrValue, PromiseResult, PublicKey,
+    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, Promise, PromiseOrValue,
+    PromiseResult, PublicKey,
 };
 use types::{AppchainId, AppchainState};
 
@@ -252,6 +254,7 @@ impl AppchainRegistry {
                 github_release,
                 commit_id,
                 contact_email,
+                custom_metadata: HashMap::new(),
             },
             env::predecessor_account_id(),
             register_deposit,

@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
 use near_sdk::Timestamp;
 
@@ -15,6 +15,7 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub custom_metadata: HashMap<String, String>,
 }
 
 /// The state of an appchain
