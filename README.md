@@ -452,11 +452,11 @@ pub trait RegistryOwnerAction {
     /// Pass auditing of an appchain
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
     /// Reject an appchain
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: u8);
+    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self, vote_result_reduction_percent: u8);
+    fn conclude_voting_score(&mut self, vote_result_reduction_percent: U64);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
