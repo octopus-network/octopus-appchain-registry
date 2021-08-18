@@ -5,16 +5,12 @@ use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, F
 
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::serde_json::json;
 use near_sdk_sim::{
     call, deploy, init_simulator, lazy_static_include, to_yocto, ContractAccount, ExecutionResult,
-    UserAccount, DEFAULT_GAS, STORAGE_AMOUNT,
+    UserAccount,
 };
 
 use num_format::{Locale, ToFormattedString};
-
-const OCT_TOKEN_ID: &str = "mock_oct_token";
-const REGISTRY_ID: &str = "appchain_registry";
 
 lazy_static_include::lazy_static_include_bytes! {
     TOKEN_WASM_BYTES => "../res/mock_oct_token.wasm",
@@ -154,7 +150,6 @@ pub fn init_by_previous(
     ContractAccount<AppchainRegistryContract>,
 ) {
     let root = init_simulator(None);
-    let mut users: Vec<UserAccount> = Vec::new();
     // Deploy and initialize contracts
     let ft_metadata = FungibleTokenMetadata {
         spec: FT_METADATA_SPEC.to_string(),
@@ -184,29 +179,13 @@ pub fn init_by_previous(
     (root, oct_token, registry)
 }
 
-pub fn upgrade_contract_code_and_perform_migration(registry: &UserAccount) {
-    registry
-        .create_transaction(registry.account_id())
+pub fn upgrade_contract_code_and_perform_migration(root: &UserAccount, registry: &UserAccount) {
+    root.create_transaction(registry.account_id())
         .deploy_contract(include_bytes!("../../../res/appchain_registry.wasm").to_vec())
         .submit()
         .assert_success();
-    let result = registry.call(
-        REGISTRY_ID.into(),
-        "migrate_state",
-        &json!({
-            "new_note_of_validator": "migrate to new version",
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        0, // attached deposit
-    );
-    result.logs().iter().for_each(|l| println!("{}", l));
-    println!(
-        "Gas burnt of function 'migrate_state' of registry contract: {}",
-        result.gas_burnt().to_formatted_string(&Locale::en)
-    );
-    result.assert_success();
+    //
+    todo!("call function for storage migration");
 }
 
 pub fn to_oct_amount(amount: u128) -> u128 {

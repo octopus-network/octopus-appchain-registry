@@ -1,30 +1,16 @@
 use appchain_registry::types::{AppchainState, AppchainStatus};
 use appchain_registry::AppchainRegistryContract;
-use mock_oct_token::MockOctTokenContract;
 
 use near_sdk::json_types::U128;
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::serde_json::{self, json};
 use near_sdk_sim::{view, ContractAccount, UserAccount};
 
-#[derive(Deserialize, Serialize)]
-#[serde(crate = "near_sdk::serde")]
-struct ParamOfGetAppchainsWithStateOf {
-    appchain_state: Option<AppchainState>,
-}
-
-pub fn get_minimum_register_deposit(caller: &UserAccount, registry: &UserAccount) -> U128 {
-    let view_result = caller.view(
-        registry.account_id(),
-        "get_minimum_register_deposit",
-        &json!({}).to_string().into_bytes(),
-    );
+pub fn get_minimum_register_deposit(registry: &ContractAccount<AppchainRegistryContract>) -> U128 {
+    let view_result = view!(registry.get_minimum_register_deposit());
     assert!(view_result.is_ok());
     view_result.unwrap_json::<U128>()
 }
 
 pub fn print_appchains(
-    caller: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_state: Option<AppchainState>,
 ) -> usize {
@@ -36,7 +22,6 @@ pub fn print_appchains(
 }
 
 pub fn get_appchain_status(
-    caller: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
 ) -> AppchainStatus {
@@ -48,39 +33,21 @@ pub fn get_appchain_status(
 }
 
 pub fn get_upvote_deposit_of(
-    caller: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
-    account: &UserAccount,
+    user: &UserAccount,
 ) -> U128 {
-    let view_result = caller.view(
-        registry.account_id(),
-        "get_upvote_deposit_for",
-        &json!({
-            "appchain_id": &appchain_id,
-            "account_id": &account.valid_account_id(),
-        })
-        .to_string()
-        .into_bytes(),
-    );
+    let view_result =
+        view!(registry.get_upvote_deposit_for(appchain_id.clone(), user.account_id()));
     view_result.unwrap_json::<U128>()
 }
 
 pub fn get_downvote_deposit_of(
-    caller: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
-    account: &UserAccount,
+    user: &UserAccount,
 ) -> U128 {
-    let view_result = caller.view(
-        registry.account_id(),
-        "get_downvote_deposit_for",
-        &json!({
-            "appchain_id": &appchain_id,
-            "account_id": &account.valid_account_id(),
-        })
-        .to_string()
-        .into_bytes(),
-    );
+    let view_result =
+        view!(registry.get_downvote_deposit_for(appchain_id.clone(), user.account_id()));
     view_result.unwrap_json::<U128>()
 }

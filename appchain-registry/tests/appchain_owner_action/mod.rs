@@ -3,8 +3,7 @@ use std::collections::HashMap;
 use appchain_registry::AppchainRegistryContract;
 use mock_oct_token::MockOctTokenContract;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::serde_json::{self, json};
-use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount, DEFAULT_GAS};
+use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
 
 use crate::common;
 
@@ -32,21 +31,13 @@ pub fn register_appchain(
 
 pub fn update_appchain_custom_metadata(
     signer: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     custom_metadata: &HashMap<String, String>,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        registry.account_id(),
-        "update_appchain_custom_metadata",
-        &serde_json::to_string(&ParamOfUpdateAppchainCustomMetadata {
-            appchain_id: appchain_id.clone(),
-            custom_metadata: custom_metadata.clone(),
-        })
-        .unwrap()
-        .into_bytes(),
-        DEFAULT_GAS,
-        0,
+    let outcome = call!(
+        signer,
+        registry.update_appchain_custom_metadata(appchain_id.clone(), custom_metadata.clone())
     );
     common::print_outcome_result("update_appchain_custom_metadata", &outcome);
     outcome
@@ -54,21 +45,13 @@ pub fn update_appchain_custom_metadata(
 
 pub fn transfer_appchain_ownership(
     signer: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     new_owner: &UserAccount,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        registry.account_id(),
-        "transfer_appchain_ownership",
-        &json!({
-            "appchain_id": appchain_id,
-            "new_owner": new_owner.account_id(),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS,
-        0,
+    let outcome = call!(
+        signer,
+        registry.transfer_appchain_ownership(appchain_id.clone(), new_owner.account_id())
     );
     common::print_outcome_result("transfer_appchain_ownership", &outcome);
     outcome

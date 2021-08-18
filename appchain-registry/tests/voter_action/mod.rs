@@ -1,54 +1,40 @@
+use appchain_registry::AppchainRegistryContract;
+use mock_oct_token::MockOctTokenContract;
 use near_sdk::serde_json::json;
-use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
+use near_sdk_sim::{ContractAccount, ExecutionResult, UserAccount, DEFAULT_GAS};
 
 use crate::common;
 
 pub fn upvote_appchain(
     signer: &UserAccount,
-    oct_token: &UserAccount,
-    registry: &UserAccount,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     amount: u128,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        oct_token.account_id(),
-        "ft_transfer_call",
-        &json!({
-            "receiver_id": registry.valid_account_id(),
-            "amount": amount.to_string(),
-            "msg": format!("upvote_appchain,{}", appchain_id)
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS,
-        1,
-    );
-    common::print_outcome_result("ft_transfer_call", &outcome);
-    outcome
+    common::ft_transfer_call_oct_token(
+        signer,
+        &registry.user_account,
+        amount,
+        format!("upvote_appchain,{}", appchain_id),
+        oct_token,
+    )
 }
 
 pub fn downvote_appchain(
     signer: &UserAccount,
-    oct_token: &UserAccount,
-    registry: &UserAccount,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     amount: u128,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        oct_token.account_id(),
-        "ft_transfer_call",
-        &json!({
-            "receiver_id": registry.valid_account_id(),
-            "amount": amount.to_string(),
-            "msg": format!("downvote_appchain,{}", appchain_id)
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS,
-        1,
-    );
-    common::print_outcome_result("ft_transfer_call", &outcome);
-    outcome
+    common::ft_transfer_call_oct_token(
+        signer,
+        &registry.user_account,
+        amount,
+        format!("downvote_appchain,{}", appchain_id),
+        oct_token,
+    )
 }
 
 pub fn withdraw_upvote_deposit_of(
