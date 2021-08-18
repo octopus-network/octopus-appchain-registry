@@ -3,6 +3,8 @@ use crate::*;
 
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Get minimum register deposit
+    fn get_minimum_register_deposit(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
     ///
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
@@ -20,6 +22,10 @@ pub trait RegistryStatus {
 
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
+    fn get_minimum_register_deposit(&self) -> U128 {
+        self.minimum_register_deposit.into()
+    }
+
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<AppchainState>,

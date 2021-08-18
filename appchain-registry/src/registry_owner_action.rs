@@ -20,7 +20,7 @@ pub trait RegistryOwnerAction {
         custom_metadata: Option<HashMap<String, String>>,
     );
     /// Change the value of minimum register deposit
-    fn change_minimum_register_deposit(&mut self, value: Balance);
+    fn change_minimum_register_deposit(&mut self, value: U128);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -100,9 +100,9 @@ impl RegistryOwnerAction for AppchainRegistry {
         )
     }
 
-    fn change_minimum_register_deposit(&mut self, value: Balance) {
+    fn change_minimum_register_deposit(&mut self, value: U128) {
         self.assert_owner();
-        self.minimum_register_deposit = value;
+        self.minimum_register_deposit = value.0;
     }
 
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {

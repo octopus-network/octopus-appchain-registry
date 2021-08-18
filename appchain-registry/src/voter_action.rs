@@ -6,21 +6,21 @@ use crate::{types::AppchainId, AppchainRegistry};
 /// The actions which the voter can perform
 pub trait VoterAction {
     /// Withdraw a certain amount of upvote deposit for an appchain
-    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
     /// Withdraw a certain amount of downvote deposit for an appchain
-    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
 }
 
 #[near_bindgen]
 impl VoterAction for AppchainRegistry {
-    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance) {
+    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
         let voter = env::predecessor_account_id();
         let voter_upvote = self
             .upvote_deposits
             .get(&(appchain_id.clone(), voter.clone()))
             .unwrap_or_default();
         assert!(
-            voter_upvote >= amount,
+            voter_upvote >= amount.0,
             "Not enough upvote deposit to withdraw."
         );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
@@ -29,11 +29,11 @@ impl VoterAction for AppchainRegistry {
             .upvote_deposits
             .get(&(appchain_id.clone(), account_id.clone()))
             .unwrap_or_default();
-        appchain_basedata.decrease_upvote_deposit(amount);
+        appchain_basedata.decrease_upvote_deposit(amount.0);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         self.upvote_deposits.insert(
             &(appchain_id.clone(), account_id.clone()),
-            &(voter_upvote - amount),
+            &(voter_upvote - amount.0),
         );
         ext_fungible_token::ft_transfer(
             voter.clone(),
@@ -46,21 +46,21 @@ impl VoterAction for AppchainRegistry {
         .then(ext_self::resolve_withdraw_upvote_deposit(
             appchain_id.clone(),
             voter.clone(),
-            amount,
+            amount.0,
             &env::current_account_id(),
             NO_DEPOSIT,
             env::prepaid_gas() / 2,
         ));
     }
 
-    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance) {
+    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
         let voter = env::predecessor_account_id();
         let voter_downvote = self
             .downvote_deposits
             .get(&(appchain_id.clone(), voter.clone()))
             .unwrap_or_default();
         assert!(
-            voter_downvote >= amount,
+            voter_downvote >= amount.0,
             "Not enough downvote deposit to withdraw."
         );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
@@ -69,11 +69,11 @@ impl VoterAction for AppchainRegistry {
             .downvote_deposits
             .get(&(appchain_id.clone(), account_id.clone()))
             .unwrap_or_default();
-        appchain_basedata.decrease_downvote_deposit(amount);
+        appchain_basedata.decrease_downvote_deposit(amount.0);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         self.downvote_deposits.insert(
             &(appchain_id.clone(), account_id.clone()),
-            &(voter_downvote - amount),
+            &(voter_downvote - amount.0),
         );
         ext_fungible_token::ft_transfer(
             voter.clone(),
@@ -86,7 +86,7 @@ impl VoterAction for AppchainRegistry {
         .then(ext_self::resolve_withdraw_downvote_deposit(
             appchain_id.clone(),
             voter.clone(),
-            amount,
+            amount.0,
             &env::current_account_id(),
             NO_DEPOSIT,
             env::prepaid_gas() / 2,

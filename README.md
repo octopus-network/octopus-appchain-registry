@@ -411,6 +411,8 @@ pub struct AppchainStatus {
 ```rust
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Get minimum register deposit
+    fn get_minimum_register_deposit(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
     ///
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
@@ -421,9 +423,9 @@ pub trait RegistryStatus {
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
     /// Get upvote deposit of a given account id for a certain appchain
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
+    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
     /// Get downvote deposit of a given account id for a certain appchain
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> Balance;
+    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
 }
 ```
 
@@ -443,6 +445,8 @@ pub trait RegistryOwnerAction {
         contact_email: Option<String>,
         custom_metadata: Option<HashMap<String, String>>,
     );
+    /// Change the value of minimum register deposit
+    fn change_minimum_register_deposit(&mut self, value: U128);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -452,7 +456,7 @@ pub trait RegistryOwnerAction {
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self);
+    fn conclude_voting_score(&mut self, vote_result_reduction_percent: u8);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
@@ -480,9 +484,9 @@ pub trait AppchainOwnerAction {
 /// The actions which the voter can perform
 pub trait VoterAction {
     /// Withdraw a certain amount of upvote deposit for an appchain
-    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
     /// Withdraw a certain amount of downvote deposit for an appchain
-    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: Balance);
+    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
 }
 ```
 

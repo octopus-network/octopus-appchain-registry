@@ -30,7 +30,7 @@ const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
 const SINGLE_CALL_GAS: u64 = 50 * T_GAS;
 const COMPLEX_CALL_GAS: u64 = 120 * T_GAS;
 const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
-const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000_000_000;
+const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
@@ -247,6 +247,10 @@ impl AppchainRegistry {
         assert!(
             self.appchain_basedatas.get(&appchain_id).is_none(),
             "Appchain already registered."
+        );
+        assert!(
+            register_deposit.eq(&self.minimum_register_deposit),
+            "Invalid register deposit."
         );
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
