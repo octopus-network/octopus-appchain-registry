@@ -1,8 +1,10 @@
+use appchain_registry::AppchainRegistryContract;
+use mock_oct_token::MockOctTokenContract;
 use std::collections::HashMap;
 
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
-use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
+use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount, DEFAULT_GAS};
 
 use crate::common;
 
@@ -79,19 +81,12 @@ pub fn change_minimum_register_deposit(
 
 pub fn start_auditing_appchain(
     signer: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        registry.account_id(),
-        "start_auditing_appchain",
-        &json!({
-            "appchain_id": appchain_id,
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS,
-        0,
+    let outcome = call!(
+        signer,
+        registry.start_auditing_appchain(appchain_id.clone())
     );
     common::print_outcome_result("start_auditing_appchain", &outcome);
     outcome
@@ -99,22 +94,10 @@ pub fn start_auditing_appchain(
 
 pub fn pass_auditing_appchain(
     signer: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
-    appchain_anchor_code: Vec<u8>,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        registry.account_id(),
-        "pass_auditing_appchain",
-        &serde_json::to_string(&ParamOfPassAuditingAppchain {
-            appchain_id: appchain_id.clone(),
-            appchain_anchor_code,
-        })
-        .unwrap()
-        .into_bytes(),
-        DEFAULT_GAS,
-        0,
-    );
+    let outcome = call!(signer, registry.pass_auditing_appchain(appchain_id.clone()));
     common::print_outcome_result("pass_auditing_appchain", &outcome);
     outcome
 }

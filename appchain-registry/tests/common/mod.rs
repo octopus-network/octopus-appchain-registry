@@ -1,17 +1,27 @@
 use appchain_registry::types::AppchainState;
+use appchain_registry::AppchainRegistryContract;
+use mock_oct_token::MockOctTokenContract;
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::json;
 use near_sdk_sim::{
-    init_simulator, to_yocto, ExecutionResult, UserAccount, DEFAULT_GAS, STORAGE_AMOUNT,
+    call, deploy, init_simulator, lazy_static_include, to_yocto, ContractAccount, ExecutionResult,
+    UserAccount, DEFAULT_GAS, STORAGE_AMOUNT,
 };
 
 use num_format::{Locale, ToFormattedString};
 
 const OCT_TOKEN_ID: &str = "mock_oct_token";
 const REGISTRY_ID: &str = "appchain_registry";
+
+lazy_static_include::lazy_static_include_bytes! {
+    TOKEN_WASM_BYTES => "../res/mock_oct_token.wasm",
+    REGISTRY_WASM_BYTES => "../res/appchain_registry.wasm",
+    PREVIOUS_REGISTRY_WASM_BYTES => "../res/previous_appchain_registry.wasm",
+    ANCHOR_WASM_BYTES => "../res/mock_appchain_anchor.wasm",
+}
 
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -20,216 +30,156 @@ struct ParamOfGetAppchainsWithStateOf {
 }
 
 // Register the given `user` to oct_token
-fn register_user(user: &UserAccount) {
-    user.call(
-        OCT_TOKEN_ID.to_string(),
-        "storage_deposit",
-        &json!({
-            "account_id": user.valid_account_id()
-        })
-        .to_string()
-        .into_bytes(),
-        near_sdk_sim::DEFAULT_GAS / 2,
-        near_sdk::env::storage_byte_cost() * 125, // attached deposit
-    )
-    .assert_success();
+fn register_user_to_oct_token(
+    account: &UserAccount,
+    contract: &ContractAccount<MockOctTokenContract>,
+) {
+    let outcome = call!(
+        account,
+        contract.storage_deposit(Option::from(account.valid_account_id()), Option::None),
+        near_sdk::env::storage_byte_cost() * 125,
+        near_sdk_sim::DEFAULT_GAS / 2
+    );
+    outcome.assert_success();
 }
 
-pub fn init(total_supply: u128) -> (UserAccount, UserAccount, UserAccount, Vec<UserAccount>) {
+pub fn ft_transfer_oct_token(
+    sender: &UserAccount,
+    receiver: &UserAccount,
+    amount: u128,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+) {
+    let outcome = call!(
+        sender,
+        oct_token.ft_transfer(
+            receiver.valid_account_id(),
+            U128::from(amount),
+            Option::None
+        ),
+        1,
+        near_sdk_sim::DEFAULT_GAS
+    );
+    print_outcome_result("ft_transfer", &outcome);
+    outcome.assert_success();
+}
+
+pub fn ft_transfer_call_oct_token(
+    sender: &UserAccount,
+    receiver: &UserAccount,
+    amount: u128,
+    msg: String,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+) -> ExecutionResult {
+    let outcome = call!(
+        sender,
+        oct_token.ft_transfer_call(
+            receiver.valid_account_id(),
+            U128::from(amount),
+            Option::None,
+            msg.clone()
+        ),
+        1,
+        near_sdk_sim::DEFAULT_GAS
+    );
+    print_outcome_result("ft_transfer_call", &outcome);
+    outcome.assert_success();
+    outcome
+}
+
+pub fn init(
+    total_supply: u128,
+) -> (
+    UserAccount,
+    ContractAccount<MockOctTokenContract>,
+    ContractAccount<AppchainRegistryContract>,
+    Vec<UserAccount>,
+) {
     let root = init_simulator(None);
     let mut users: Vec<UserAccount> = Vec::new();
     // Deploy and initialize contracts
-    let oct_token = root.deploy(
-        &include_bytes!("../../../res/mock_oct_token.wasm").to_vec(),
-        OCT_TOKEN_ID.into(),
-        10 * STORAGE_AMOUNT,
-    );
-    let registry = root.deploy(
-        &include_bytes!("../../../res/appchain_registry.wasm").to_vec(),
-        REGISTRY_ID.into(),
-        10 * STORAGE_AMOUNT,
-    );
-    oct_token
-        .call(
-            OCT_TOKEN_ID.into(),
-            "new",
-            &json!({
-                "owner_id": root.valid_account_id(),
-                "total_supply": U128::from(total_supply),
-                "metadata": FungibleTokenMetadata {
-                    spec: FT_METADATA_SPEC.to_string(),
-                    name: "OCTToken".to_string(),
-                    symbol: "OCT".to_string(),
-                    icon: None,
-                    reference: None,
-                    reference_hash: None,
-                    decimals: 24,
-                }
-            })
-            .to_string()
-            .into_bytes(),
-            DEFAULT_GAS / 2,
-            0, // attached deposit
-        )
-        .assert_success();
-    registry
-        .call(
-            REGISTRY_ID.into(),
-            "new",
-            &json!({
-                "oct_token": oct_token.valid_account_id()
-            })
-            .to_string()
-            .into_bytes(),
-            DEFAULT_GAS / 2,
-            0, // attached deposit
-        )
-        .assert_success();
-    register_user(&registry);
+    let ft_metadata = FungibleTokenMetadata {
+        spec: FT_METADATA_SPEC.to_string(),
+        name: "OCTToken".to_string(),
+        symbol: "OCT".to_string(),
+        icon: None,
+        reference: None,
+        reference_hash: None,
+        decimals: 24,
+    };
+    let oct_token = deploy! {
+        contract: MockOctTokenContract,
+        contract_id: "oct_token",
+        bytes: &TOKEN_WASM_BYTES,
+        signer_account: root,
+        init_method: new(root.valid_account_id(), U128::from(total_supply), ft_metadata)
+    };
+    let registry = deploy! {
+        contract: AppchainRegistryContract,
+        contract_id: "registry",
+        bytes: &REGISTRY_WASM_BYTES,
+        signer_account: root,
+        init_method: new(oct_token.valid_account_id().to_string())
+    };
+    register_user_to_oct_token(&registry.user_account, &oct_token);
     // Create users and transfer a certain amount of OCT token to them
     let alice = root.create_user("alice".to_string(), to_yocto("100"));
-    register_user(&alice);
-    root.call(
-        OCT_TOKEN_ID.into(),
-        "ft_transfer",
-        &json!({
-            "receiver_id": alice.valid_account_id(),
-            "amount": U128::from(total_supply / 10),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        1, // attached deposit
-    )
-    .assert_success();
+    register_user_to_oct_token(&alice, &oct_token);
+    ft_transfer_oct_token(&root, &alice, total_supply / 10, &oct_token);
     users.push(alice);
     let bob = root.create_user("bob".to_string(), to_yocto("100"));
-    register_user(&bob);
-    root.call(
-        OCT_TOKEN_ID.into(),
-        "ft_transfer",
-        &json!({
-            "receiver_id": bob.valid_account_id(),
-            "amount": U128::from(total_supply / 10),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        1, // attached deposit
-    )
-    .assert_success();
+    register_user_to_oct_token(&bob, &oct_token);
+    ft_transfer_oct_token(&root, &bob, total_supply / 10, &oct_token);
     users.push(bob);
     let charlie = root.create_user("charlie".to_string(), to_yocto("100"));
-    register_user(&charlie);
-    root.call(
-        OCT_TOKEN_ID.into(),
-        "ft_transfer",
-        &json!({
-            "receiver_id": charlie.valid_account_id(),
-            "amount": U128::from(total_supply / 10),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        1, // attached deposit
-    )
-    .assert_success();
+    register_user_to_oct_token(&charlie, &oct_token);
+    ft_transfer_oct_token(&root, &charlie, total_supply / 10, &oct_token);
     users.push(charlie);
     let dave = root.create_user("dave".to_string(), to_yocto("100"));
-    register_user(&dave);
-    root.call(
-        OCT_TOKEN_ID.into(),
-        "ft_transfer",
-        &json!({
-            "receiver_id": dave.valid_account_id(),
-            "amount": U128::from(total_supply / 10),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        1, // attached deposit
-    )
-    .assert_success();
+    register_user_to_oct_token(&dave, &oct_token);
+    ft_transfer_oct_token(&root, &dave, total_supply / 10, &oct_token);
     users.push(dave);
     let eve = root.create_user("eve".to_string(), to_yocto("100"));
-    register_user(&eve);
-    root.call(
-        OCT_TOKEN_ID.into(),
-        "ft_transfer",
-        &json!({
-            "receiver_id": eve.valid_account_id(),
-            "amount": U128::from(total_supply / 10),
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        1, // attached deposit
-    )
-    .assert_success();
+    register_user_to_oct_token(&eve, &oct_token);
+    ft_transfer_oct_token(&root, &eve, total_supply / 10, &oct_token);
     users.push(eve);
     // return initialized UserAccounts
     (root, oct_token, registry, users)
 }
 
-pub fn init_by_previous(total_supply: u128) -> (UserAccount, UserAccount, UserAccount) {
+pub fn init_by_previous(
+    total_supply: u128,
+) -> (
+    UserAccount,
+    ContractAccount<MockOctTokenContract>,
+    ContractAccount<AppchainRegistryContract>,
+) {
     let root = init_simulator(None);
-
-    let oct_token = root.deploy(
-        &include_bytes!("../../../res/mock_oct_token.wasm").to_vec(),
-        OCT_TOKEN_ID.into(),
-        10 * STORAGE_AMOUNT,
-    );
-    let registry = root.deploy(
-        &include_bytes!("../../../res/previous_appchain_registry.wasm").to_vec(),
-        REGISTRY_ID.into(),
-        10 * STORAGE_AMOUNT,
-    );
-
-    let mut result = oct_token.call(
-        OCT_TOKEN_ID.into(),
-        "new",
-        &json!({
-            "owner_id": root.valid_account_id(),
-            "total_supply": U128::from(total_supply),
-            "metadata": FungibleTokenMetadata {
-                spec: FT_METADATA_SPEC.to_string(),
-                name: "OCTToken".to_string(),
-                symbol: "OCT".to_string(),
-                icon: None,
-                reference: None,
-                reference_hash: None,
-                decimals: 24,
-            }
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        0, // attached deposit
-    );
-    println!(
-        "Gas burnt of function 'new' of OCT token contract: {}",
-        result.gas_burnt().to_formatted_string(&Locale::en)
-    );
-    result.assert_success();
-
-    result = registry.call(
-        REGISTRY_ID.into(),
-        "new",
-        &json!({
-            "oct_token": oct_token.valid_account_id()
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS / 2,
-        0, // attached deposit
-    );
-    println!(
-        "Gas burnt of function 'new' of registry contract: {}",
-        result.gas_burnt().to_formatted_string(&Locale::en)
-    );
-    result.assert_success();
-
-    register_user(&registry);
+    let mut users: Vec<UserAccount> = Vec::new();
+    // Deploy and initialize contracts
+    let ft_metadata = FungibleTokenMetadata {
+        spec: FT_METADATA_SPEC.to_string(),
+        name: "OCTToken".to_string(),
+        symbol: "OCT".to_string(),
+        icon: None,
+        reference: None,
+        reference_hash: None,
+        decimals: 24,
+    };
+    let oct_token = deploy! {
+        contract: MockOctTokenContract,
+        contract_id: "oct_token",
+        bytes: &TOKEN_WASM_BYTES,
+        signer_account: root,
+        init_method: new(root.valid_account_id(), U128::from(total_supply), ft_metadata)
+    };
+    let registry = deploy! {
+        contract: AppchainRegistryContract,
+        contract_id: "registry",
+        bytes: &PREVIOUS_REGISTRY_WASM_BYTES,
+        signer_account: root,
+        init_method: new(oct_token.valid_account_id().to_string())
+    };
+    register_user_to_oct_token(&registry.user_account, &oct_token);
 
     (root, oct_token, registry)
 }

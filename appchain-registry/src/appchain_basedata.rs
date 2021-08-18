@@ -9,7 +9,6 @@ pub struct AppchainBasedata {
     appchain_id: AppchainId,
     appchain_metadata: AppchainMetadata,
     appchain_anchor: AccountId,
-    appchain_anchor_code: Vec<u8>,
     appchain_owner: AccountId,
     register_deposit: Balance,
     appchain_state: AppchainState,
@@ -32,7 +31,6 @@ impl AppchainBasedata {
             appchain_id,
             appchain_metadata,
             appchain_anchor: String::new(),
-            appchain_anchor_code: Vec::<u8>::new(),
             appchain_owner,
             register_deposit,
             appchain_state: AppchainState::Registered,
@@ -54,13 +52,6 @@ impl AppchainBasedata {
     /// Get acount id of anchor
     pub fn anchor(&self) -> &AccountId {
         &self.appchain_anchor
-    }
-    /// Get code of anchor
-    pub fn anchor_code(&self) -> Vec<u8> {
-        self.appchain_anchor_code
-            .iter()
-            .map(|f| f.clone())
-            .collect()
     }
     /// Get account id of owner
     pub fn owner(&self) -> &AccountId {
@@ -115,11 +106,6 @@ impl AppchainBasedata {
     /// Set initial deposit
     pub fn set_initial_deposit(&mut self, deposit: Balance) {
         self.register_deposit = deposit;
-    }
-    /// Set code of anchor
-    pub fn set_anchor_code(&mut self, mut code: Vec<u8>) {
-        self.appchain_anchor_code.clear();
-        self.appchain_anchor_code.append(&mut code);
     }
     /// Change state
     pub fn change_state(&mut self, new_state: AppchainState) {

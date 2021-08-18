@@ -87,7 +87,6 @@ impl AppchainRegistry {
     #[init]
     pub fn new(oct_token: AccountId) -> Self {
         assert!(!env::state_exists(), "The contract is already initialized.");
-        assert_self();
         Self {
             owner: env::signer_account_id(),
             owner_pk: env::signer_account_pk(),

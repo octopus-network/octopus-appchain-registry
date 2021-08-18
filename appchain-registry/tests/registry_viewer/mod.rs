@@ -1,9 +1,11 @@
 use appchain_registry::types::{AppchainState, AppchainStatus};
+use appchain_registry::AppchainRegistryContract;
+use mock_oct_token::MockOctTokenContract;
 
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
-use near_sdk_sim::UserAccount;
+use near_sdk_sim::{view, ContractAccount, UserAccount};
 
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -23,16 +25,10 @@ pub fn get_minimum_register_deposit(caller: &UserAccount, registry: &UserAccount
 
 pub fn print_appchains(
     caller: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_state: Option<AppchainState>,
 ) -> usize {
-    let view_result = caller.view(
-        registry.account_id(),
-        "get_appchains_with_state_of",
-        &serde_json::to_string(&ParamOfGetAppchainsWithStateOf { appchain_state })
-            .unwrap()
-            .into_bytes(),
-    );
+    let view_result = view!(registry.get_appchains_with_state_of(appchain_state));
     assert!(view_result.is_ok());
     println!("{}", String::from_utf8(view_result.unwrap()).unwrap());
     let appchains: Vec<AppchainStatus> = view_result.unwrap_json();
@@ -41,16 +37,10 @@ pub fn print_appchains(
 
 pub fn get_appchain_status(
     caller: &UserAccount,
-    registry: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
 ) -> AppchainStatus {
-    let view_result = caller.view(
-        registry.account_id(),
-        "get_appchain_status_of",
-        &json!({ "appchain_id": &appchain_id })
-            .to_string()
-            .into_bytes(),
-    );
+    let view_result = view!(registry.get_appchain_status_of(appchain_id.clone()));
     assert!(view_result.is_ok());
     println!("{}", String::from_utf8(view_result.unwrap()).unwrap());
     let appchain_status: AppchainStatus = view_result.unwrap_json();

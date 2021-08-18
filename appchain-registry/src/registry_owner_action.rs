@@ -25,7 +25,7 @@ pub trait RegistryOwnerAction {
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
@@ -116,12 +116,11 @@ impl RegistryOwnerAction for AppchainRegistry {
         env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
     }
 
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>) {
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_state(AppchainState::InQueue);
-        appchain_basedata.set_anchor_code(appchain_anthor_code);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
     }
@@ -198,9 +197,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         Promise::new(sub_account_id)
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
-            .add_full_access_key(self.owner_pk.clone())
-            .deploy_contract(top_appchain_basedata.anchor_code())
-            .function_call(b"new".to_vec(), b"{}".to_vec(), NO_DEPOSIT, SINGLE_CALL_GAS);
+            .add_full_access_key(self.owner_pk.clone());
     }
 
     fn remove_appchain(&mut self, appchain_id: AppchainId) {

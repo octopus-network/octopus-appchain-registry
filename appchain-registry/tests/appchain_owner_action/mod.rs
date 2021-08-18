@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
+use appchain_registry::AppchainRegistryContract;
+use mock_oct_token::MockOctTokenContract;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
-use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
+use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount, DEFAULT_GAS};
 
 use crate::common;
 
@@ -15,26 +17,17 @@ struct ParamOfUpdateAppchainCustomMetadata {
 
 pub fn register_appchain(
     signer: &UserAccount,
-    oct_token: &UserAccount,
-    registry: &UserAccount,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+    registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     amount: u128,
 ) -> ExecutionResult {
-    let outcome = signer.call(
-        oct_token.account_id(),
-        "ft_transfer_call",
-        &json!({
-            "receiver_id": registry.valid_account_id(),
-            "amount": amount.to_string(),
-            "msg": format!("register_appchain,{},website_url_string,github_address_string,github_release_string,commit_id,email_string", appchain_id)
-        })
-        .to_string()
-        .into_bytes(),
-        DEFAULT_GAS,
-        1,
-    );
-    common::print_outcome_result("ft_transfer_call", &outcome);
-    outcome
+    common::ft_transfer_call_oct_token(
+        signer,
+        &registry.user_account,
+        amount,
+        format!("register_appchain,{},website_url_string,github_address_string,github_release_string,commit_id,email_string", appchain_id),
+        oct_token)
 }
 
 pub fn update_appchain_custom_metadata(
