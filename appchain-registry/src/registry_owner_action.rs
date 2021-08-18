@@ -1,3 +1,4 @@
+use near_sdk::json_types::U64;
 use near_sdk::Gas;
 
 use crate::types::AppchainId;
@@ -26,11 +27,11 @@ pub trait RegistryOwnerAction {
     /// Pass auditing of an appchain
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
     /// Reject an appchain
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: u8);
+    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self, vote_result_reduction_percent: u8);
+    fn conclude_voting_score(&mut self, vote_result_reduction_percent: U64);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
@@ -82,6 +83,7 @@ impl RegistryOwnerAction for AppchainRegistry {
                 .push_str(&contact_email);
         }
         if let Some(custom_metadata) = custom_metadata {
+            appchain_basedata.metadata().custom_metadata.clear();
             custom_metadata.keys().for_each(|key| {
                 appchain_basedata
                     .metadata()
@@ -124,13 +126,13 @@ impl RegistryOwnerAction for AppchainRegistry {
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
     }
 
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: u8) {
+    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_state(AppchainState::Dead);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
-        let refund_amount = appchain_basedata.register_deposit() * refund_percent as u128 / 100;
+        let refund_amount = appchain_basedata.register_deposit() * refund_percent.0 as u128 / 100;
         if refund_amount > 0 {
             ext_fungible_token::ft_transfer(
                 appchain_basedata.owner().clone(),
@@ -168,7 +170,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         }
     }
 
-    fn conclude_voting_score(&mut self, voting_result_reduction_percent: u8) {
+    fn conclude_voting_score(&mut self, voting_result_reduction_percent: U64) {
         self.assert_owner();
         assert!(
             !self.top_appchain_id_in_queue.is_empty(),
@@ -183,7 +185,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         for id in ids {
             let mut appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                appchain_basedata.reduce_voting_score_by_percent(voting_result_reduction_percent);
+                appchain_basedata.reduce_voting_score_by_percent(voting_result_reduction_percent.0);
                 self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
             }
         }
@@ -204,15 +206,20 @@ impl RegistryOwnerAction for AppchainRegistry {
     fn remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Dead);
-        let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
-        Promise::new(anchor_account_id)
-            .delete_account(env::current_account_id())
-            .then(ext_self::resolve_appchain_anchor_deletion(
-                appchain_id,
-                &env::current_account_id(),
-                0,
-                GAS_FOR_RESOLVE_ADDCHAIN_ANCHOR_DELETION,
-            ));
+        let appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        if !appchain_basedata.anchor().trim().is_empty() {
+            let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
+            Promise::new(anchor_account_id)
+                .delete_account(env::current_account_id())
+                .then(ext_self::resolve_appchain_anchor_deletion(
+                    appchain_id.clone(),
+                    &env::current_account_id(),
+                    0,
+                    GAS_FOR_RESOLVE_ADDCHAIN_ANCHOR_DELETION,
+                ));
+        }
+        self.appchain_basedatas.remove(&appchain_id);
+        env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
     }
 }
 
@@ -223,13 +230,16 @@ impl AppchainRegistry {
         assert_self();
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => {
-                self.appchain_basedatas.remove(&appchain_id);
-                env::log(
-                    format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes(),
+            PromiseResult::Successful(_) => env::log(
+                format!("Anchor contract of appchain '{}' is deleted.", &appchain_id).as_bytes(),
+            ),
+            PromiseResult::Failed => env::log(
+                format!(
+                    "Failed to delete anchor contract of appchain '{}'.",
+                    &appchain_id
                 )
-            }
-            PromiseResult::Failed => {}
+                .as_bytes(),
+            ),
         }
     }
     ///

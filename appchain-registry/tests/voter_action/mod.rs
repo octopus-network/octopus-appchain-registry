@@ -1,6 +1,7 @@
 use near_sdk::serde_json::json;
 use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
-use num_format::{Locale, ToFormattedString};
+
+use crate::common;
 
 pub fn upvote_appchain(
     signer: &UserAccount,
@@ -22,10 +23,7 @@ pub fn upvote_appchain(
         DEFAULT_GAS,
         1,
     );
-    println!(
-        "Gas burnt of function 'ft_transfer_call': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("ft_transfer_call", &outcome);
     outcome
 }
 
@@ -49,10 +47,7 @@ pub fn downvote_appchain(
         DEFAULT_GAS,
         1,
     );
-    println!(
-        "Gas burnt of function 'ft_transfer_call': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("ft_transfer_call", &outcome);
     outcome
 }
 
@@ -74,10 +69,7 @@ pub fn withdraw_upvote_deposit_of(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'withdraw_upvote_deposit_of': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("withdraw_upvote_deposit_of", &outcome);
     outcome
 }
 
@@ -99,9 +91,6 @@ pub fn withdraw_downvote_deposit_of(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'withdraw_downvote_deposit_of': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("withdraw_downvote_deposit_of", &outcome);
     outcome
 }

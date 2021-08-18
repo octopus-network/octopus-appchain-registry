@@ -1,10 +1,12 @@
-use appchain_registry::types::{AppchainState, AppchainStatus};
+use appchain_registry::types::AppchainState;
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::serde_json::{self, json};
-use near_sdk_sim::{init_simulator, to_yocto, UserAccount, DEFAULT_GAS, STORAGE_AMOUNT};
+use near_sdk::serde_json::json;
+use near_sdk_sim::{
+    init_simulator, to_yocto, ExecutionResult, UserAccount, DEFAULT_GAS, STORAGE_AMOUNT,
+};
 
 use num_format::{Locale, ToFormattedString};
 
@@ -260,4 +262,19 @@ pub fn upgrade_contract_code_and_perform_migration(registry: &UserAccount) {
 pub fn to_oct_amount(amount: u128) -> u128 {
     let bt_decimals_base = (10 as u128).pow(18);
     amount * bt_decimals_base
+}
+
+pub fn print_outcome_result(function_name: &str, outcome: &ExecutionResult) {
+    println!(
+        "Gas burnt of function '{}': {}",
+        function_name,
+        outcome.gas_burnt().to_formatted_string(&Locale::en)
+    );
+    let results = outcome.promise_results();
+    for result in results {
+        let logs = result.as_ref().unwrap().logs();
+        if logs.len() > 0 {
+            println!("{:#?}", logs);
+        }
+    }
 }

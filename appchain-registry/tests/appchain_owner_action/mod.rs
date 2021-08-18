@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
 use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
-use num_format::{Locale, ToFormattedString};
+
+use crate::common;
 
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -32,13 +33,7 @@ pub fn register_appchain(
         DEFAULT_GAS,
         1,
     );
-    println!(
-        "Gas burnt of function 'ft_transfer_call': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
-    let results = outcome.promise_results();
-    let logs = results[2].as_ref().unwrap().logs();
-    println!("{:#?}", logs);
+    common::print_outcome_result("ft_transfer_call", &outcome);
     outcome
 }
 
@@ -60,10 +55,7 @@ pub fn update_appchain_custom_metadata(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'update_appchain_custom_metadata': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("update_appchain_custom_metadata", &outcome);
     outcome
 }
 
@@ -73,7 +65,7 @@ pub fn transfer_appchain_ownership(
     appchain_id: &String,
     new_owner: &UserAccount,
 ) -> ExecutionResult {
-    let outcome = registry.call(
+    let outcome = signer.call(
         registry.account_id(),
         "transfer_appchain_ownership",
         &json!({
@@ -85,9 +77,6 @@ pub fn transfer_appchain_ownership(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'transfer_appchain_ownership': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("transfer_appchain_ownership", &outcome);
     outcome
 }

@@ -111,7 +111,7 @@ impl AppchainRegistry {
     fn assert_appchain_owner(&self, appchain_id: &AppchainId) {
         let appchain_basedata = self.get_appchain_basedata(appchain_id);
         assert_eq!(
-            env::predecessor_account_id(),
+            env::signer_account_id(),
             appchain_basedata.owner().clone(),
             "Function can only be called by appchain owner."
         );
@@ -195,6 +195,11 @@ impl AppchainRegistry {
                 );
                 let appchain_id = msg_vec.get(1).unwrap().to_string();
                 let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+                assert_eq!(
+                    &appchain_basedata.state(),
+                    &AppchainState::InQueue,
+                    "Voting appchain must be 'inQueue'."
+                );
                 let voter_upvote = self
                     .upvote_deposits
                     .get(&(appchain_id.clone(), sender_id.clone()))
@@ -213,6 +218,11 @@ impl AppchainRegistry {
                 );
                 let appchain_id = msg_vec.get(1).unwrap().to_string();
                 let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+                assert_eq!(
+                    &appchain_basedata.state(),
+                    &AppchainState::InQueue,
+                    "Downvoting appchain must be 'inQueue'."
+                );
                 let voter_downvote = self
                     .downvote_deposits
                     .get(&(appchain_id.clone(), sender_id.clone()))

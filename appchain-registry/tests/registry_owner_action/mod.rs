@@ -3,7 +3,8 @@ use std::collections::HashMap;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::serde_json::{self, json};
 use near_sdk_sim::{ExecutionResult, UserAccount, DEFAULT_GAS};
-use num_format::{Locale, ToFormattedString};
+
+use crate::common;
 
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -52,10 +53,7 @@ pub fn update_appchain_metadata(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'update_appchain_metadata': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("update_appchain_metadata", &outcome);
     outcome
 }
 
@@ -75,10 +73,7 @@ pub fn change_minimum_register_deposit(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'change_minimum_register_deposit': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("change_minimum_register_deposit", &outcome);
     outcome
 }
 
@@ -98,10 +93,7 @@ pub fn start_auditing_appchain(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'start_auditing_appchain': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("start_auditing_appchain", &outcome);
     outcome
 }
 
@@ -123,10 +115,7 @@ pub fn pass_auditing_appchain(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'pass_auditing_appchain': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("pass_auditing_appchain", &outcome);
     outcome
 }
 
@@ -148,10 +137,7 @@ pub fn reject_appchain(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'reject_appchain': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("reject_appchain", &outcome);
     outcome
 }
 
@@ -163,10 +149,7 @@ pub fn count_voting_score(signer: &UserAccount, registry: &UserAccount) -> Execu
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'count_voting_score': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("count_voting_score", &outcome);
     outcome
 }
 
@@ -186,10 +169,7 @@ pub fn conclude_voting_score(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'conclude_voting_score': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("conclude_voting_score", &outcome);
     outcome
 }
 
@@ -209,9 +189,6 @@ pub fn remove_appchain(
         DEFAULT_GAS,
         0,
     );
-    println!(
-        "Gas burnt of function 'remove_appchain': {}",
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
-    );
+    common::print_outcome_result("remove_appchain", &outcome);
     outcome
 }
