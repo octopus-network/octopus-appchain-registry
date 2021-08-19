@@ -1,10 +1,8 @@
-use appchain_registry::types::AppchainState;
 use appchain_registry::AppchainRegistryContract;
 use mock_oct_token::MockOctTokenContract;
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 
 use near_sdk::json_types::U128;
-use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk_sim::{
     call, deploy, init_simulator, lazy_static_include, to_yocto, ContractAccount, ExecutionResult,
     UserAccount,
@@ -17,12 +15,6 @@ lazy_static_include::lazy_static_include_bytes! {
     REGISTRY_WASM_BYTES => "../res/appchain_registry.wasm",
     PREVIOUS_REGISTRY_WASM_BYTES => "../res/previous_appchain_registry.wasm",
     ANCHOR_WASM_BYTES => "../res/mock_appchain_anchor.wasm",
-}
-
-#[derive(Deserialize, Serialize)]
-#[serde(crate = "near_sdk::serde")]
-struct ParamOfGetAppchainsWithStateOf {
-    appchain_state: Option<AppchainState>,
 }
 
 // Register the given `user` to oct_token

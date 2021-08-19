@@ -234,14 +234,13 @@ Generate log: `The owner of appchain <appchain_id> is set to <account_id>.`
 This action needs the following parameters:
 
 * `appchain_id`: The id of an appchain.
-* `appchain_anchor_code`: The wasm code of `appchain anthor` of the given appchain.
 
 Qualification of this action:
 
 * The `sender` must be the `owner`.
 * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `auditing`.
 
-The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `inQueue`. The value of `appchain_anchor_code` is staged to `appchain basedata` corresponding to `appchain_id` in this contract.
+The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `inQueue`.
 
 Generate log: `Appchain <appchain_id> is in queue.`
 
@@ -312,10 +311,7 @@ The `appchain state` of appchain with the largest `voting score` will become `st
 
 * Create subaccount `<appchain_id>.<account id of this contract>`.
 * Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
-* Deploy the code of `appchain anchor` of the appchain to the account `<appchain_id>.<account id of this contract>`.
-* Initialize new `appchain anchor` by the metadata of the appchain.
 * Add a new full access key to the new `appchain anchor` for the `owner`.
-* Add a new access key to this contract for the new `appchain anchor`, to allow it syncing its state to this contract.
 * Store the account of new `appchain anchor` for the appchain in this contract.
 
 The `voting score` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
@@ -450,7 +446,7 @@ pub trait RegistryOwnerAction {
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
