@@ -118,7 +118,8 @@ impl AppchainBasedata {
     }
     /// Decrease upvote deposit
     pub fn decrease_upvote_deposit(&mut self, value: Balance) {
-        self.upvote_deposit
+        self.upvote_deposit = self
+            .upvote_deposit
             .checked_sub(value)
             .expect("Upvote deposit is not big enough to decrease.");
     }
@@ -128,7 +129,8 @@ impl AppchainBasedata {
     }
     /// Decrease upvote deposit
     pub fn decrease_downvote_deposit(&mut self, value: Balance) {
-        self.downvote_deposit
+        self.downvote_deposit = self
+            .downvote_deposit
             .checked_sub(value)
             .expect("Downvote deposit is not big enough to decrease.");
     }

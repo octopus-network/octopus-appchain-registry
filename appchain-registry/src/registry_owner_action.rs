@@ -159,9 +159,16 @@ impl RegistryOwnerAction for AppchainRegistry {
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
                 appchain_basedata.count_voting_score();
                 self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
-                let top_appchain_basedata =
-                    self.get_appchain_basedata(&self.top_appchain_id_in_queue);
-                if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
+                if let Some(top_appchain_basedata) =
+                    self.appchain_basedatas.get(&self.top_appchain_id_in_queue)
+                {
+                    if let Some(top_appchain_basedata) = top_appchain_basedata.get() {
+                        if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
+                            self.top_appchain_id_in_queue.clear();
+                            self.top_appchain_id_in_queue.push_str(&id);
+                        }
+                    }
+                } else {
                     self.top_appchain_id_in_queue.clear();
                     self.top_appchain_id_in_queue.push_str(&id);
                 }

@@ -317,4 +317,208 @@ fn test_case2() {
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
     //
     assert_eq!(registry_viewer::print_appchains(&registry, Option::None), 3);
+    //
+    let outcome = voter_action::upvote_appchain(
+        &users[0],
+        &oct_token,
+        &registry,
+        &appchain_id1,
+        common::to_oct_amount(1000),
+    );
+    outcome.assert_success();
+    let outcome = voter_action::downvote_appchain(
+        &users[0],
+        &oct_token,
+        &registry,
+        &appchain_id2,
+        common::to_oct_amount(1500),
+    );
+    outcome.assert_success();
+    let outcome = voter_action::upvote_appchain(
+        &users[4],
+        &oct_token,
+        &registry,
+        &appchain_id2,
+        common::to_oct_amount(2000),
+    );
+    outcome.assert_success();
+    let outcome = voter_action::downvote_appchain(
+        &users[4],
+        &oct_token,
+        &registry,
+        &appchain_id3,
+        common::to_oct_amount(800),
+    );
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    assert_eq!(appchain1.upvote_deposit.0, common::to_oct_amount(1000));
+    assert_eq!(appchain1.downvote_deposit.0, 0);
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(appchain2.upvote_deposit.0, common::to_oct_amount(2000));
+    assert_eq!(appchain2.downvote_deposit.0, common::to_oct_amount(1500));
+    let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
+    assert_eq!(appchain3.upvote_deposit.0, 0);
+    assert_eq!(appchain3.downvote_deposit.0, common::to_oct_amount(800));
+    //
+    let outcome = registry_owner_action::count_voting_score(&users[1], &registry);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    assert_eq!(
+        appchain1.voting_score.0,
+        common::to_oct_amount(1000) as i128
+    );
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(appchain2.voting_score.0, common::to_oct_amount(500) as i128);
+    let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
+    assert_eq!(
+        appchain3.voting_score.0,
+        0 - common::to_oct_amount(800) as i128
+    );
+    //
+    let outcome = voter_action::withdraw_upvote_deposit_of(
+        &users[0],
+        &registry,
+        &appchain_id1,
+        common::to_oct_amount(1000) + 1,
+    );
+    assert!(!outcome.is_ok());
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 2500)
+    );
+    let outcome = voter_action::withdraw_downvote_deposit_of(
+        &users[4],
+        &registry,
+        &appchain_id3,
+        common::to_oct_amount(800) + 1,
+    );
+    assert!(!outcome.is_ok());
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 2800)
+    );
+    //
+    let outcome = voter_action::withdraw_upvote_deposit_of(
+        &users[0],
+        &registry,
+        &appchain_id1,
+        common::to_oct_amount(550),
+    );
+    outcome.assert_success();
+    assert_eq!(
+        registry_viewer::get_upvote_deposit_of(&registry, &appchain_id1, &users[0]).0,
+        common::to_oct_amount(450)
+    );
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1950)
+    );
+    let outcome = voter_action::withdraw_downvote_deposit_of(
+        &users[4],
+        &registry,
+        &appchain_id3,
+        common::to_oct_amount(450),
+    );
+    outcome.assert_success();
+    assert_eq!(
+        registry_viewer::get_downvote_deposit_of(&registry, &appchain_id3, &users[4]).0,
+        common::to_oct_amount(350)
+    );
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 2350)
+    );
+    //
+    let outcome = registry_owner_action::count_voting_score(&users[2], &registry);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    assert_eq!(
+        appchain1.voting_score.0,
+        common::to_oct_amount(1450) as i128
+    );
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(
+        appchain2.voting_score.0,
+        common::to_oct_amount(1000) as i128
+    );
+    let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
+    assert_eq!(
+        appchain3.voting_score.0,
+        0 - common::to_oct_amount(1150) as i128
+    );
+    //
+    let outcome = voter_action::withdraw_downvote_deposit_of(
+        &users[0],
+        &registry,
+        &appchain_id2,
+        common::to_oct_amount(550),
+    );
+    outcome.assert_success();
+    assert_eq!(
+        registry_viewer::get_downvote_deposit_of(&registry, &appchain_id2, &users[0]).0,
+        common::to_oct_amount(950)
+    );
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1400)
+    );
+    let outcome = voter_action::withdraw_upvote_deposit_of(
+        &users[4],
+        &registry,
+        &appchain_id2,
+        common::to_oct_amount(50),
+    );
+    outcome.assert_success();
+    assert_eq!(
+        registry_viewer::get_upvote_deposit_of(&registry, &appchain_id2, &users[4]).0,
+        common::to_oct_amount(1950)
+    );
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 2300)
+    );
+    //
+    let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    assert_eq!(
+        appchain1.voting_score.0,
+        common::to_oct_amount(1900) as i128
+    );
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(
+        appchain2.voting_score.0,
+        common::to_oct_amount(2000) as i128
+    );
+    let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
+    assert_eq!(
+        appchain3.voting_score.0,
+        0 - common::to_oct_amount(1500) as i128
+    );
+    //
+    let outcome = registry_owner_action::conclude_voting_score(&users[0], &registry, 100);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::conclude_voting_score(&root, &registry, 101);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::conclude_voting_score(&root, &registry, 60);
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    assert_eq!(appchain1.voting_score.0, common::to_oct_amount(760) as i128);
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(&appchain2.appchain_state, &AppchainState::Staging);
+    assert_eq!(
+        appchain2.voting_score.0,
+        common::to_oct_amount(2000) as i128
+    );
+    let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
+    assert_eq!(
+        appchain3.voting_score.0,
+        0 - common::to_oct_amount(600) as i128
+    );
 }
