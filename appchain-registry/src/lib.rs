@@ -11,13 +11,14 @@ use std::collections::HashMap;
 use crate::storage_key::StorageKey;
 use crate::types::AppchainMetadata;
 use appchain_basedata::AppchainBasedata;
+use near_contract_standards::upgrade::{Ownable, Upgradable};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap};
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{WrappedDuration, U128};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, Promise, PromiseOrValue,
-    PromiseResult, PublicKey,
+    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, Duration, Promise,
+    PromiseOrValue, PromiseResult, PublicKey, Timestamp,
 };
 use types::{AppchainId, AppchainState};
 
@@ -31,6 +32,9 @@ const SINGLE_CALL_GAS: u64 = 50 * T_GAS;
 const COMPLEX_CALL_GAS: u64 = 120 * T_GAS;
 const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
 const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
+
+/// Default staging duration of contract code for upgrade
+const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
@@ -66,14 +70,16 @@ pub trait CrossContractResultResolver {
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainRegistry {
-    pub owner: AccountId,
-    pub owner_pk: PublicKey,
-    pub oct_token: AccountId,
-    pub minimum_register_deposit: Balance,
-    pub appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
-    pub upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    pub downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    pub top_appchain_id_in_queue: AppchainId,
+    owner: AccountId,
+    owner_pk: PublicKey,
+    contract_code_staging_timestamp: Timestamp,
+    contract_code_staging_duration: Duration,
+    oct_token: AccountId,
+    minimum_register_deposit: Balance,
+    appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    top_appchain_id_in_queue: AppchainId,
 }
 
 impl Default for AppchainRegistry {
@@ -90,6 +96,8 @@ impl AppchainRegistry {
         Self {
             owner: env::signer_account_id(),
             owner_pk: env::signer_account_pk(),
+            contract_code_staging_timestamp: u64::MAX,
+            contract_code_staging_duration: DEFAULT_CONTRACT_CODE_STAGING_DURATION,
             oct_token,
             minimum_register_deposit: 100 * OCT_DECIMALS_BASE,
             appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),
@@ -292,18 +300,6 @@ impl AppchainRegistry {
     }
 }
 
-pub trait Ownable {
-    fn assert_owner(&self) {
-        assert_eq!(
-            env::predecessor_account_id(),
-            self.get_owner(),
-            "You are not the contract owner."
-        );
-    }
-    fn get_owner(&self) -> AccountId;
-    fn set_owner(&mut self, owner: AccountId);
-}
-
 #[near_bindgen]
 impl Ownable for AppchainRegistry {
     fn get_owner(&self) -> AccountId {
@@ -313,5 +309,38 @@ impl Ownable for AppchainRegistry {
     fn set_owner(&mut self, owner: AccountId) {
         self.assert_owner();
         self.owner = owner;
+    }
+}
+
+#[near_bindgen]
+impl Upgradable for AppchainRegistry {
+    fn get_staging_duration(&self) -> WrappedDuration {
+        self.contract_code_staging_duration.into()
+    }
+
+    fn stage_code(&mut self, code: Vec<u8>, timestamp: Timestamp) {
+        self.assert_owner();
+        assert!(
+            env::block_timestamp() + self.contract_code_staging_duration < timestamp,
+            "Timestamp {} must be later than staging duration {}",
+            timestamp,
+            env::block_timestamp() + self.contract_code_staging_duration
+        );
+        // Writes directly into storage to avoid serialization penalty by using default struct.
+        env::storage_write(&StorageKey::ContractCode.into_bytes(), &code);
+        self.contract_code_staging_timestamp = timestamp;
+    }
+
+    fn deploy_code(&mut self) -> Promise {
+        self.assert_owner();
+        assert!(
+            self.contract_code_staging_timestamp < env::block_timestamp(),
+            "Deploy code too early: staging ends on {}",
+            self.contract_code_staging_timestamp
+        );
+        let code = env::storage_read(&StorageKey::ContractCode.into_bytes())
+            .unwrap_or_else(|| panic!("No upgrade code available"));
+        env::storage_remove(&StorageKey::ContractCode.into_bytes());
+        Promise::new(env::current_account_id()).deploy_contract(code)
     }
 }

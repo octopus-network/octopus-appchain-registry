@@ -4,8 +4,8 @@ use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, F
 
 use near_sdk::json_types::U128;
 use near_sdk_sim::{
-    call, deploy, init_simulator, lazy_static_include, to_yocto, ContractAccount, ExecutionResult,
-    UserAccount,
+    call, deploy, init_simulator, lazy_static_include, runtime::init_runtime, to_yocto,
+    ContractAccount, ExecutionResult, UserAccount,
 };
 
 use num_format::{Locale, ToFormattedString};
@@ -92,7 +92,7 @@ pub fn init(
         icon: None,
         reference: None,
         reference_hash: None,
-        decimals: 24,
+        decimals: 18,
     };
     let oct_token = deploy! {
         contract: MockOctTokenContract,
@@ -172,10 +172,11 @@ pub fn init_by_previous(
 }
 
 pub fn upgrade_contract_code_and_perform_migration(root: &UserAccount, registry: &UserAccount) {
-    root.create_transaction(registry.account_id())
-        .deploy_contract(include_bytes!("../../../res/appchain_registry.wasm").to_vec())
-        .submit()
-        .assert_success();
+    let outcome = root
+        .create_transaction(registry.account_id())
+        .deploy_contract(PREVIOUS_REGISTRY_WASM_BYTES.to_vec())
+        .submit();
+    print_outcome_result("deploy_registry_contract", &outcome);
     //
     todo!("call function for storage migration");
 }

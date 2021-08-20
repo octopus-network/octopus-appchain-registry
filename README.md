@@ -32,6 +32,8 @@ Contents:
   * [Appchain owner action](#appchain-owner-action)
   * [Voter action](#voter-action)
   * [Appchain anchor callback](#appchain-anchor-callback)
+  * [Ownable](#ownable)
+  * [Upgradable](#upgradable)
 
 ## Terminology
 
@@ -449,9 +451,9 @@ pub trait RegistryOwnerAction {
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>);
     /// Change the code of an appchain anchor
-    fn change_appchain_anchor_code(&mut self, appchain_id: AppchainId, appchain_anthor_code: Vec<u8>);
+    fn change_appchain_anchor_code(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>);
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
@@ -498,5 +500,34 @@ pub trait VoterAction {
 pub trait AppchainAnchorCallback {
     /// Sync state of an appchain to registry
     fn sync_state_of(&mut self, appchain_id: AppchainId, appchain_state: AppchainState);
+}
+```
+
+### Ownable
+
+```rust
+pub trait Ownable {
+    fn assert_owner(&self) {
+        require!(env::predecessor_account_id() == self.get_owner(), "Owner must be predecessor");
+    }
+    fn get_owner(&self) -> AccountId;
+    fn set_owner(&mut self, owner: AccountId);
+}
+```
+
+### Upgradable
+
+```rust
+pub trait Upgradable {
+    fn get_staging_duration(&self) -> WrappedDuration;
+    fn stage_code(&mut self, code: Vec<u8>, timestamp: Timestamp);
+    fn deploy_code(&mut self) -> Promise;
+
+    /// Implement migration for the next version.
+    /// Should be `unimplemented` for a new contract.
+    /// TODO: consider adding version of the contract stored in the storage?
+    fn migrate(&mut self) {
+        unimplemented!();
+    }
 }
 ```

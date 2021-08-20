@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use appchain_registry::types::AppchainState;
+use near_sdk_sim::lazy_static_include;
 
 mod appchain_owner_action;
 mod common;
@@ -8,6 +9,13 @@ mod oct_token_viewer;
 mod registry_owner_action;
 mod registry_viewer;
 mod voter_action;
+
+lazy_static_include::lazy_static_include_bytes! {
+    TOKEN_WASM_BYTES => "../res/mock_oct_token.wasm",
+    REGISTRY_WASM_BYTES => "../res/appchain_registry.wasm",
+    PREVIOUS_REGISTRY_WASM_BYTES => "../res/previous_appchain_registry.wasm",
+    ANCHOR_WASM_BYTES => "../res/mock_appchain_anchor.wasm",
+}
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
@@ -280,20 +288,67 @@ fn test_case2() {
         common::to_oct_amount(300)
     );
     //
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id1);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &root,
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     assert!(!outcome.is_ok());
-    let outcome =
-        registry_owner_action::pass_auditing_appchain(&users[0], &registry, &appchain_id1);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &users[0],
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     assert!(!outcome.is_ok());
-    let outcome =
-        registry_owner_action::pass_auditing_appchain(&users[1], &registry, &appchain_id1);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &users[1],
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    assert!(!outcome.is_ok());
+    //
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &users[0],
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &users[1],
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     assert!(!outcome.is_ok());
     //
     let outcome = registry_owner_action::start_auditing_appchain(&root, &registry, &appchain_id1);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id1);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &root,
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    outcome.assert_success();
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
@@ -302,7 +357,19 @@ fn test_case2() {
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id2);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id2);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &root,
+        &registry,
+        &appchain_id2,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    outcome.assert_success();
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id2,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id2);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
@@ -311,7 +378,19 @@ fn test_case2() {
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id3);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id3);
+    let outcome = registry_owner_action::pass_auditing_appchain(
+        &root,
+        &registry,
+        &appchain_id3,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    outcome.assert_success();
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id3,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id3);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
@@ -521,4 +600,44 @@ fn test_case2() {
         appchain3.voting_score.0,
         0 - common::to_oct_amount(600) as i128
     );
+    //
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id1,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    outcome.assert_success();
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id2,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::change_appchain_anchor_code(
+        &root,
+        &registry,
+        &appchain_id3,
+        ANCHOR_WASM_BYTES.to_vec(),
+    );
+    outcome.assert_success();
+}
+
+#[test]
+fn test_case3() {
+    let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
+    let (root, oct_token, registry, users) = common::init(total_supply);
+
+    let staging_timestamp =
+        root.borrow_runtime().current_block().block_timestamp + 1000000000 + 86500;
+    println!("staging timestamp {}", staging_timestamp);
+
+    let outcome = registry_owner_action::stage_code(
+        &root,
+        &registry,
+        REGISTRY_WASM_BYTES.to_vec(),
+        staging_timestamp,
+    );
+    outcome.assert_success();
 }

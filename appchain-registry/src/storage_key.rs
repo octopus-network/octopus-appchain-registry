@@ -3,18 +3,22 @@ use crate::AppchainId;
 /// Storage keys for collections of sub-struct in main contract
 pub enum StorageKey {
     AppchainBasedatas,
+    ContractCode,
     UpvoteDeposits,
     DownvoteDeposits,
     AppchainBasedata(AppchainId),
+    AppchainAnchorCode(AppchainId),
 }
 
 impl StorageKey {
     pub fn to_string(&self) -> String {
         match self {
             StorageKey::AppchainBasedatas => "a".to_string(),
+            StorageKey::ContractCode => "contract_code".to_string(),
             StorageKey::UpvoteDeposits => "u".to_string(),
             StorageKey::DownvoteDeposits => "d".to_string(),
             StorageKey::AppchainBasedata(appchain_id) => format!("{}bd", appchain_id),
+            StorageKey::AppchainAnchorCode(appchain_id) => format!("{}ac", appchain_id),
         }
     }
     pub fn into_bytes(&self) -> Vec<u8> {
