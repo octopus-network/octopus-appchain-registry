@@ -174,8 +174,13 @@ impl RegistryOwnerAction for AppchainRegistry {
 
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64) {
         self.assert_owner();
-        self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            appchain_basedata.state().eq(&AppchainState::Registered)
+                || appchain_basedata.state().eq(&AppchainState::Auditing)
+                || appchain_basedata.state().eq(&AppchainState::InQueue),
+            "Appchain state must be 'registered', 'auditing' or 'inQueue'."
+        );
         appchain_basedata.change_state(AppchainState::Dead);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
         let refund_amount = appchain_basedata.register_deposit() * refund_percent.0 as u128 / 100;

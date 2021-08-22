@@ -32,7 +32,8 @@ const SINGLE_CALL_GAS: u64 = 50 * T_GAS;
 const COMPLEX_CALL_GAS: u64 = 120 * T_GAS;
 const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
 const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
-
+/// Multiple of nano seconds for a second
+const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
 /// Default staging duration of contract code for upgrade
 const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
 
@@ -97,7 +98,8 @@ impl AppchainRegistry {
             owner: env::signer_account_id(),
             owner_pk: env::signer_account_pk(),
             contract_code_staging_timestamp: u64::MAX,
-            contract_code_staging_duration: DEFAULT_CONTRACT_CODE_STAGING_DURATION,
+            contract_code_staging_duration: DEFAULT_CONTRACT_CODE_STAGING_DURATION
+                * NANO_SECONDS_MULTIPLE,
             oct_token,
             minimum_register_deposit: 100 * OCT_DECIMALS_BASE,
             appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),

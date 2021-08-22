@@ -273,7 +273,7 @@ This action needs the following parameters:
 Qualification of this action:
 
 * The `sender` must be the `owner`.
-* The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `auditing` or `inQueue`.
+* The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `registered`, `auditing` or `inQueue`.
 
 The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `dead`. And send a certain amount of OCT token back to the `appchain owner`. The amount is calculated by:
 
@@ -390,7 +390,7 @@ pub enum AppchainState {
 /// Appchain status
 ///
 /// This struct should NOT be used in storage on chain
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainStatus {
     pub appchain_id: AppchainId,
@@ -404,6 +404,20 @@ pub struct AppchainStatus {
     pub voting_score: I128,
     pub registered_time: U64,
     pub go_live_time: U64,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum AppchainSortingField {
+    AppchainId,
+    RegisteredTime,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum SortingOrder {
+    Ascending,
+    Descending,
 }
 ```
 
@@ -420,7 +434,15 @@ pub trait RegistryStatus {
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<AppchainState>,
+        page_number: u16,
+        page_size: u16,
+        sorting_field: AppchainSortingField,
+        sorting_order: SortingOrder,
     ) -> Vec<AppchainStatus>;
+    /// Get appchains count whose state is equal to the given AppchainState
+    ///
+    /// If param `appchain_state` is `Option::None`, return count of all appchains in registry
+    fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64;
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
     /// Get upvote deposit of a given account id for a certain appchain

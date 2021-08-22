@@ -35,7 +35,7 @@ pub enum AppchainState {
 /// Appchain status
 ///
 /// This struct should NOT be used in storage on chain
-#[derive(Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainStatus {
     pub appchain_id: AppchainId,
@@ -49,6 +49,20 @@ pub struct AppchainStatus {
     pub voting_score: I128,
     pub registered_time: U64,
     pub go_live_time: U64,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum AppchainSortingField {
+    AppchainId,
+    RegisteredTime,
+}
+
+#[derive(Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
+pub enum SortingOrder {
+    Ascending,
+    Descending,
 }
 
 impl AppchainState {

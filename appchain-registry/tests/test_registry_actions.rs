@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use appchain_registry::types::AppchainState;
+use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 use near_sdk_sim::lazy_static_include;
 
 mod appchain_owner_action;
@@ -59,7 +59,17 @@ fn test_case1() {
         amount,
     );
     outcome.assert_success();
-    assert_eq!(registry_viewer::print_appchains(&registry, Option::None), 0);
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            1,
+            AppchainSortingField::AppchainId,
+            SortingOrder::Ascending
+        ),
+        0
+    );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
@@ -223,7 +233,17 @@ fn test_case1() {
     assert!(!outcome.is_ok());
     let outcome = registry_owner_action::remove_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
-    assert_eq!(registry_viewer::print_appchains(&registry, Option::None), 0);
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            1,
+            AppchainSortingField::RegisteredTime,
+            SortingOrder::Descending
+        ),
+        0
+    );
 }
 
 /// Test 'pass auditing', 'upvote', 'downvote', 'withdraw upvote' and 'withdraw downvote' actions.
@@ -395,7 +415,17 @@ fn test_case2() {
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id3);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
     //
-    assert_eq!(registry_viewer::print_appchains(&registry, Option::None), 3);
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            10,
+            AppchainSortingField::AppchainId,
+            SortingOrder::Descending
+        ),
+        3
+    );
     //
     let outcome = voter_action::upvote_appchain(
         &users[0],
@@ -622,6 +652,17 @@ fn test_case2() {
         ANCHOR_WASM_BYTES.to_vec(),
     );
     outcome.assert_success();
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            5,
+            AppchainSortingField::RegisteredTime,
+            SortingOrder::Ascending
+        ),
+        3
+    );
 }
 
 #[test]

@@ -1,4 +1,6 @@
-use crate::types::{AppchainState, AppchainStatus};
+use near_sdk::json_types::U64;
+
+use crate::types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder};
 use crate::*;
 
 /// The interface for querying status of appchain registry
@@ -11,7 +13,15 @@ pub trait RegistryStatus {
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<AppchainState>,
+        page_number: u16,
+        page_size: u16,
+        sorting_field: AppchainSortingField,
+        sorting_order: SortingOrder,
     ) -> Vec<AppchainStatus>;
+    /// Get appchains count whose state is equal to the given AppchainState
+    ///
+    /// If param `appchain_state` is `Option::None`, return count of all appchains in registry
+    fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64;
     /// Get status of an appchain
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
     /// Get upvote deposit of a given account id for a certain appchain
@@ -29,7 +39,13 @@ impl RegistryStatus for AppchainRegistry {
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<AppchainState>,
+        page_number: u16,
+        page_size: u16,
+        sorting_field: AppchainSortingField,
+        sorting_order: SortingOrder,
     ) -> Vec<AppchainStatus> {
+        assert!(page_number > 0, "Invalid page number.");
+        assert!(page_size >= 5 && page_size <= 50, "Invalid page size.");
         let mut results: Vec<AppchainStatus> = Vec::new();
         let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
         for id in ids {
@@ -43,7 +59,40 @@ impl RegistryStatus for AppchainRegistry {
                 None => results.push(appchain_basedata.status()),
             }
         }
-        results
+        match sorting_field {
+            AppchainSortingField::AppchainId => results.sort_by(|a, b| match sorting_order {
+                SortingOrder::Ascending => a.appchain_id.cmp(&b.appchain_id),
+                SortingOrder::Descending => b.appchain_id.cmp(&a.appchain_id),
+            }),
+            AppchainSortingField::RegisteredTime => results.sort_by(|a, b| match sorting_order {
+                SortingOrder::Ascending => a.registered_time.0.cmp(&b.registered_time.0),
+                SortingOrder::Descending => b.registered_time.0.cmp(&a.registered_time.0),
+            }),
+        }
+        let (_, tail) = results.split_at(((page_number - 1) * page_size).into());
+        if tail.len() > page_size.into() {
+            let (page, _) = tail.split_at(page_size.into());
+            page.to_vec()
+        } else {
+            tail.to_vec()
+        }
+    }
+
+    fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64 {
+        let mut count: u64 = 0;
+        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        for id in ids {
+            let appchain_basedata = self.get_appchain_basedata(&id);
+            match appchain_state {
+                Some(ref state) => {
+                    if appchain_basedata.state().eq(state) {
+                        count += 1;
+                    }
+                }
+                None => count += 1,
+            }
+        }
+        count.into()
     }
 
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus {

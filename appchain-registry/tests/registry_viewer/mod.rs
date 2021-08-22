@@ -1,4 +1,4 @@
-use appchain_registry::types::{AppchainState, AppchainStatus};
+use appchain_registry::types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder};
 use appchain_registry::AppchainRegistryContract;
 
 use near_sdk::json_types::U128;
@@ -13,8 +13,18 @@ pub fn get_minimum_register_deposit(registry: &ContractAccount<AppchainRegistryC
 pub fn print_appchains(
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_state: Option<AppchainState>,
+    page_number: u16,
+    page_size: u16,
+    sorting_field: AppchainSortingField,
+    sorting_order: SortingOrder,
 ) -> usize {
-    let view_result = view!(registry.get_appchains_with_state_of(appchain_state));
+    let view_result = view!(registry.get_appchains_with_state_of(
+        appchain_state,
+        page_number,
+        page_size,
+        sorting_field,
+        sorting_order
+    ));
     assert!(view_result.is_ok());
     println!("{}", String::from_utf8(view_result.unwrap()).unwrap());
     let appchains: Vec<AppchainStatus> = view_result.unwrap_json();
