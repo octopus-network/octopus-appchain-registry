@@ -81,6 +81,7 @@ pub struct AppchainRegistry {
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     top_appchain_id_in_queue: AppchainId,
+    total_stake: Balance,
 }
 
 impl Default for AppchainRegistry {
@@ -106,6 +107,7 @@ impl AppchainRegistry {
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
             top_appchain_id_in_queue: String::new(),
+            total_stake: 0,
         }
     }
     // Assert that the contract called by the owner.

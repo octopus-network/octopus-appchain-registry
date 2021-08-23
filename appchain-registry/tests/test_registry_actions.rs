@@ -64,7 +64,7 @@ fn test_case1() {
             &registry,
             Option::None,
             1,
-            1,
+            5,
             AppchainSortingField::AppchainId,
             SortingOrder::Ascending
         ),
@@ -238,7 +238,7 @@ fn test_case1() {
             &registry,
             Option::None,
             1,
-            1,
+            5,
             AppchainSortingField::RegisteredTime,
             SortingOrder::Descending
         ),

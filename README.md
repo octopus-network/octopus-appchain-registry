@@ -428,6 +428,8 @@ pub enum SortingOrder {
 pub trait RegistryStatus {
     /// Get minimum register deposit
     fn get_minimum_register_deposit(&self) -> U128;
+    /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
+    fn get_total_stake(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
     ///
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
