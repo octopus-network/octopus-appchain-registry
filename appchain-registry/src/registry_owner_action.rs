@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use near_sdk::json_types::U64;
 use near_sdk::Gas;
 
@@ -22,6 +24,8 @@ pub trait RegistryOwnerAction {
     );
     /// Change the value of minimum register deposit
     fn change_minimum_register_deposit(&mut self, value: U128);
+    /// Change the value of reduction percent for voting result of all appchains still in queue
+    fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -37,7 +41,7 @@ pub trait RegistryOwnerAction {
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self, vote_result_reduction_percent: U64);
+    fn conclude_voting_score(&mut self);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
@@ -111,6 +115,14 @@ impl RegistryOwnerAction for AppchainRegistry {
     fn change_minimum_register_deposit(&mut self, value: U128) {
         self.assert_owner();
         self.minimum_register_deposit = value.0;
+    }
+
+    fn change_voting_result_reduction_percent(&mut self, value: U64) {
+        self.assert_owner();
+        assert!(value.0 <= 100, "Invalid percent value.");
+        if let Ok(value) = value.0.try_into() {
+            self.voting_result_reduction_percent = value;
+        }
     }
 
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {
@@ -228,7 +240,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         }
     }
 
-    fn conclude_voting_score(&mut self, voting_result_reduction_percent: U64) {
+    fn conclude_voting_score(&mut self) {
         self.assert_owner();
         assert!(
             !self.top_appchain_id_in_queue.is_empty(),
@@ -252,7 +264,8 @@ impl RegistryOwnerAction for AppchainRegistry {
         for id in ids {
             let mut appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                appchain_basedata.reduce_voting_score_by_percent(voting_result_reduction_percent.0);
+                appchain_basedata
+                    .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
                 self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
             }
         }

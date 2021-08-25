@@ -12,7 +12,7 @@ pub fn get_minimum_register_deposit(registry: &ContractAccount<AppchainRegistryC
 
 pub fn print_appchains(
     registry: &ContractAccount<AppchainRegistryContract>,
-    appchain_state: Option<AppchainState>,
+    appchain_state: Option<Vec<AppchainState>>,
     page_number: u16,
     page_size: u16,
     sorting_field: AppchainSortingField,

@@ -611,11 +611,19 @@ fn test_case2() {
         0 - common::to_oct_amount(1500) as i128
     );
     //
-    let outcome = registry_owner_action::conclude_voting_score(&users[0], &registry, 100);
+    let outcome =
+        registry_owner_action::change_voting_result_reduction_percent(&users[4], &registry, 60);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::conclude_voting_score(&root, &registry, 101);
+    let outcome =
+        registry_owner_action::change_voting_result_reduction_percent(&root, &registry, 101);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::conclude_voting_score(&root, &registry, 60);
+    let outcome =
+        registry_owner_action::change_voting_result_reduction_percent(&root, &registry, 60);
+    outcome.assert_success();
+    //
+    let outcome = registry_owner_action::conclude_voting_score(&users[0], &registry);
+    assert!(!outcome.is_ok());
+    let outcome = registry_owner_action::conclude_voting_score(&root, &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(appchain1.voting_score.0, common::to_oct_amount(760) as i128);
@@ -655,7 +663,7 @@ fn test_case2() {
     assert_eq!(
         registry_viewer::print_appchains(
             &registry,
-            Option::None,
+            Option::Some([AppchainState::InQueue, AppchainState::Staging].to_vec()),
             1,
             5,
             AppchainSortingField::RegisteredTime,

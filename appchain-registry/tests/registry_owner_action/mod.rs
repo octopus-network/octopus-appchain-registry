@@ -46,6 +46,19 @@ pub fn change_minimum_register_deposit(
     outcome
 }
 
+pub fn change_voting_result_reduction_percent(
+    signer: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
+    value: u64,
+) -> ExecutionResult {
+    let outcome = call!(
+        signer,
+        registry.change_voting_result_reduction_percent(value.into())
+    );
+    common::print_outcome_result("change_voting_result_reduction_percent", &outcome);
+    outcome
+}
+
 pub fn start_auditing_appchain(
     signer: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
@@ -113,12 +126,8 @@ pub fn count_voting_score(
 pub fn conclude_voting_score(
     signer: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
-    voting_result_reduction_percent: u64,
 ) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.conclude_voting_score(voting_result_reduction_percent.into())
-    );
+    let outcome = call!(signer, registry.conclude_voting_score());
     common::print_outcome_result("conclude_voting_score", &outcome);
     outcome
 }

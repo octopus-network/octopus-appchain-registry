@@ -7,6 +7,8 @@ use crate::*;
 pub trait RegistryStatus {
     /// Get minimum register deposit
     fn get_minimum_register_deposit(&self) -> U128;
+    /// Get the value of reduction percent for voting result of all appchains still in queue
+    fn get_voting_result_reduction_percent(&self) -> U64;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
@@ -14,7 +16,7 @@ pub trait RegistryStatus {
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
     fn get_appchains_with_state_of(
         &self,
-        appchain_state: Option<AppchainState>,
+        appchain_state: Option<Vec<AppchainState>>,
         page_number: u16,
         page_size: u16,
         sorting_field: AppchainSortingField,
@@ -38,13 +40,17 @@ impl RegistryStatus for AppchainRegistry {
         self.minimum_register_deposit.into()
     }
 
+    fn get_voting_result_reduction_percent(&self) -> U64 {
+        U64::from(self.voting_result_reduction_percent as u64)
+    }
+
     fn get_total_stake(&self) -> U128 {
         self.total_stake.into()
     }
 
     fn get_appchains_with_state_of(
         &self,
-        appchain_state: Option<AppchainState>,
+        appchain_state: Option<Vec<AppchainState>>,
         page_number: u16,
         page_size: u16,
         sorting_field: AppchainSortingField,
@@ -57,9 +63,12 @@ impl RegistryStatus for AppchainRegistry {
         for id in ids {
             let appchain_basedata = self.get_appchain_basedata(&id);
             match appchain_state {
-                Some(ref state) => {
-                    if appchain_basedata.state().eq(state) {
-                        results.push(appchain_basedata.status());
+                Some(ref states) => {
+                    for state in states {
+                        if appchain_basedata.state().eq(state) {
+                            results.push(appchain_basedata.status());
+                            break;
+                        }
                     }
                 }
                 None => results.push(appchain_basedata.status()),
@@ -69,6 +78,10 @@ impl RegistryStatus for AppchainRegistry {
             AppchainSortingField::AppchainId => results.sort_by(|a, b| match sorting_order {
                 SortingOrder::Ascending => a.appchain_id.cmp(&b.appchain_id),
                 SortingOrder::Descending => b.appchain_id.cmp(&a.appchain_id),
+            }),
+            AppchainSortingField::VotingScore => results.sort_by(|a, b| match sorting_order {
+                SortingOrder::Ascending => a.voting_score.0.cmp(&b.voting_score.0),
+                SortingOrder::Descending => b.voting_score.0.cmp(&a.voting_score.0),
             }),
             AppchainSortingField::RegisteredTime => results.sort_by(|a, b| match sorting_order {
                 SortingOrder::Ascending => a.registered_time.0.cmp(&b.registered_time.0),

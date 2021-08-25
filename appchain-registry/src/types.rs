@@ -55,6 +55,7 @@ pub struct AppchainStatus {
 #[serde(crate = "near_sdk::serde")]
 pub enum AppchainSortingField {
     AppchainId,
+    VotingScore,
     RegisteredTime,
 }
 

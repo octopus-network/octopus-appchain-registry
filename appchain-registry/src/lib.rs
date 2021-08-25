@@ -37,6 +37,8 @@ const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
 const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
 /// Default staging duration of contract code for upgrade
 const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
+/// Default value of voting_result_reduction_percent
+const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
@@ -78,6 +80,7 @@ pub struct AppchainRegistry {
     contract_code_staging_duration: Duration,
     oct_token: AccountId,
     minimum_register_deposit: Balance,
+    voting_result_reduction_percent: u16,
     appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
@@ -104,6 +107,7 @@ impl AppchainRegistry {
                 * NANO_SECONDS_MULTIPLE,
             oct_token,
             minimum_register_deposit: 100 * OCT_DECIMALS_BASE,
+            voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
             appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
