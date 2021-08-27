@@ -22,6 +22,7 @@ Contents:
   * [Change code of an appchain anchor](#change-code-of-an-appchain-anchor)
   * [Reject an appchain](#reject-an-appchain)
   * [Count voting score](#count-voting-score)
+  * [Change reduction percent of voting result](#change-reduction-percent-of-voting-result)
   * [Conclude voting score](#conclude-voting-score)
   * [Sync state of an appchain](#sync-state-of-an-appchain)
   * [Remove an appchain](#remove-an-appchain)
@@ -57,6 +58,7 @@ Contents:
   * `downvote deposit`: The total amount of OCT token which the `voter` (s) deposited to this contract for downvoting an appchain.
   * `voting score`: A value representing the result of appchain voting. It is calculated by the total upvote and downvote deposit for an appchain.
 * `minimum register deposit`: The minimum amount of `register deposit` which is specified by Octopus DAO.
+* `voting result reduction percent`: The value of reduction percent for voting result of all appchains still in queue, after an appchain is selected for `staging`.
 * `voter`: Who can `upvote` or `downvote` an appchain when its `appchain state` is `inQueue`.
 * `validator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to be the validator of an appchain after the appchain goes `booting` state.
 * `delegator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to delegate his/her voting rights to an validator of an appchain after the appchain goes `booting` state.
@@ -300,6 +302,19 @@ voting_score_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) -
 
 > This action should be performed every day by an offchain daemon or an operator.
 
+### Change reduction percent of voting result
+
+This action needs the following parameters:
+
+* `value`: The percent (unsigned integer not bigger than 100) which all appchains' voting score will be reduced in the next voting period.
+
+Qualification of this action:
+
+* The `sender` must be the `owner`.
+* The `value` must be not smaller than 0 and not bigger than 100.
+
+The `voting result reduction percent` is set to `value`.
+
 ### Conclude voting score
 
 This action needs the following parameters:
@@ -410,6 +425,7 @@ pub struct AppchainStatus {
 #[serde(crate = "near_sdk::serde")]
 pub enum AppchainSortingField {
     AppchainId,
+    VotingScore,
     RegisteredTime,
 }
 
@@ -428,6 +444,8 @@ pub enum SortingOrder {
 pub trait RegistryStatus {
     /// Get minimum register deposit
     fn get_minimum_register_deposit(&self) -> U128;
+    /// Get the value of reduction percent for voting result of all appchains still in queue
+    fn get_voting_result_reduction_percent(&self) -> U64;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
@@ -435,7 +453,7 @@ pub trait RegistryStatus {
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
     fn get_appchains_with_state_of(
         &self,
-        appchain_state: Option<AppchainState>,
+        appchain_state: Option<Vec<AppchainState>>,
         page_number: u16,
         page_size: u16,
         sorting_field: AppchainSortingField,
@@ -472,18 +490,24 @@ pub trait RegistryOwnerAction {
     );
     /// Change the value of minimum register deposit
     fn change_minimum_register_deposit(&mut self, value: U128);
+    /// Change the value of reduction percent for voting result of all appchains still in queue
+    fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>);
     /// Change the code of an appchain anchor
-    fn change_appchain_anchor_code(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>);
+    fn change_appchain_anchor_code(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_anchor_code: Vec<u8>,
+    );
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
-    fn conclude_voting_score(&mut self, vote_result_reduction_percent: U64);
+    fn conclude_voting_score(&mut self);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
