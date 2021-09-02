@@ -1,5 +1,5 @@
 use appchain_registry::AppchainRegistryContract;
-use near_sdk::{test_utils::test_env, Timestamp};
+use near_sdk::Timestamp;
 use std::collections::HashMap;
 
 use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
@@ -76,27 +76,9 @@ pub fn pass_auditing_appchain(
     signer: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
-    appchain_anchor_code: Vec<u8>,
 ) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.pass_auditing_appchain(appchain_id.clone(), appchain_anchor_code)
-    );
+    let outcome = call!(signer, registry.pass_auditing_appchain(appchain_id.clone()));
     common::print_outcome_result("pass_auditing_appchain", &outcome);
-    outcome
-}
-
-pub fn change_appchain_anchor_code(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    appchain_id: &String,
-    appchain_anchor_code: Vec<u8>,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.change_appchain_anchor_code(appchain_id.clone(), appchain_anchor_code)
-    );
-    common::print_outcome_result("change_appchain_anchor_code", &outcome);
     outcome
 }
 

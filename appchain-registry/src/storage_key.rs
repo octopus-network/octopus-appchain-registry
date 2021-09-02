@@ -8,6 +8,7 @@ pub enum StorageKey {
     DownvoteDeposits,
     AppchainBasedata(AppchainId),
     AppchainAnchorCode(AppchainId),
+    AppchainVotingScore(AppchainId),
 }
 
 impl StorageKey {
@@ -19,6 +20,7 @@ impl StorageKey {
             StorageKey::DownvoteDeposits => "d".to_string(),
             StorageKey::AppchainBasedata(appchain_id) => format!("{}bd", appchain_id),
             StorageKey::AppchainAnchorCode(appchain_id) => format!("{}ac", appchain_id),
+            StorageKey::AppchainVotingScore(appchain_id) => format!("{}vs", appchain_id),
         }
     }
     pub fn into_bytes(&self) -> Vec<u8> {

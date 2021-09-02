@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 use near_sdk::Timestamp;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
@@ -14,7 +16,6 @@ pub struct AppchainBasedata {
     appchain_state: AppchainState,
     upvote_deposit: Balance,
     downvote_deposit: Balance,
-    voting_score: i128,
     registered_time: Timestamp,
     go_live_time: Timestamp,
 }
@@ -28,7 +29,7 @@ impl AppchainBasedata {
         register_deposit: Balance,
     ) -> Self {
         Self {
-            appchain_id,
+            appchain_id: appchain_id.clone(),
             appchain_metadata,
             appchain_anchor: String::new(),
             appchain_owner,
@@ -36,7 +37,6 @@ impl AppchainBasedata {
             appchain_state: AppchainState::Registered,
             upvote_deposit: 0,
             downvote_deposit: 0,
-            voting_score: 0,
             registered_time: env::block_timestamp(),
             go_live_time: 0,
         }
@@ -75,7 +75,16 @@ impl AppchainBasedata {
     }
     /// Get voting score
     pub fn voting_score(&self) -> i128 {
-        self.voting_score
+        if let Some(bytes) = env::storage_read(
+            &StorageKey::AppchainVotingScore(self.appchain_id.clone()).into_bytes(),
+        ) {
+            i128::from_be_bytes(bytes.try_into().expect(&format!(
+                "Invalid storage data for voting score of appchain {}",
+                self.appchain_id
+            )))
+        } else {
+            0
+        }
     }
     /// Get full status
     pub fn status(&self) -> AppchainStatus {
@@ -88,7 +97,7 @@ impl AppchainBasedata {
             appchain_state: self.appchain_state.clone(),
             upvote_deposit: self.upvote_deposit.into(),
             downvote_deposit: self.downvote_deposit.into(),
-            voting_score: self.voting_score.into(),
+            voting_score: self.voting_score().into(),
             registered_time: self.registered_time.into(),
             go_live_time: self.go_live_time.into(),
         }
@@ -106,6 +115,11 @@ impl AppchainBasedata {
     /// Set initial deposit
     pub fn set_initial_deposit(&mut self, deposit: Balance) {
         self.register_deposit = deposit;
+    }
+    /// Set anchor account
+    pub fn set_anchor_account(&mut self, anchor_account: &AccountId) {
+        self.appchain_anchor.clear();
+        self.appchain_anchor.push_str(anchor_account);
     }
     /// Change state
     pub fn change_state(&mut self, new_state: AppchainState) {
@@ -135,12 +149,22 @@ impl AppchainBasedata {
             .expect("Downvote deposit is not big enough to decrease.");
     }
     /// Count voting score
-    pub fn count_voting_score(&mut self) {
-        self.voting_score += self.upvote_deposit as i128 - self.downvote_deposit as i128;
+    pub fn count_voting_score(&self) {
+        let voting_score =
+            self.voting_score() + self.upvote_deposit as i128 - self.downvote_deposit as i128;
+        env::storage_write(
+            &StorageKey::AppchainVotingScore(self.appchain_id.clone()).into_bytes(),
+            &voting_score.to_be_bytes(),
+        );
     }
     /// Reduce voting score by the given percent
-    pub fn reduce_voting_score_by_percent(&mut self, percent: u16) {
+    pub fn reduce_voting_score_by_percent(&self, percent: u16) {
         assert!(percent <= 100, "Invalid percent value.");
-        self.voting_score -= self.voting_score * percent as i128 / 100;
+        let mut voting_score = self.voting_score();
+        voting_score -= voting_score * percent as i128 / 100;
+        env::storage_write(
+            &StorageKey::AppchainVotingScore(self.appchain_id.clone()).into_bytes(),
+            &voting_score.to_be_bytes(),
+        );
     }
 }

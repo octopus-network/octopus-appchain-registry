@@ -29,13 +29,7 @@ pub trait RegistryOwnerAction {
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>);
-    /// Change the code of an appchain anchor
-    fn change_appchain_anchor_code(
-        &mut self,
-        appchain_id: AppchainId,
-        appchain_anchor_code: Vec<u8>,
-    );
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
     /// Count voting score of appchains
@@ -134,54 +128,13 @@ impl RegistryOwnerAction for AppchainRegistry {
         env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
     }
 
-    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId, appchain_anchor_code: Vec<u8>) {
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
-        assert!(
-            appchain_anchor_code.len() > 0,
-            "Appchain anchor code is empty."
-        );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_state(AppchainState::InQueue);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
-        env::storage_write(
-            &StorageKey::AppchainAnchorCode(appchain_id).into_bytes(),
-            &appchain_anchor_code,
-        );
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
-    }
-
-    fn change_appchain_anchor_code(
-        &mut self,
-        appchain_id: AppchainId,
-        appchain_anchor_code: Vec<u8>,
-    ) {
-        self.assert_owner();
-        let appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        if appchain_basedata.state().eq(&AppchainState::Auditing)
-            || appchain_basedata.state().eq(&AppchainState::InQueue)
-        {
-            assert!(
-                appchain_anchor_code.len() > 0,
-                "Appchain anchor code is empty."
-            );
-            env::storage_write(
-                &StorageKey::AppchainAnchorCode(appchain_id).into_bytes(),
-                &appchain_anchor_code,
-            );
-            env::log(
-                format!(
-                    "The anchor code of appchain '{}' is changed by manager.",
-                    appchain_basedata.id()
-                )
-                .as_bytes(),
-            )
-        } else {
-            panic!(
-                "The anchor code of appchain '{}' cannot be changed now.",
-                appchain_basedata.id()
-            );
-        }
     }
 
     fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64) {
@@ -217,27 +170,34 @@ impl RegistryOwnerAction for AppchainRegistry {
 
     fn count_voting_score(&mut self) {
         self.assert_owner();
+        assert!(
+            env::block_timestamp() - self.time_of_last_count_voting_score
+                > SECONDS_OF_A_DAY * NANO_SECONDS_MULTIPLE,
+            "Count voting score can only be performed once a day."
+        );
         let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        let mut top_appchain_id = self.top_appchain_id_in_queue.clone();
         for id in ids {
-            let mut appchain_basedata = self.get_appchain_basedata(&id);
+            let appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
                 appchain_basedata.count_voting_score();
-                self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
-                if let Some(top_appchain_basedata) =
-                    self.appchain_basedatas.get(&self.top_appchain_id_in_queue)
-                {
+                if let Some(top_appchain_basedata) = self.appchain_basedatas.get(&top_appchain_id) {
                     if let Some(top_appchain_basedata) = top_appchain_basedata.get() {
                         if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
-                            self.top_appchain_id_in_queue.clear();
-                            self.top_appchain_id_in_queue.push_str(&id);
+                            top_appchain_id.clear();
+                            top_appchain_id.push_str(&id);
                         }
                     }
                 } else {
-                    self.top_appchain_id_in_queue.clear();
-                    self.top_appchain_id_in_queue.push_str(&id);
+                    top_appchain_id.clear();
+                    top_appchain_id.push_str(&id);
                 }
             }
         }
+        self.top_appchain_id_in_queue.clear();
+        self.top_appchain_id_in_queue.push_str(&top_appchain_id);
+        self.time_of_last_count_voting_score = env::block_timestamp()
+            - (env::block_timestamp() % (SECONDS_OF_A_DAY * NANO_SECONDS_MULTIPLE));
     }
 
     fn conclude_voting_score(&mut self) {
@@ -246,44 +206,33 @@ impl RegistryOwnerAction for AppchainRegistry {
             !self.top_appchain_id_in_queue.is_empty(),
             "There is no appchain on the top of queue yet."
         );
-        let appchain_anchor_code = env::storage_read(
-            &StorageKey::AppchainAnchorCode(self.top_appchain_id_in_queue.clone()).into_bytes(),
-        )
-        .unwrap_or_else(|| {
-            panic!(
-                "No anchor code of appchain '{}' available.",
-                &self.top_appchain_id_in_queue
-            )
-        });
         // Set the appchain with the largest voting score to go `staging`
-        let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
-        top_appchain_basedata.change_state(AppchainState::Staging);
-        self.set_appchain_basedata(top_appchain_basedata.id(), &top_appchain_basedata);
-        // Reduce the voting score of all appchains in queue by the given percent
-        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
-        for id in ids {
-            let mut appchain_basedata = self.get_appchain_basedata(&id);
-            if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                appchain_basedata
-                    .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
-                self.set_appchain_basedata(appchain_basedata.id(), &appchain_basedata);
-            }
-        }
-        // Deploy contract of anchor of the appchain with the largest voting score, and initialize it.
         let sub_account_id = format!(
             "{}.{}",
             &self.top_appchain_id_in_queue,
             env::current_account_id()
         );
+        let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
+        top_appchain_basedata.change_state(AppchainState::Staging);
+        top_appchain_basedata.set_anchor_account(&sub_account_id);
+        self.set_appchain_basedata(top_appchain_basedata.id(), &top_appchain_basedata);
+        // Reduce the voting score of all appchains in queue by the given percent
+        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        for id in ids {
+            let appchain_basedata = self.get_appchain_basedata(&id);
+            if appchain_basedata.state().eq(&AppchainState::InQueue) {
+                appchain_basedata
+                    .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
+            }
+        }
+        // Deploy contract of anchor of the appchain with the largest voting score, and initialize it.
         env::storage_remove(
             &StorageKey::AppchainAnchorCode(self.top_appchain_id_in_queue.clone()).into_bytes(),
         );
         Promise::new(sub_account_id)
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
-            .add_full_access_key(self.owner_pk.clone())
-            .deploy_contract(appchain_anchor_code)
-            .function_call(b"new".to_vec(), b"{}".to_vec(), NO_DEPOSIT, SINGLE_CALL_GAS);
+            .add_full_access_key(self.owner_pk.clone());
     }
 
     fn remove_appchain(&mut self, appchain_id: AppchainId) {

@@ -8,17 +8,19 @@ use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, Promise, PublicK
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct OldAppchainRegistry {
-    pub owner: AccountId,
-    pub owner_pk: PublicKey,
-    pub contract_code_staging_timestamp: Timestamp,
-    pub contract_code_staging_duration: Duration,
-    pub oct_token: AccountId,
-    pub minimum_register_deposit: Balance,
-    pub appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
-    pub upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    pub downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    pub top_appchain_id_in_queue: AppchainId,
-    pub total_stake: Balance,
+    owner: AccountId,
+    owner_pk: PublicKey,
+    contract_code_staging_timestamp: Timestamp,
+    contract_code_staging_duration: Duration,
+    oct_token: AccountId,
+    minimum_register_deposit: Balance,
+    voting_result_reduction_percent: u16,
+    appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    top_appchain_id_in_queue: AppchainId,
+    total_stake: Balance,
+    time_of_last_count_voting_score: Timestamp,
 }
 
 #[near_bindgen]
@@ -76,12 +78,13 @@ impl AppchainRegistry {
             contract_code_staging_duration: old_contract.contract_code_staging_duration,
             oct_token: old_contract.oct_token,
             minimum_register_deposit: old_contract.minimum_register_deposit,
-            voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
+            voting_result_reduction_percent: old_contract.voting_result_reduction_percent,
             appchain_basedatas: old_contract.appchain_basedatas,
             upvote_deposits: old_contract.upvote_deposits,
             downvote_deposits: old_contract.downvote_deposits,
             top_appchain_id_in_queue: old_contract.top_appchain_id_in_queue,
             total_stake: old_contract.total_stake,
+            time_of_last_count_voting_score: old_contract.time_of_last_count_voting_score,
         }
     }
 }

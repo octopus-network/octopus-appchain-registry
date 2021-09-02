@@ -35,6 +35,8 @@ const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
 const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
 /// Multiple of nano seconds for a second
 const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
+/// Seconds of a day
+const SECONDS_OF_A_DAY: u64 = 86400;
 /// Default staging duration of contract code for upgrade
 const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
 /// Default value of voting_result_reduction_percent
@@ -86,6 +88,7 @@ pub struct AppchainRegistry {
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     top_appchain_id_in_queue: AppchainId,
     total_stake: Balance,
+    time_of_last_count_voting_score: Timestamp,
 }
 
 impl Default for AppchainRegistry {
@@ -113,6 +116,7 @@ impl AppchainRegistry {
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
             top_appchain_id_in_queue: String::new(),
             total_stake: 0,
+            time_of_last_count_voting_score: 0,
         }
     }
     // Assert that the contract called by the owner.

@@ -4,8 +4,9 @@ use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, F
 
 use near_sdk::json_types::U128;
 use near_sdk_sim::{
-    call, deploy, init_simulator, lazy_static_include, runtime::init_runtime, to_yocto,
-    ContractAccount, ExecutionResult, UserAccount,
+    call, deploy, init_simulator, lazy_static_include,
+    runtime::{init_runtime, GenesisConfig},
+    to_yocto, ContractAccount, ExecutionResult, UserAccount,
 };
 
 use num_format::{Locale, ToFormattedString};
@@ -74,6 +75,12 @@ pub fn ft_transfer_call_oct_token(
     outcome
 }
 
+fn get_genesis_config() -> GenesisConfig {
+    let mut genesis_config = GenesisConfig::default();
+    genesis_config.block_prod_time = 86400 * 1_000_000_000;
+    genesis_config
+}
+
 pub fn init(
     total_supply: u128,
 ) -> (
@@ -82,7 +89,7 @@ pub fn init(
     ContractAccount<AppchainRegistryContract>,
     Vec<UserAccount>,
 ) {
-    let root = init_simulator(None);
+    let root = init_simulator(Some(get_genesis_config()));
     let mut users: Vec<UserAccount> = Vec::new();
     // Deploy and initialize contracts
     let ft_metadata = FungibleTokenMetadata {
