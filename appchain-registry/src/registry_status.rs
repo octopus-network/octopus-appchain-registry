@@ -5,6 +5,8 @@ use crate::*;
 
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Get account id of OCT token
+    fn get_oct_token(&self) -> AccountId;
     /// Get minimum register deposit
     fn get_minimum_register_deposit(&self) -> U128;
     /// Get the value of reduction percent for voting result of all appchains still in queue
@@ -36,6 +38,10 @@ pub trait RegistryStatus {
 
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
+    fn get_oct_token(&self) -> AccountId {
+        self.oct_token.clone()
+    }
+
     fn get_minimum_register_deposit(&self) -> U128 {
         self.minimum_register_deposit.into()
     }
