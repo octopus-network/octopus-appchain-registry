@@ -86,12 +86,8 @@ pub fn reject_appchain(
     signer: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
-    refund_percent: u64,
 ) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.reject_appchain(appchain_id.clone(), refund_percent.into())
-    );
+    let outcome = call!(signer, registry.reject_appchain(appchain_id.clone()));
     common::print_outcome_result("reject_appchain", &outcome);
     outcome
 }

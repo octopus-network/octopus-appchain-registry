@@ -254,20 +254,15 @@ Generate log: `Appchain <appchain_id> is in queue.`
 This action needs the following parameters:
 
 * `appchain_id`: The id of an appchain.
-* `refund_percent`: The percent of `register deposit` for refunding for the rejection. This should be an unsigned integer not bigger than 100.
 
 Qualification of this action:
 
 * The `sender` must be the `owner`.
 * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `registered`, `auditing` or `inQueue`.
 
-The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `dead`. And send a certain amount of OCT token back to the `appchain owner`. The amount is calculated by:
+The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `dead`.
 
-```js
-refund_amount = register_deposit_of_the_appchain * refund_percent / 100
-```
-
-Generate log: `Appchain <appchain_id> is rejected, and <refund_amount> OCT token returned.`
+Generate log: `Appchain <appchain_id> is rejected.`
 
 ### Count voting score
 
@@ -479,7 +474,7 @@ pub trait RegistryOwnerAction {
     /// Pass auditing of an appchain
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
+    fn reject_appchain(&mut self, appchain_id: AppchainId);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains

@@ -1,13 +1,10 @@
 use std::convert::TryInto;
 
 use near_sdk::json_types::U64;
-use near_sdk::Gas;
 
 use crate::types::AppchainId;
 
 use crate::*;
-
-const GAS_FOR_RESOLVE_ADDCHAIN_ANCHOR_DELETION: Gas = 2_500_000_000_000;
 
 /// The actions which the owner of appchain registry can perform
 pub trait RegistryOwnerAction {
@@ -31,7 +28,7 @@ pub trait RegistryOwnerAction {
     /// Pass auditing of an appchain
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64);
+    fn reject_appchain(&mut self, appchain_id: AppchainId);
     /// Count voting score of appchains
     fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
@@ -137,7 +134,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
     }
 
-    fn reject_appchain(&mut self, appchain_id: AppchainId, refund_percent: U64) {
+    fn reject_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert!(
@@ -148,24 +145,6 @@ impl RegistryOwnerAction for AppchainRegistry {
         );
         appchain_basedata.change_state(AppchainState::Dead);
         self.set_appchain_basedata(&appchain_id, &appchain_basedata);
-        let refund_amount = appchain_basedata.register_deposit() * refund_percent.0 as u128 / 100;
-        if refund_amount > 0 {
-            ext_fungible_token::ft_transfer(
-                appchain_basedata.owner().clone(),
-                appchain_basedata.register_deposit().into(),
-                None,
-                &self.oct_token,
-                1,
-                GAS_FOR_FT_TRANSFER_CALL,
-            )
-            .then(ext_self::resolve_appchain_refunding(
-                appchain_id,
-                refund_amount,
-                &env::current_account_id(),
-                NO_DEPOSIT,
-                env::prepaid_gas() / 2,
-            ));
-        }
     }
 
     fn count_voting_score(&mut self) {
@@ -241,52 +220,15 @@ impl RegistryOwnerAction for AppchainRegistry {
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         if !appchain_basedata.anchor().trim().is_empty() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
-            Promise::new(anchor_account_id)
-                .delete_account(env::current_account_id())
-                .then(ext_self::resolve_appchain_anchor_deletion(
-                    appchain_id.clone(),
-                    &env::current_account_id(),
-                    0,
-                    GAS_FOR_RESOLVE_ADDCHAIN_ANCHOR_DELETION,
-                ));
+            env::log(
+                format!(
+                    "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
+                    &anchor_account_id, &appchain_id
+                )
+                .as_bytes(),
+            );
         }
         self.appchain_basedatas.remove(&appchain_id);
         env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
-    }
-}
-
-#[near_bindgen]
-impl AppchainRegistry {
-    ///
-    pub fn resolve_appchain_anchor_deletion(&mut self, appchain_id: AppchainId) {
-        assert_self();
-        match env::promise_result(0) {
-            PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => env::log(
-                format!("Anchor contract of appchain '{}' is deleted.", &appchain_id).as_bytes(),
-            ),
-            PromiseResult::Failed => env::log(
-                format!(
-                    "Failed to delete anchor contract of appchain '{}'.",
-                    &appchain_id
-                )
-                .as_bytes(),
-            ),
-        }
-    }
-    ///
-    pub fn resolve_appchain_refunding(&mut self, appchain_id: AppchainId, amount: Balance) {
-        assert_self();
-        match env::promise_result(0) {
-            PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => env::log(
-                format!(
-                    "Appchain '{}' is rejected, and '{}' OCT token returned.",
-                    &appchain_id, &amount
-                )
-                .as_bytes(),
-            ),
-            PromiseResult::Failed => {}
-        }
     }
 }

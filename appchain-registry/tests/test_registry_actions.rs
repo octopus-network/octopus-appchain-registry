@@ -27,9 +27,9 @@ fn test_case1() {
     //
     assert_eq!(
         registry_viewer::get_minimum_register_deposit(&registry).0,
-        common::to_oct_amount(100)
+        common::to_oct_amount(1000)
     );
-    let amount = common::to_oct_amount(120);
+    let amount = common::to_oct_amount(1200);
     let outcome =
         registry_owner_action::change_minimum_register_deposit(&users[0], &registry, amount);
     assert!(!outcome.is_ok());
@@ -37,7 +37,7 @@ fn test_case1() {
     outcome.assert_success();
     assert_eq!(
         registry_viewer::get_minimum_register_deposit(&registry).0,
-        common::to_oct_amount(120)
+        common::to_oct_amount(1200)
     );
     //
     assert_eq!(
@@ -50,7 +50,7 @@ fn test_case1() {
         total_supply / 10
     );
     let appchain_id = String::from("test_appchain");
-    let amount = common::to_oct_amount(100);
+    let amount = common::to_oct_amount(1000);
     let outcome = appchain_owner_action::register_appchain(
         &users[0],
         &oct_token,
@@ -74,7 +74,7 @@ fn test_case1() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
-    let amount = common::to_oct_amount(120);
+    let amount = common::to_oct_amount(1200);
     let outcome = appchain_owner_action::register_appchain(
         &users[0],
         &oct_token,
@@ -85,11 +85,11 @@ fn test_case1() {
     outcome.assert_success();
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10 - 120)
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1200)
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
-        common::to_oct_amount(120)
+        common::to_oct_amount(1200)
     );
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id);
     assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
@@ -193,7 +193,7 @@ fn test_case1() {
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
-        common::to_oct_amount(120)
+        common::to_oct_amount(1200)
     );
     let outcome = voter_action::downvote_appchain(
         &users[3],
@@ -213,20 +213,20 @@ fn test_case1() {
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
-        common::to_oct_amount(120)
+        common::to_oct_amount(1200)
     );
     //
-    let outcome = registry_owner_action::reject_appchain(&users[4], &registry, &appchain_id, 100);
+    let outcome = registry_owner_action::reject_appchain(&users[4], &registry, &appchain_id);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::reject_appchain(&root, &registry, &appchain_id, 100);
+    let outcome = registry_owner_action::reject_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[1], &oct_token).0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10 + 120)
+        common::to_oct_amount(TOTAL_SUPPLY / 10)
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
-        0
+        common::to_oct_amount(1200)
     );
     //
     let outcome = registry_owner_action::remove_appchain(&users[2], &registry, &appchain_id);
@@ -253,7 +253,7 @@ fn test_case2() {
     let (root, oct_token, registry, users) = common::init(total_supply);
     //
     let appchain_id1 = "test_appchain1".to_string();
-    let amount = common::to_oct_amount(100);
+    let amount = common::to_oct_amount(1000);
     let outcome = appchain_owner_action::register_appchain(
         &users[1],
         &oct_token,
@@ -266,7 +266,7 @@ fn test_case2() {
     assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
     //
     let appchain_id2 = "test_appchain2".to_string();
-    let amount = common::to_oct_amount(100);
+    let amount = common::to_oct_amount(1000);
     let outcome = appchain_owner_action::register_appchain(
         &users[2],
         &oct_token,
@@ -279,7 +279,7 @@ fn test_case2() {
     assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
     //
     let appchain_id3 = "test_appchain3".to_string();
-    let amount = common::to_oct_amount(100);
+    let amount = common::to_oct_amount(1000);
     let outcome = appchain_owner_action::register_appchain(
         &users[3],
         &oct_token,
@@ -293,19 +293,19 @@ fn test_case2() {
     //
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[1], &oct_token).0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10 - 100)
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[2], &oct_token).0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10 - 100)
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[3], &oct_token).0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10 - 100)
+        common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
-        common::to_oct_amount(300)
+        common::to_oct_amount(3000)
     );
     //
     let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id1);
@@ -589,7 +589,7 @@ fn test_case3() {
     let mut i = 1;
     while i <= 50 {
         let appchain_id = format!("test_appchain{}", i);
-        let amount = common::to_oct_amount(100);
+        let amount = common::to_oct_amount(1000);
         let outcome = appchain_owner_action::register_appchain(
             &users[1],
             &oct_token,
