@@ -155,6 +155,7 @@ impl RegistryOwnerAction for AppchainRegistry {
             "Count voting score can only be performed once a day."
         );
         let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
+        assert!(ids.len() > 0, "There is no appchain to count.");
         let mut top_appchain_id = self.top_appchain_id_in_queue.clone();
         for id in ids {
             let appchain_basedata = self.get_appchain_basedata(&id);
@@ -208,6 +209,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         env::storage_remove(
             &StorageKey::AppchainAnchorCode(self.top_appchain_id_in_queue.clone()).into_bytes(),
         );
+        self.top_appchain_id_in_queue.clear();
         Promise::new(sub_account_id)
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
