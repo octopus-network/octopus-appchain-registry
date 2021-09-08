@@ -23,6 +23,8 @@ pub trait RegistryOwnerAction {
     fn change_minimum_register_deposit(&mut self, value: U128);
     /// Change the value of reduction percent for voting result of all appchains still in queue
     fn change_voting_result_reduction_percent(&mut self, value: U64);
+    /// Change the interval for counting voting score of appchains
+    fn change_counting_interval_in_seconds(&mut self, value: U64);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -116,6 +118,11 @@ impl RegistryOwnerAction for AppchainRegistry {
         }
     }
 
+    fn change_counting_interval_in_seconds(&mut self, value: U64) {
+        self.assert_owner();
+        self.counting_interval_in_seconds = value.0;
+    }
+
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Registered);
@@ -151,7 +158,7 @@ impl RegistryOwnerAction for AppchainRegistry {
         self.assert_owner();
         assert!(
             env::block_timestamp() - self.time_of_last_count_voting_score
-                > SECONDS_OF_A_DAY * NANO_SECONDS_MULTIPLE,
+                > self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE,
             "Count voting score can only be performed once a day."
         );
         let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
@@ -177,7 +184,8 @@ impl RegistryOwnerAction for AppchainRegistry {
         self.top_appchain_id_in_queue.clear();
         self.top_appchain_id_in_queue.push_str(&top_appchain_id);
         self.time_of_last_count_voting_score = env::block_timestamp()
-            - (env::block_timestamp() % (SECONDS_OF_A_DAY * NANO_SECONDS_MULTIPLE));
+            - (env::block_timestamp()
+                % (self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE));
     }
 
     fn conclude_voting_score(&mut self) {

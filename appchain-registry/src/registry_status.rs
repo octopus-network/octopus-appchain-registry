@@ -11,6 +11,8 @@ pub trait RegistryStatus {
     fn get_minimum_register_deposit(&self) -> U128;
     /// Get the value of reduction percent for voting result of all appchains still in queue
     fn get_voting_result_reduction_percent(&self) -> U64;
+    /// Get the counting interval for voting score
+    fn get_counting_interval_in_seconds(&self) -> U64;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
@@ -48,6 +50,10 @@ impl RegistryStatus for AppchainRegistry {
 
     fn get_voting_result_reduction_percent(&self) -> U64 {
         U64::from(self.voting_result_reduction_percent as u64)
+    }
+
+    fn get_counting_interval_in_seconds(&self) -> U64 {
+        U64::from(self.counting_interval_in_seconds)
     }
 
     fn get_total_stake(&self) -> U128 {

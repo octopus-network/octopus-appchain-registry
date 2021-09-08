@@ -423,6 +423,8 @@ pub trait RegistryStatus {
     fn get_minimum_register_deposit(&self) -> U128;
     /// Get the value of reduction percent for voting result of all appchains still in queue
     fn get_voting_result_reduction_percent(&self) -> U64;
+    /// Get the counting interval for voting score
+    fn get_counting_interval_in_seconds(&self) -> U64;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchains whose state is equal to the given AppchainState
@@ -469,6 +471,8 @@ pub trait RegistryOwnerAction {
     fn change_minimum_register_deposit(&mut self, value: U128);
     /// Change the value of reduction percent for voting result of all appchains still in queue
     fn change_voting_result_reduction_percent(&mut self, value: U64);
+    /// Change the interval for counting voting score of appchains
+    fn change_counting_interval_in_seconds(&mut self, value: U64);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain

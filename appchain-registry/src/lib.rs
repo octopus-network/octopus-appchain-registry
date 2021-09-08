@@ -10,9 +10,9 @@ mod upgradable;
 mod voter_action;
 use std::collections::HashMap;
 
-use crate::storage_key::StorageKey;
-use crate::types::AppchainMetadata;
-use appchain_basedata::AppchainBasedata;
+pub use appchain_anchor_callback::AppchainAnchorCallback;
+pub use appchain_basedata::AppchainBasedata;
+pub use appchain_owner_action::AppchainOwnerAction;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap};
@@ -22,7 +22,12 @@ use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, Duration, Promise,
     PromiseOrValue, PromiseResult, PublicKey, Timestamp,
 };
-use types::{AppchainId, AppchainState};
+pub use registry_owner_action::RegistryOwnerAction;
+pub use registry_status::RegistryStatus;
+pub use storage_key::StorageKey;
+pub use sudo_actions::SudoActions;
+use types::{AppchainId, AppchainMetadata, AppchainState};
+pub use voter_action::VoterAction;
 
 const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
@@ -92,6 +97,7 @@ pub struct AppchainRegistry {
     top_appchain_id_in_queue: AppchainId,
     total_stake: Balance,
     time_of_last_count_voting_score: Timestamp,
+    counting_interval_in_seconds: u64,
 }
 
 impl Default for AppchainRegistry {
@@ -120,6 +126,7 @@ impl AppchainRegistry {
             top_appchain_id_in_queue: String::new(),
             total_stake: 0,
             time_of_last_count_voting_score: 0,
+            counting_interval_in_seconds: SECONDS_OF_A_DAY,
         }
     }
     // Assert that the contract called by the owner.

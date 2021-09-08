@@ -85,6 +85,7 @@ impl AppchainRegistry {
             top_appchain_id_in_queue: old_contract.top_appchain_id_in_queue,
             total_stake: old_contract.total_stake,
             time_of_last_count_voting_score: old_contract.time_of_last_count_voting_score,
+            counting_interval_in_seconds: SECONDS_OF_A_DAY,
         }
     }
 }
