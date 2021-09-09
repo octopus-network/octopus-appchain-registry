@@ -34,6 +34,7 @@ Contents:
   * [Appchain anchor callback](#appchain-anchor-callback)
   * [Ownable](#ownable)
   * [Upgradable](#upgradable)
+* [Change notes](#change-notes)
 
 ## Terminology
 
@@ -64,6 +65,27 @@ Contents:
 * `sender`: A NEAR transaction sender, that is the account which perform actions (call functions) on this contract.
 
 ## Implementation details
+
+### Contract data design
+
+```rust
+pub struct AppchainRegistry {
+    owner: AccountId,
+    owner_pk: PublicKey,
+    contract_code_staging_timestamp: Timestamp,
+    contract_code_staging_duration: Duration,
+    oct_token: AccountId,
+    minimum_register_deposit: Balance,
+    voting_result_reduction_percent: u16,
+    appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    top_appchain_id_in_queue: AppchainId,
+    total_stake: Balance,
+    time_of_last_count_voting_score: Timestamp,
+    counting_interval_in_seconds: u64,
+}
+```
 
 ### Initialization
 
@@ -554,3 +576,14 @@ pub trait Upgradable {
     }
 }
 ```
+
+## Change notes
+
+### 20210909
+
+* Add function `change_counting_interval_in_seconds` with param `value`.
+* Add view function `get_counting_interval_in_seconds`.
+* Add sudo function `delete_appchain` with param `appchain_id`.
+* Add sudo function `go_booting` with param `appchain_id`.
+* Function `count_voting_score` will fail if there is no appchain `inQueue`.
+* Function `conclude_voting_score` will clear `top_appchain_id_in_queue` after changes its state to `staging`.
