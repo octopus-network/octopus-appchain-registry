@@ -15,7 +15,7 @@ pub use appchain_basedata::AppchainBasedata;
 pub use appchain_owner_action::AppchainOwnerAction;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap, UnorderedMap};
+use near_sdk::collections::{LookupMap, UnorderedSet};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
@@ -33,11 +33,7 @@ const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 3_000_000_000_000_000_000_000_000; // 3e24yN, 3N
 const T_GAS: u64 = 1_000_000_000_000;
-const FT_TRANSFER_GAS: u64 = 5 * T_GAS;
 const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
-const SINGLE_CALL_GAS: u64 = 50 * T_GAS;
-const COMPLEX_CALL_GAS: u64 = 120 * T_GAS;
-const SIMPLE_CALL_GAS: u64 = 5 * T_GAS;
 const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
 /// Default register deposit amount
 const DEFAULT_REGISTER_DEPOSIT: Balance = 1000;
@@ -91,13 +87,15 @@ pub struct AppchainRegistry {
     oct_token: AccountId,
     minimum_register_deposit: Balance,
     voting_result_reduction_percent: u16,
-    appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    appchain_ids: UnorderedSet<AppchainId>,
+    appchain_basedatas: LookupMap<AppchainId, AppchainBasedata>,
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     top_appchain_id_in_queue: AppchainId,
     total_stake: Balance,
     time_of_last_count_voting_score: Timestamp,
     counting_interval_in_seconds: u64,
+    operator_of_counting_voting_score: AccountId,
 }
 
 impl Default for AppchainRegistry {
@@ -120,13 +118,15 @@ impl AppchainRegistry {
             oct_token,
             minimum_register_deposit: DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE,
             voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
-            appchain_basedatas: UnorderedMap::new(StorageKey::AppchainBasedatas.into_bytes()),
+            appchain_ids: UnorderedSet::new(StorageKey::AppchainIds.into_bytes()),
+            appchain_basedatas: LookupMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
             top_appchain_id_in_queue: String::new(),
             total_stake: 0,
             time_of_last_count_voting_score: 0,
             counting_interval_in_seconds: SECONDS_OF_A_DAY,
+            operator_of_counting_voting_score: env::signer_account_id(),
         }
     }
     // Assert that the contract called by the owner.
@@ -161,19 +161,6 @@ impl AppchainRegistry {
         self.appchain_basedatas
             .get(appchain_id)
             .expect(APPCHAIN_NOT_FOUND)
-            .get()
-            .expect(APPCHAIN_NOT_FOUND)
-    }
-    // Save AppchainBasedata to storage
-    fn set_appchain_basedata(
-        &mut self,
-        appchain_id: &AppchainId,
-        appchain_basedata: &AppchainBasedata,
-    ) {
-        self.appchain_basedatas
-            .get(appchain_id)
-            .expect(APPCHAIN_NOT_FOUND)
-            .set(appchain_basedata);
     }
     /// Callback function for `ft_transfer_call` of NEP-141 compatible contracts
     pub fn ft_on_transfer(
@@ -235,7 +222,8 @@ impl AppchainRegistry {
                     .get(&(appchain_id.clone(), sender_id.clone()))
                     .unwrap_or_default();
                 appchain_basedata.increase_upvote_deposit(amount.0);
-                self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+                self.appchain_basedatas
+                    .insert(&appchain_id, &appchain_basedata);
                 self.upvote_deposits
                     .insert(&(appchain_id, sender_id), &(voter_upvote + amount.0));
                 PromiseOrValue::Value(0.into())
@@ -258,7 +246,8 @@ impl AppchainRegistry {
                     .get(&(appchain_id.clone(), sender_id.clone()))
                     .unwrap_or_default();
                 appchain_basedata.increase_downvote_deposit(amount.0);
-                self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+                self.appchain_basedatas
+                    .insert(&appchain_id, &appchain_basedata);
                 self.downvote_deposits
                     .insert(&(appchain_id, sender_id), &(voter_downvote + amount.0));
                 PromiseOrValue::Value(0.into())
@@ -305,13 +294,9 @@ impl AppchainRegistry {
             sender_id,
             register_deposit,
         );
-        self.appchain_basedatas.insert(
-            &appchain_id,
-            &LazyOption::new(
-                StorageKey::AppchainBasedata(appchain_id.clone()).into_bytes(),
-                Option::from(&appchain_basedata),
-            ),
-        );
+        self.appchain_ids.insert(&appchain_id);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(
             format!(
                 "Appchain '{}' is registered by '{}'.",

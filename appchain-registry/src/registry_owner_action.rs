@@ -25,6 +25,8 @@ pub trait RegistryOwnerAction {
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
+    /// Change operator of counting voting score
+    fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -94,7 +96,8 @@ impl RegistryOwnerAction for AppchainRegistry {
                     .insert(key.clone(), custom_metadata.get(key).unwrap().clone());
             });
         }
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(
             format!(
                 "The metadata of appchain '{}' is updated by '{}'.",
@@ -123,12 +126,20 @@ impl RegistryOwnerAction for AppchainRegistry {
         self.counting_interval_in_seconds = value.0;
     }
 
+    fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId) {
+        self.assert_owner();
+        self.operator_of_counting_voting_score.clear();
+        self.operator_of_counting_voting_score
+            .push_str(&operator_account);
+    }
+
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Registered);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_state(AppchainState::Auditing);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
     }
 
@@ -137,7 +148,8 @@ impl RegistryOwnerAction for AppchainRegistry {
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_state(AppchainState::InQueue);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
     }
 
@@ -151,29 +163,34 @@ impl RegistryOwnerAction for AppchainRegistry {
             "Appchain state must be 'registered', 'auditing' or 'inQueue'."
         );
         appchain_basedata.change_state(AppchainState::Dead);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
     }
 
     fn count_voting_score(&mut self) {
-        self.assert_owner();
+        assert_eq!(
+            env::predecessor_account_id(),
+            self.operator_of_counting_voting_score,
+            "Only certain operator can call this function."
+        );
         assert!(
             env::block_timestamp() - self.time_of_last_count_voting_score
                 > self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE,
             "Count voting score can only be performed once a day."
         );
-        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
-        assert!(ids.len() > 0, "There is no appchain to count.");
+        assert!(
+            self.appchain_ids.len() > 0,
+            "There is no appchain to count."
+        );
         let mut top_appchain_id = self.top_appchain_id_in_queue.clone();
-        for id in ids {
+        for id in self.appchain_ids.to_vec() {
             let appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
                 appchain_basedata.count_voting_score();
                 if let Some(top_appchain_basedata) = self.appchain_basedatas.get(&top_appchain_id) {
-                    if let Some(top_appchain_basedata) = top_appchain_basedata.get() {
-                        if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
-                            top_appchain_id.clear();
-                            top_appchain_id.push_str(&id);
-                        }
+                    if appchain_basedata.voting_score() > top_appchain_basedata.voting_score() {
+                        top_appchain_id.clear();
+                        top_appchain_id.push_str(&id);
                     }
                 } else {
                     top_appchain_id.clear();
@@ -203,10 +220,10 @@ impl RegistryOwnerAction for AppchainRegistry {
         let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
         top_appchain_basedata.change_state(AppchainState::Staging);
         top_appchain_basedata.set_anchor_account(&sub_account_id);
-        self.set_appchain_basedata(top_appchain_basedata.id(), &top_appchain_basedata);
+        self.appchain_basedatas
+            .insert(top_appchain_basedata.id(), &top_appchain_basedata);
         // Reduce the voting score of all appchains in queue by the given percent
-        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
-        for id in ids {
+        for id in self.appchain_ids.to_vec() {
             let appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
                 appchain_basedata
@@ -238,6 +255,7 @@ impl RegistryOwnerAction for AppchainRegistry {
                 .as_bytes(),
             );
         }
+        self.appchain_ids.remove(&appchain_id);
         self.appchain_basedatas.remove(&appchain_id);
         env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
     }

@@ -3,10 +3,12 @@ use std::convert::TryInto;
 use near_sdk::Timestamp;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
+use crate::upgradable::OldAppchainBasedata;
 use crate::*;
 
 /// Appchain basedata
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
+#[serde(crate = "near_sdk::serde")]
 pub struct AppchainBasedata {
     appchain_id: AppchainId,
     appchain_metadata: AppchainMetadata,
@@ -18,6 +20,8 @@ pub struct AppchainBasedata {
     downvote_deposit: Balance,
     registered_time: Timestamp,
     go_live_time: Timestamp,
+    validator_count: u32,
+    total_stake: Balance,
 }
 
 impl AppchainBasedata {
@@ -39,6 +43,8 @@ impl AppchainBasedata {
             downvote_deposit: 0,
             registered_time: env::block_timestamp(),
             go_live_time: 0,
+            validator_count: 0,
+            total_stake: 0,
         }
     }
     /// Get appchain id
@@ -100,6 +106,8 @@ impl AppchainBasedata {
             voting_score: self.voting_score().into(),
             registered_time: self.registered_time.into(),
             go_live_time: self.go_live_time.into(),
+            validator_count: 0,
+            total_stake: self.total_stake.into(),
         }
     }
     /// Change owner
@@ -121,10 +129,19 @@ impl AppchainBasedata {
         self.appchain_anchor.clear();
         self.appchain_anchor.push_str(anchor_account);
     }
+    /// Set total stake
+    pub fn set_total_stake(&mut self, total_stake: Balance) {
+        self.total_stake = total_stake;
+    }
     /// Change state
     pub fn change_state(&mut self, new_state: AppchainState) {
         assert_ne!(self.appchain_state, new_state, "The state not changed.");
         self.appchain_state = new_state;
+    }
+    /// Sync staking status
+    pub fn sync_staking_status(&mut self, validator_count: u32, total_stake: Balance) {
+        self.validator_count = validator_count;
+        self.total_stake = total_stake;
     }
     /// Increase upvote deposit
     pub fn increase_upvote_deposit(&mut self, value: Balance) {
@@ -166,5 +183,22 @@ impl AppchainBasedata {
             &StorageKey::AppchainVotingScore(self.appchain_id.clone()).into_bytes(),
             &voting_score.to_be_bytes(),
         );
+    }
+    /// Construct a new instance from an old version of this struct
+    pub fn from_old_version(old_version: &OldAppchainBasedata) -> Self {
+        Self {
+            appchain_id: old_version.appchain_id.clone(),
+            appchain_metadata: old_version.appchain_metadata.clone(),
+            appchain_anchor: old_version.appchain_anchor.clone(),
+            appchain_owner: old_version.appchain_owner.clone(),
+            register_deposit: old_version.register_deposit,
+            appchain_state: old_version.appchain_state.clone(),
+            upvote_deposit: old_version.upvote_deposit,
+            downvote_deposit: old_version.downvote_deposit,
+            registered_time: old_version.registered_time,
+            go_live_time: old_version.go_live_time,
+            validator_count: 0,
+            total_stake: 0,
+        }
     }
 }

@@ -29,7 +29,8 @@ impl AppchainOwnerAction for AppchainRegistry {
                 .custom_metadata
                 .insert(key.clone(), custom_metadata.get(key).unwrap().clone());
         });
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(
             format!(
                 "The custom metadata of appchain '{}' is updated by '{}'.",
@@ -44,7 +45,8 @@ impl AppchainOwnerAction for AppchainRegistry {
         self.assert_appchain_owner(&appchain_id);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.change_owner(&new_owner);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         env::log(
             format!(
                 "The ownership of appchain '{}' is transfered to '{}'.",

@@ -49,6 +49,8 @@ pub struct AppchainStatus {
     pub voting_score: I128,
     pub registered_time: U64,
     pub go_live_time: U64,
+    pub validator_count: u32,
+    pub total_stake: U128,
 }
 
 #[derive(Serialize, Deserialize)]

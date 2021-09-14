@@ -30,7 +30,8 @@ impl VoterAction for AppchainRegistry {
             .get(&(appchain_id.clone(), account_id.clone()))
             .unwrap_or_default();
         appchain_basedata.decrease_upvote_deposit(amount.0);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         self.upvote_deposits.insert(
             &(appchain_id.clone(), account_id.clone()),
             &(voter_upvote - amount.0),
@@ -70,7 +71,8 @@ impl VoterAction for AppchainRegistry {
             .get(&(appchain_id.clone(), account_id.clone()))
             .unwrap_or_default();
         appchain_basedata.decrease_downvote_deposit(amount.0);
-        self.set_appchain_basedata(&appchain_id, &appchain_basedata);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
         self.downvote_deposits.insert(
             &(appchain_id.clone(), account_id.clone()),
             &(voter_downvote - amount.0),

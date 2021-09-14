@@ -2,6 +2,7 @@ use crate::AppchainId;
 
 /// Storage keys for collections of sub-struct in main contract
 pub enum StorageKey {
+    AppchainIds,
     AppchainBasedatas,
     ContractCode,
     UpvoteDeposits,
@@ -14,6 +15,7 @@ pub enum StorageKey {
 impl StorageKey {
     pub fn to_string(&self) -> String {
         match self {
+            StorageKey::AppchainIds => "i".to_string(),
             StorageKey::AppchainBasedatas => "a".to_string(),
             StorageKey::ContractCode => "contract_code".to_string(),
             StorageKey::UpvoteDeposits => "u".to_string(),

@@ -418,6 +418,8 @@ pub struct AppchainStatus {
     pub voting_score: I128,
     pub registered_time: U64,
     pub go_live_time: U64,
+    pub validator_count: u32,
+    pub total_stake: U128,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -495,6 +497,8 @@ pub trait RegistryOwnerAction {
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
+    /// Change operator of counting voting score
+    fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId);
     /// Start auditing of an appchain
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Pass auditing of an appchain
@@ -544,7 +548,13 @@ pub trait VoterAction {
 /// The callback interface for appchain anchor
 pub trait AppchainAnchorCallback {
     /// Sync state of an appchain to registry
-    fn sync_state_of(&mut self, appchain_id: AppchainId, appchain_state: AppchainState);
+    fn sync_state_of(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_state: AppchainState,
+        validator_count: u32,
+        total_stake: Balance,
+    );
 }
 ```
 
@@ -587,3 +597,11 @@ pub trait Upgradable {
 * Add sudo function `go_booting` with param `appchain_id`.
 * Function `count_voting_score` will fail if there is no appchain `inQueue`.
 * Function `conclude_voting_score` will clear `top_appchain_id_in_queue` after changes its state to `staging`.
+
+### 20210915
+
+* Add function `change_operator_of_counting_voting_score` with param `operator_account`. The default account which is changed by this function is `owner` of this contract.
+* The function `count_voting_score` can only be called by the account which is speicifed by function `change_operator_of_counting_voting_score`.
+* Add field `validator_count` and `total_stake` to `AppchainStatus`.
+* Add param `validator_count` and `total_stake` to function `sync_state_of`
+* Optimize storage of this contract to reduce general gas consumption of function calls.

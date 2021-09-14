@@ -15,8 +15,9 @@ pub trait RegistryStatus {
     fn get_counting_interval_in_seconds(&self) -> U64;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
+    /// Get appchain ids
+    fn get_appchain_ids(&self) -> Vec<String>;
     /// Get appchains whose state is equal to the given AppchainState
-    ///
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
     fn get_appchains_with_state_of(
         &self,
@@ -60,6 +61,10 @@ impl RegistryStatus for AppchainRegistry {
         self.total_stake.into()
     }
 
+    fn get_appchain_ids(&self) -> Vec<String> {
+        self.appchain_ids.to_vec()
+    }
+
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<Vec<AppchainState>>,
@@ -71,8 +76,7 @@ impl RegistryStatus for AppchainRegistry {
         assert!(page_number > 0, "Invalid page number.");
         assert!(page_size >= 5 && page_size <= 50, "Invalid page size.");
         let mut results: Vec<AppchainStatus> = Vec::new();
-        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
-        for id in ids {
+        for id in self.appchain_ids.to_vec() {
             let appchain_basedata = self.get_appchain_basedata(&id);
             match appchain_state {
                 Some(ref states) => {
@@ -86,33 +90,38 @@ impl RegistryStatus for AppchainRegistry {
                 None => results.push(appchain_basedata.status()),
             }
         }
-        match sorting_field {
-            AppchainSortingField::AppchainId => results.sort_by(|a, b| match sorting_order {
-                SortingOrder::Ascending => a.appchain_id.cmp(&b.appchain_id),
-                SortingOrder::Descending => b.appchain_id.cmp(&a.appchain_id),
-            }),
-            AppchainSortingField::VotingScore => results.sort_by(|a, b| match sorting_order {
-                SortingOrder::Ascending => a.voting_score.0.cmp(&b.voting_score.0),
-                SortingOrder::Descending => b.voting_score.0.cmp(&a.voting_score.0),
-            }),
-            AppchainSortingField::RegisteredTime => results.sort_by(|a, b| match sorting_order {
-                SortingOrder::Ascending => a.registered_time.0.cmp(&b.registered_time.0),
-                SortingOrder::Descending => b.registered_time.0.cmp(&a.registered_time.0),
-            }),
-        }
-        let (_, tail) = results.split_at(((page_number - 1) * page_size).into());
-        if tail.len() > page_size.into() {
-            let (page, _) = tail.split_at(page_size.into());
-            page.to_vec()
+        if results.len() > 0 {
+            match sorting_field {
+                AppchainSortingField::AppchainId => results.sort_by(|a, b| match sorting_order {
+                    SortingOrder::Ascending => a.appchain_id.cmp(&b.appchain_id),
+                    SortingOrder::Descending => b.appchain_id.cmp(&a.appchain_id),
+                }),
+                AppchainSortingField::VotingScore => results.sort_by(|a, b| match sorting_order {
+                    SortingOrder::Ascending => a.voting_score.0.cmp(&b.voting_score.0),
+                    SortingOrder::Descending => b.voting_score.0.cmp(&a.voting_score.0),
+                }),
+                AppchainSortingField::RegisteredTime => {
+                    results.sort_by(|a, b| match sorting_order {
+                        SortingOrder::Ascending => a.registered_time.0.cmp(&b.registered_time.0),
+                        SortingOrder::Descending => b.registered_time.0.cmp(&a.registered_time.0),
+                    })
+                }
+            }
+            let (_, tail) = results.split_at(((page_number - 1) * page_size).into());
+            if tail.len() > page_size.into() {
+                let (page, _) = tail.split_at(page_size.into());
+                page.to_vec()
+            } else {
+                tail.to_vec()
+            }
         } else {
-            tail.to_vec()
+            results
         }
     }
 
     fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64 {
         let mut count: u64 = 0;
-        let ids = self.appchain_basedatas.keys().collect::<Vec<String>>();
-        for id in ids {
+        for id in self.appchain_ids.to_vec() {
             let appchain_basedata = self.get_appchain_basedata(&id);
             match appchain_state {
                 Some(ref state) => {
