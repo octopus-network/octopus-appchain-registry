@@ -70,20 +70,40 @@ Contents:
 
 ```rust
 pub struct AppchainRegistry {
+    /// The account of the owner of this contract
     owner: AccountId,
+    /// The public key of owner account
     owner_pk: PublicKey,
+    /// The earliest time that the staged code can be deployed
     contract_code_staging_timestamp: Timestamp,
+    /// The shortest time range between code staging and code deployment
     contract_code_staging_duration: Duration,
+    /// The account of OCT token contract
     oct_token: AccountId,
+    /// The minimum deposit amount for registering an appchain
     minimum_register_deposit: Balance,
+    /// The reduction percent of voting score of all appchain `inQueue` after each time
+    /// the owner conclude the voting score
     voting_result_reduction_percent: u16,
-    appchain_basedatas: UnorderedMap<AppchainId, LazyOption<AppchainBasedata>>,
+    /// The set of all appchain ids
+    appchain_ids: UnorderedSet<AppchainId>,
+    /// The map from appchain id to their basedata
+    appchain_basedatas: LookupMap<AppchainId, AppchainBasedata>,
+    /// The map from pair (appchain id, account id) to their upvote deposit
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    /// The map from pair (appchain id, account id) to their downvote deposit
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
+    /// The appchain id with the highest voting score at a certain time
     top_appchain_id_in_queue: AppchainId,
+    /// The total stake of OCT token in all appchains
     total_stake: Balance,
+    /// The time of the last calling of function `count_voting_score`
     time_of_last_count_voting_score: Timestamp,
+    /// The interval for calling function `count_voting_score`,
+    /// in the interval this function can only be called once.
     counting_interval_in_seconds: u64,
+    /// The only account that can call function `count_voting_score`
+    operator_of_counting_voting_score: AccountId,
 }
 ```
 
