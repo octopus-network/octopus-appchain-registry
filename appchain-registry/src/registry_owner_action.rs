@@ -224,10 +224,16 @@ impl RegistryOwnerAction for AppchainRegistry {
             .insert(top_appchain_basedata.id(), &top_appchain_basedata);
         // Reduce the voting score of all appchains in queue by the given percent
         for id in self.appchain_ids.to_vec() {
-            let appchain_basedata = self.get_appchain_basedata(&id);
+            let mut appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                appchain_basedata
-                    .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
+                if appchain_basedata.voting_score() <= 0 {
+                    appchain_basedata.change_state(AppchainState::Dead);
+                    self.appchain_basedatas
+                        .insert(appchain_basedata.id(), &appchain_basedata);
+                } else {
+                    appchain_basedata
+                        .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
+                }
             }
         }
         // Deploy contract of anchor of the appchain with the largest voting score, and initialize it.
@@ -245,6 +251,14 @@ impl RegistryOwnerAction for AppchainRegistry {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Dead);
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            appchain_basedata.upvote_deposit() == 0,
+            "The appchain still has upvote deposit(s)."
+        );
+        assert!(
+            appchain_basedata.downvote_deposit() == 0,
+            "The appchain still has downvote deposit(s)."
+        );
         if !appchain_basedata.anchor().trim().is_empty() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
             env::log(

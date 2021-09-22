@@ -563,10 +563,7 @@ fn test_case2() {
         common::to_oct_amount(2000) as i128
     );
     let appchain3 = registry_viewer::get_appchain_status(&registry, &appchain_id3);
-    assert_eq!(
-        appchain3.voting_score.0,
-        0 - common::to_oct_amount(600) as i128
-    );
+    assert_eq!(appchain3.appchain_state, AppchainState::Dead);
     //
     assert_eq!(
         registry_viewer::print_appchains(
@@ -577,7 +574,7 @@ fn test_case2() {
             AppchainSortingField::RegisteredTime,
             SortingOrder::Ascending
         ),
-        3
+        2
     );
 }
 

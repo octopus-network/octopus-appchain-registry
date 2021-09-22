@@ -13,6 +13,7 @@ pub trait VoterAction {
 
 #[near_bindgen]
 impl VoterAction for AppchainRegistry {
+    //
     fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
         let voter = env::predecessor_account_id();
         let voter_upvote = self
@@ -32,10 +33,15 @@ impl VoterAction for AppchainRegistry {
         appchain_basedata.decrease_upvote_deposit(amount.0);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        self.upvote_deposits.insert(
-            &(appchain_id.clone(), account_id.clone()),
-            &(voter_upvote - amount.0),
-        );
+        if amount.0 == voter_upvote {
+            self.upvote_deposits
+                .remove(&(appchain_id.clone(), account_id.clone()));
+        } else {
+            self.upvote_deposits.insert(
+                &(appchain_id.clone(), account_id.clone()),
+                &(voter_upvote - amount.0),
+            );
+        }
         ext_fungible_token::ft_transfer(
             voter.clone(),
             amount.into(),
@@ -53,7 +59,7 @@ impl VoterAction for AppchainRegistry {
             env::prepaid_gas() / 2,
         ));
     }
-
+    //
     fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
         let voter = env::predecessor_account_id();
         let voter_downvote = self
@@ -73,10 +79,15 @@ impl VoterAction for AppchainRegistry {
         appchain_basedata.decrease_downvote_deposit(amount.0);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        self.downvote_deposits.insert(
-            &(appchain_id.clone(), account_id.clone()),
-            &(voter_downvote - amount.0),
-        );
+        if amount.0 == voter_downvote {
+            self.downvote_deposits
+                .remove(&(appchain_id.clone(), account_id.clone()));
+        } else {
+            self.downvote_deposits.insert(
+                &(appchain_id.clone(), account_id.clone()),
+                &(voter_downvote - amount.0),
+            );
+        }
         ext_fungible_token::ft_transfer(
             voter.clone(),
             amount.into(),

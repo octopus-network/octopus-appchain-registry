@@ -240,7 +240,11 @@ Qualification of this action:
 
 * The `amount` must not be larger than `upvote deposit` of `sender` for `appchain_id`.
 
-Reduce `amount` from `upvote deposit` of `sender` for `appchain_id`, reduce `amount` from `upvote deposit` of `appchain basedata` for `appchain_id`, and send `amount` of OCT token back to `sender`.
+Processing steps:
+
+* Reduce `amount` from `upvote deposit` of `sender` for `appchain_id`. If the `upvote deposit` of `sender` goes to `0`, remove the pair (`appchain_id`, `sender`) from `self.upvote_deposits`.
+* Reduce `amount` from `upvote deposit` of `appchain basedata` for `appchain_id`.
+* Send `amount` of OCT token back to `sender`.
 
 Generate log: `Upvote deposit <amount> for appchain <appchain_id> is withdrawed by <sender>.`
 
@@ -255,7 +259,11 @@ Qualification of this action:
 
 * The `amount` must not be larger than `downvote deposit` of `sender` for `appchain_id`.
 
-Reduce `amount` from `downvote deposit` of `sender` for `appchain_id`, reduce `amount` from `downvote deposit` of `appchain basedata` for `appchain_id`, and send `amount` of OCT token back to `sender`.
+Processing steps:
+
+* Reduce `amount` from `downvote deposit` of `sender` for `appchain_id`. If the `downvote deposit` of `sender` goes to `0`, remove the pair (`appchain_id`, `sender`) from `self.downvote_deposits`.
+* Reduce `amount` from `downvote deposit` of `appchain basedata` for `appchain_id`.
+* Send `amount` of OCT token back to `sender`.
 
 Generate log: `Downvote deposit <amount> for appchain <appchain_id> is withdrawed by <sender>.`
 
@@ -355,6 +363,8 @@ The `appchain state` of appchain with the largest `voting score` will become `st
 
 The `voting score` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
 
+If the `voting score` of an appchain goes to negative number, the state of the appchain will be set to `dead`.
+
 Generate log: `Appchain <appchain_id> goes staging at <account>.`
 
 > This action should be performed when the period of appchain selection for `staging` ends.
@@ -385,6 +395,7 @@ Qualification of this action:
 
 * The `sender` must be the `owner`.
 * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `dead`.
+* The `upvote deposit` and `downvote deposit` of the appchain must be both `0`.
 
 This action will remove the appchain corresponding to `appchain_id` from this contract, and delete the account of its `appchain anchor`.
 
@@ -609,19 +620,12 @@ pub trait Upgradable {
 
 ## Change notes
 
-### 20210909
+Refer to [change notes](https://github.com/octopus-network/octopus-appchain-registry/blob/main/change_notes.md).
 
-* Add function `change_counting_interval_in_seconds` with param `value`.
-* Add view function `get_counting_interval_in_seconds`.
-* Add sudo function `delete_appchain` with param `appchain_id`.
-* Add sudo function `go_booting` with param `appchain_id`.
-* Function `count_voting_score` will fail if there is no appchain `inQueue`.
-* Function `conclude_voting_score` will clear `top_appchain_id_in_queue` after changes its state to `staging`.
+## Build and test
 
-### 20210915
+Simply run `.build.sh` to build the project. The script will create folder `out` and `res`.
 
-* Add function `change_operator_of_counting_voting_score` with param `operator_account`. The default account which is changed by this function is `owner` of this contract.
-* The function `count_voting_score` can only be called by the account which is speicifed by function `change_operator_of_counting_voting_score`.
-* Add field `validator_count` and `total_stake` to `AppchainStatus`.
-* Add param `validator_count` and `total_stake` to function `sync_state_of`
-* Optimize storage of this contract to reduce general gas consumption of function calls.
+Run `./build.sh test` to build and run all test code.
+
+> The `test_case9` in `./appchain-registry/tests/test_registry_actions.rs` will fail because of the limitation of NEAR transaction. So the upgrade of this contract has to be performed manually (by cli or api.js).
