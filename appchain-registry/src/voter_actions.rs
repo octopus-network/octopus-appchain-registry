@@ -4,7 +4,7 @@ use crate::*;
 use crate::{types::AppchainId, AppchainRegistry};
 
 /// The actions which the voter can perform
-pub trait VoterAction {
+pub trait VoterActions {
     /// Withdraw a certain amount of upvote deposit for an appchain
     fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
     /// Withdraw a certain amount of downvote deposit for an appchain
@@ -12,7 +12,7 @@ pub trait VoterAction {
 }
 
 #[near_bindgen]
-impl VoterAction for AppchainRegistry {
+impl VoterActions for AppchainRegistry {
     //
     fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
         let voter = env::predecessor_account_id();

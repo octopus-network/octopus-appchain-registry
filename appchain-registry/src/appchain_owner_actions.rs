@@ -3,7 +3,7 @@ use near_sdk::{env, near_bindgen, AccountId};
 use crate::*;
 
 /// The actions which the owner of an appchain can perform
-pub trait AppchainOwnerAction {
+pub trait AppchainOwnerActions {
     /// Update custom metadata of an appchain
     fn update_appchain_custom_metadata(
         &mut self,
@@ -15,7 +15,7 @@ pub trait AppchainOwnerAction {
 }
 
 #[near_bindgen]
-impl AppchainOwnerAction for AppchainRegistry {
+impl AppchainOwnerActions for AppchainRegistry {
     fn update_appchain_custom_metadata(
         &mut self,
         appchain_id: AppchainId,
