@@ -417,43 +417,35 @@ Generate log: `Appchain <appchain_id> is rejected.`
 
 Qualification of this action:
 
-* The `sender` must be the `owner`.
-* The action can only be called once a day.
+* The `sender` must be `self.operator_of_counting_voting_score`.
+* The value of `env::block_timestamp() - self.time_of_last_count_voting_score` must be bigger than `self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE`.
 
-This action will count `voting score` of all appchains whose `appchain state` is `inQueue`, and store the results in `appchain basedata` in this contract.
+Processing steps:
 
-The `voting score` of an appchain is calculated by:
+* Count `voting score` of all appchains whose `appchain state` is `inQueue`, and store the results to `self.appchain_basedatas`. The `voting score` of an appchain is calculated by:
 
 ```js
 voting_score_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) - sum(downvote_amount_from_a_voter_of_the_appchain);
 ```
 
-> This action should be performed every day by an offchain daemon or an operator.
+* The `self.time_of_last_count_voting_score` is set to `env::block_timestamp() - (env::block_timestamp() % (self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE)`.
 
 ### Conclude voting score
-
-This action needs the following parameters:
-
-* `vote_result_reduction_percent`: The percent (unsigned integer not bigger than 100) which all appchains' voting score will be reduced in the next voting period.
 
 Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-The `appchain state` of appchain with the largest `voting score` will become `staging`. Then:
+Processing steps:
 
-* Create subaccount `<appchain_id>.<account id of this contract>`.
-* Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
-* Add a new full access key to the new `appchain anchor` for the `owner`.
-* Store the account of new `appchain anchor` for the appchain in this contract.
-
-The `voting score` of all appchains with state `inQueue` will be reduced by value of `vote_result_reduction_percent`.
-
-If the `voting score` of an appchain goes to negative number, the state of the appchain will be set to `dead`.
-
-Generate log: `Appchain <appchain_id> goes staging at <account>.`
-
-> This action should be performed when the period of appchain selection for `staging` ends.
+* The `appchain state` of appchain with the largest `voting score` will become `staging`. Then:
+  * Create subaccount `<appchain_id>.<account id of this contract>`.
+  * Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
+  * Add a new full access key to the new `appchain anchor` for the `owner`.
+  * Store the account of new `appchain anchor` for the appchain in this contract.
+* The `voting score` of all appchains with state `inQueue` will be reduced by value of `self.voting_result_reduction_percent`.
+* If the `voting score` of an appchain goes to negative number, the state of the appchain will be set to `dead`.
+* Generate log: `Appchain <appchain_id> goes staging at <account>.`
 
 ### Remove an appchain
 
@@ -467,9 +459,10 @@ Qualification of this action:
 * The `appchain state` of `appchain basedata` corresponding to `appchain_id` must be `dead`.
 * The `upvote deposit` and `downvote deposit` of the appchain must be both `0`.
 
-This action will remove the appchain corresponding to `appchain_id` from this contract, and delete the account of its `appchain anchor`.
+Processing steps:
 
-Generate log: `Appchain <appchain_id> and its anchor is removed.`
+* Remove the appchain corresponding to `appchain_id` from this contract.
+* Generate log: `Appchain <appchain_id> and its anchor is removed.`
 
 ## Voter actions
 
@@ -612,9 +605,10 @@ Qualification of this action:
 * The `sender` must be the account which the `appchain anchor` corresponding to `appchain_id` is deployed.
 * The value of `state` must be one of `staging`, `booting`, `active`, `broken` and `dead`, which are managed by `appchain anchor`.
 
-The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `state`.
+Processing steps:
 
-Generate log: `The state of appchain <appchain_id> changes to <new state>.`
+* The `appchain state` of `appchain basedata` corresponding to `appchain_id` is set to `state`.
+* Generate log: `The state of appchain <appchain_id> changes to <new state>.`
 
 ## Ownable interface
 
