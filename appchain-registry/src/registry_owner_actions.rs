@@ -139,7 +139,8 @@ impl RegistryOwnerActions for AppchainRegistry {
         assert!(
             env::block_timestamp() - self.time_of_last_count_voting_score
                 > self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE,
-            "Count voting score can only be performed once a day."
+            "Count voting score can only be performed once in every {} seconds.",
+            self.counting_interval_in_seconds
         );
         assert!(
             self.appchain_ids.len() > 0,
