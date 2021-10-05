@@ -15,6 +15,9 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub preminted_wrapped_appchain_token: U128,
+    pub ido_amount_of_wrapped_appchain_token: U128,
+    pub initial_era_reward: U128,
     pub custom_metadata: HashMap<String, String>,
 }
 

@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
+use near_sdk::json_types::U128;
 use near_sdk_sim::lazy_static_include;
 
 mod appchain_owner_action;
@@ -142,6 +143,9 @@ fn test_case1() {
         Option::None,
         Option::None,
         Option::from(String::from("yangzhen@oct.network")),
+        Option::from(U128::from(10_000_000_000_000_000_000_000_000)),
+        Option::from(U128::from(1_000_000_000_000_000_000_000_000)),
+        Option::from(U128::from(100_000_000_000_000_000_000)),
         Option::from(custom_metadata.clone()),
     );
     assert!(!outcome.is_ok());
@@ -154,6 +158,9 @@ fn test_case1() {
         Option::None,
         Option::None,
         Option::from(String::from("yangzhen@oct.network")),
+        Option::from(U128::from(10_000_000_000_000_000_000_000_000)),
+        Option::from(U128::from(1_000_000_000_000_000_000_000_000)),
+        Option::from(U128::from(100_000_000_000_000_000_000)),
         Option::from(custom_metadata.clone()),
     );
     outcome.assert_success();

@@ -1,14 +1,24 @@
 use crate::*;
 use near_contract_standards::upgrade::Upgradable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::LookupMap;
+use near_sdk::collections::{LazyOption, LookupMap};
 use near_sdk::json_types::WrappedDuration;
 use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, Promise, PublicKey, Timestamp};
 
 #[derive(BorshDeserialize, BorshSerialize)]
+pub struct OldAppchainMetadata {
+    pub website_url: String,
+    pub github_address: String,
+    pub github_release: String,
+    pub commit_id: String,
+    pub contact_email: String,
+    pub custom_metadata: HashMap<String, String>,
+}
+
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct OldAppchainBasedata {
     pub appchain_id: AppchainId,
-    pub appchain_metadata: AppchainMetadata,
+    pub appchain_metadata: LazyOption<OldAppchainMetadata>,
     pub appchain_anchor: AccountId,
     pub appchain_owner: AccountId,
     pub register_deposit: Balance,
@@ -98,8 +108,7 @@ impl AppchainRegistry {
     #[init(ignore_state)]
     pub fn migrate_state() -> Self {
         // Deserialize the state using the old contract structure.
-        let mut old_contract: OldAppchainRegistry =
-            env::state_read().expect("Old state doesn't exist");
+        let old_contract: OldAppchainRegistry = env::state_read().expect("Old state doesn't exist");
         // Verify that the migration can only be done by the owner.
         // This is not necessary, if the upgrade is done internally.
         assert_eq!(
@@ -111,7 +120,7 @@ impl AppchainRegistry {
         let appchain_ids = old_contract.appchain_ids.to_vec();
 
         // Create the new contract using the data from the old contract.
-        let mut new_appchain_registry = AppchainRegistry {
+        let new_appchain_registry = AppchainRegistry {
             owner: old_contract.owner.clone(),
             owner_pk: old_contract.owner_pk,
             contract_code_staging_timestamp: old_contract.contract_code_staging_timestamp,
@@ -132,9 +141,12 @@ impl AppchainRegistry {
 
         for appchain_id in appchain_ids {
             if let Some(old_appchain_basedata) = old_contract.appchain_basedatas.get(&appchain_id) {
-                old_contract.appchain_basedatas.remove(&appchain_id);
-                new_appchain_registry.add_appchain_basedata(AppchainBasedata::from_old_version(
-                    &old_appchain_basedata,
+                let mut appchain_basedata = new_appchain_registry
+                    .appchain_basedatas
+                    .get(&appchain_id)
+                    .unwrap();
+                appchain_basedata.set_metadata(&AppchainMetadata::from_old_version(
+                    &old_appchain_basedata.appchain_metadata.get().unwrap(),
                 ));
             }
         }

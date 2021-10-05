@@ -13,6 +13,9 @@ pub trait RegistryOwnerActions {
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
+        preminted_wrapped_appchain_token: Option<U128>,
+        ido_amount_of_wrapped_appchain_token: Option<U128>,
+        initial_era_reward: Option<U128>,
         custom_metadata: Option<HashMap<String, String>>,
     );
     /// Start auditing of an appchain
@@ -39,6 +42,9 @@ impl RegistryOwnerActions for AppchainRegistry {
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
+        preminted_wrapped_appchain_token: Option<U128>,
+        ido_amount_of_wrapped_appchain_token: Option<U128>,
+        initial_era_reward: Option<U128>,
         custom_metadata: Option<HashMap<String, String>>,
     ) {
         self.assert_owner();
@@ -63,6 +69,15 @@ impl RegistryOwnerActions for AppchainRegistry {
         if let Some(contact_email) = contact_email {
             metadata.contact_email.clear();
             metadata.contact_email.push_str(&contact_email);
+        }
+        if let Some(preminted_wrapped_appchain_token) = preminted_wrapped_appchain_token {
+            metadata.preminted_wrapped_appchain_token = preminted_wrapped_appchain_token;
+        }
+        if let Some(ido_amount_of_wrapped_appchain_token) = ido_amount_of_wrapped_appchain_token {
+            metadata.ido_amount_of_wrapped_appchain_token = ido_amount_of_wrapped_appchain_token;
+        }
+        if let Some(initial_era_reward) = initial_era_reward {
+            metadata.initial_era_reward = initial_era_reward;
         }
         if let Some(custom_metadata) = custom_metadata {
             metadata.custom_metadata.clear();

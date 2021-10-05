@@ -21,3 +21,8 @@
 
 * The state of appchain(s) with negative or zero `voting score` will be set to `dead` while running the function `conclude_voting_score`.
 * The function `remove_appchain` will also check the `upvote deposit` and `downvote deposit` of the given appchain now. The given appchain will be removed only if the deposits are all `0` (which means, all voters have already withdrawed their deposits for the given appchain).
+
+## 20211005
+
+* Add fields `preminted_wrapped_appchain_token`, `ido_amount_of_wrapped_appchain_token` and `initial_era_reward` to `AppchainMetadata`.
+* Add params `preminted_wrapped_appchain_token`, `ido_amount_of_wrapped_appchain_token` and `initial_era_reward` to function `update_appchain_metadata` of `RegistryOwnerActions`.

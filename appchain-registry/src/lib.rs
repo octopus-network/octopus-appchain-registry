@@ -11,18 +11,19 @@ mod upgradable;
 mod voter_actions;
 use std::collections::HashMap;
 
-pub use appchain_anchor_callback::AppchainAnchorCallback;
-pub use appchain_basedata::AppchainBasedata;
-pub use appchain_owner_actions::AppchainOwnerActions;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LookupMap, UnorderedSet};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
-    assert_self, env, ext_contract, log, near_bindgen, AccountId, Balance, Duration, Promise,
-    PromiseOrValue, PromiseResult, PublicKey, Timestamp,
+    assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
+    Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
 };
+
+pub use appchain_anchor_callback::AppchainAnchorCallback;
+pub use appchain_basedata::AppchainBasedata;
+pub use appchain_owner_actions::AppchainOwnerActions;
 pub use registry_owner_actions::RegistryOwnerActions;
 pub use registry_status::RegistryStatus;
 pub use storage_key::StorageKey;
@@ -208,7 +209,7 @@ impl AppchainRegistry {
             "register_appchain" => {
                 assert_eq!(
                     msg_vec.len(),
-                    7,
+                    10,
                     "Invalid params for `register_appchain`. Return deposit."
                 );
                 self.register_appchain(
@@ -220,6 +221,9 @@ impl AppchainRegistry {
                     msg_vec.get(4).unwrap().to_string(),
                     msg_vec.get(5).unwrap().to_string(),
                     msg_vec.get(6).unwrap().to_string(),
+                    serde_json::from_str(msg_vec.get(7).unwrap().as_str()).unwrap(),
+                    serde_json::from_str(msg_vec.get(8).unwrap().as_str()).unwrap(),
+                    serde_json::from_str(msg_vec.get(9).unwrap().as_str()).unwrap(),
                 );
                 PromiseOrValue::Value(0.into())
             }
@@ -291,6 +295,9 @@ impl AppchainRegistry {
         github_release: String,
         commit_id: String,
         contact_email: String,
+        preminted_amount: U128,
+        ido_amount: U128,
+        initial_era_reward: U128,
     ) {
         assert!(
             self.appchain_basedatas.get(&appchain_id).is_none(),
@@ -308,6 +315,9 @@ impl AppchainRegistry {
                 github_release,
                 commit_id,
                 contact_email,
+                preminted_wrapped_appchain_token: preminted_amount,
+                ido_amount_of_wrapped_appchain_token: ido_amount,
+                initial_era_reward,
                 custom_metadata: HashMap::new(),
             },
             sender_id,

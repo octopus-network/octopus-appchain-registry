@@ -25,7 +25,7 @@ pub fn register_appchain(
         signer,
         &registry.user_account,
         amount,
-        format!("register_appchain,{},website_url_string,github_address_string,github_release_string,commit_id,email_string", appchain_id),
+        format!("register_appchain,{},website_url_string,github_address_string,github_release_string,commit_id,email_string,\"10000000000000000000000000\",\"1000000000000000000000000\",\"100000000000000000000\"", appchain_id),
         oct_token)
 }
 

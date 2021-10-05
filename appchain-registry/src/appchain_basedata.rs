@@ -4,7 +4,7 @@ use near_sdk::collections::LazyOption;
 use near_sdk::Timestamp;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
-use crate::upgradable::OldAppchainBasedata;
+use crate::upgradable::{OldAppchainBasedata, OldAppchainMetadata};
 use crate::*;
 
 /// Appchain basedata
@@ -22,6 +22,24 @@ pub struct AppchainBasedata {
     go_live_time: Timestamp,
     validator_count: u32,
     total_stake: Balance,
+}
+
+impl AppchainMetadata {
+    ///
+    /// Construct a new instance from an old version of this struct
+    pub fn from_old_version(old_version: &OldAppchainMetadata) -> Self {
+        Self {
+            website_url: old_version.website_url.clone(),
+            github_address: old_version.github_address.clone(),
+            github_release: old_version.github_release.clone(),
+            commit_id: old_version.commit_id.clone(),
+            contact_email: old_version.contact_email.clone(),
+            preminted_wrapped_appchain_token: 0.into(),
+            ido_amount_of_wrapped_appchain_token: 0.into(),
+            initial_era_reward: 0.into(),
+            custom_metadata: old_version.custom_metadata.clone(),
+        }
+    }
 }
 
 impl AppchainBasedata {
@@ -197,7 +215,9 @@ impl AppchainBasedata {
             appchain_id: old_version.appchain_id.clone(),
             appchain_metadata: LazyOption::new(
                 StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
-                Some(&old_version.appchain_metadata.clone()),
+                Some(&AppchainMetadata::from_old_version(
+                    &old_version.appchain_metadata.get().unwrap(),
+                )),
             ),
             appchain_anchor: old_version.appchain_anchor.clone(),
             appchain_owner: old_version.appchain_owner.clone(),
