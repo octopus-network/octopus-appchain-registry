@@ -43,47 +43,36 @@ impl RegistryOwnerActions for AppchainRegistry {
     ) {
         self.assert_owner();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        let mut metadata = appchain_basedata.metadata();
         if let Some(website_url) = website_url {
-            appchain_basedata.metadata().website_url.clear();
-            appchain_basedata
-                .metadata()
-                .website_url
-                .push_str(&website_url);
+            metadata.website_url.clear();
+            metadata.website_url.push_str(&website_url);
         }
         if let Some(github_address) = github_address {
-            appchain_basedata.metadata().github_address.clear();
-            appchain_basedata
-                .metadata()
-                .github_address
-                .push_str(&github_address);
+            metadata.github_address.clear();
+            metadata.github_address.push_str(&github_address);
         }
         if let Some(github_release) = github_release {
-            appchain_basedata.metadata().github_release.clear();
-            appchain_basedata
-                .metadata()
-                .github_release
-                .push_str(&github_release);
+            metadata.github_release.clear();
+            metadata.github_release.push_str(&github_release);
         }
         if let Some(commit_id) = commit_id {
-            appchain_basedata.metadata().commit_id.clear();
-            appchain_basedata.metadata().commit_id.push_str(&commit_id);
+            metadata.commit_id.clear();
+            metadata.commit_id.push_str(&commit_id);
         }
         if let Some(contact_email) = contact_email {
-            appchain_basedata.metadata().contact_email.clear();
-            appchain_basedata
-                .metadata()
-                .contact_email
-                .push_str(&contact_email);
+            metadata.contact_email.clear();
+            metadata.contact_email.push_str(&contact_email);
         }
         if let Some(custom_metadata) = custom_metadata {
-            appchain_basedata.metadata().custom_metadata.clear();
+            metadata.custom_metadata.clear();
             custom_metadata.keys().for_each(|key| {
-                appchain_basedata
-                    .metadata()
+                metadata
                     .custom_metadata
                     .insert(key.clone(), custom_metadata.get(key).unwrap().clone());
             });
         }
+        appchain_basedata.set_metadata(&metadata);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         env::log(

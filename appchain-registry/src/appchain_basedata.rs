@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 
+use near_sdk::collections::LazyOption;
 use near_sdk::Timestamp;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
@@ -7,11 +8,10 @@ use crate::upgradable::OldAppchainBasedata;
 use crate::*;
 
 /// Appchain basedata
-#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
+#[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
     appchain_id: AppchainId,
-    appchain_metadata: AppchainMetadata,
+    appchain_metadata: LazyOption<AppchainMetadata>,
     appchain_anchor: AccountId,
     appchain_owner: AccountId,
     register_deposit: Balance,
@@ -34,7 +34,10 @@ impl AppchainBasedata {
     ) -> Self {
         Self {
             appchain_id: appchain_id.clone(),
-            appchain_metadata,
+            appchain_metadata: LazyOption::new(
+                StorageKey::AppchainMetadata(appchain_id.clone()).into_bytes(),
+                Some(&appchain_metadata),
+            ),
             appchain_anchor: String::new(),
             appchain_owner,
             register_deposit,
@@ -52,8 +55,8 @@ impl AppchainBasedata {
         &self.appchain_id
     }
     /// Get mutable metadata
-    pub fn metadata(&mut self) -> &mut AppchainMetadata {
-        &mut self.appchain_metadata
+    pub fn metadata(&mut self) -> AppchainMetadata {
+        self.appchain_metadata.get().unwrap()
     }
     /// Get acount id of anchor
     pub fn anchor(&self) -> &AccountId {
@@ -96,7 +99,7 @@ impl AppchainBasedata {
     pub fn status(&self) -> AppchainStatus {
         AppchainStatus {
             appchain_id: self.appchain_id.clone(),
-            appchain_metadata: self.appchain_metadata.clone(),
+            appchain_metadata: self.appchain_metadata.get().unwrap(),
             appchain_anchor: self.appchain_anchor.clone(),
             appchain_owner: self.appchain_owner.clone(),
             register_deposit: self.register_deposit.into(),
@@ -106,7 +109,7 @@ impl AppchainBasedata {
             voting_score: self.voting_score().into(),
             registered_time: self.registered_time.into(),
             go_live_time: self.go_live_time.into(),
-            validator_count: 0,
+            validator_count: self.validator_count,
             total_stake: self.total_stake.into(),
         }
     }
@@ -119,6 +122,10 @@ impl AppchainBasedata {
         );
         self.appchain_owner.clear();
         self.appchain_owner.push_str(new_owner);
+    }
+    /// Set metadata
+    pub fn set_metadata(&mut self, metadata: &AppchainMetadata) {
+        self.appchain_metadata.set(metadata);
     }
     /// Set initial deposit
     pub fn set_initial_deposit(&mut self, deposit: Balance) {
@@ -188,7 +195,10 @@ impl AppchainBasedata {
     pub fn from_old_version(old_version: &OldAppchainBasedata) -> Self {
         Self {
             appchain_id: old_version.appchain_id.clone(),
-            appchain_metadata: old_version.appchain_metadata.clone(),
+            appchain_metadata: LazyOption::new(
+                StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
+                Some(&old_version.appchain_metadata.clone()),
+            ),
             appchain_anchor: old_version.appchain_anchor.clone(),
             appchain_owner: old_version.appchain_owner.clone(),
             register_deposit: old_version.register_deposit,
@@ -197,8 +207,8 @@ impl AppchainBasedata {
             downvote_deposit: old_version.downvote_deposit,
             registered_time: old_version.registered_time,
             go_live_time: old_version.go_live_time,
-            validator_count: 0,
-            total_stake: 0,
+            validator_count: old_version.validator_count,
+            total_stake: old_version.total_stake,
         }
     }
 }
