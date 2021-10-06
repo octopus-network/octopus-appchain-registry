@@ -4,6 +4,7 @@ use crate::AppchainId;
 pub enum StorageKey {
     AppchainIds,
     AppchainBasedatas,
+    AppchainSettings,
     ContractCode,
     UpvoteDeposits,
     DownvoteDeposits,
@@ -18,7 +19,8 @@ impl StorageKey {
         match self {
             StorageKey::AppchainIds => "i".to_string(),
             StorageKey::AppchainBasedatas => "a".to_string(),
-            StorageKey::ContractCode => "contract_code".to_string(),
+            StorageKey::AppchainSettings => "s".to_string(),
+            StorageKey::ContractCode => "cc".to_string(),
             StorageKey::UpvoteDeposits => "u".to_string(),
             StorageKey::DownvoteDeposits => "d".to_string(),
             StorageKey::AppchainMetadata(appchain_id) => format!("{}md", appchain_id),

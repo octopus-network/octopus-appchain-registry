@@ -13,7 +13,7 @@ use std::collections::HashMap;
 
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LookupMap, UnorderedSet};
+use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
 use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
@@ -28,7 +28,7 @@ pub use registry_owner_actions::RegistryOwnerActions;
 pub use registry_status::RegistryStatus;
 pub use storage_key::StorageKey;
 pub use sudo_actions::SudoActions;
-use types::{AppchainId, AppchainMetadata, AppchainState};
+use types::{AppchainId, AppchainMetadata, AppchainState, RegistrySettings};
 pub use voter_actions::VoterActions;
 
 const NO_DEPOSIT: Balance = 0;
@@ -36,9 +36,9 @@ const NO_DEPOSIT: Balance = 0;
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 3_000_000_000_000_000_000_000_000; // 3e24yN, 3N
 const T_GAS: u64 = 1_000_000_000_000;
 const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
-const OCT_DECIMALS_BASE: Balance = 1000_000_000_000_000_000;
+const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 /// Default register deposit amount
-const DEFAULT_REGISTER_DEPOSIT: Balance = 1000;
+const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
 /// Multiple of nano seconds for a second
 const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
 /// Seconds of a day
@@ -92,11 +92,8 @@ pub struct AppchainRegistry {
     contract_code_staging_duration: Duration,
     /// The account of OCT token contract
     oct_token: AccountId,
-    /// The minimum deposit amount for registering an appchain
-    minimum_register_deposit: Balance,
-    /// The reduction percent of voting score of all appchain `inQueue` after each time
-    /// the owner conclude the voting score
-    voting_result_reduction_percent: u16,
+    /// The settings of appchain registry
+    registry_settings: LazyOption<RegistrySettings>,
     /// The set of all appchain ids
     appchain_ids: UnorderedSet<AppchainId>,
     /// The map from appchain id to their basedata
@@ -111,11 +108,6 @@ pub struct AppchainRegistry {
     total_stake: Balance,
     /// The time of the last calling of function `count_voting_score`
     time_of_last_count_voting_score: Timestamp,
-    /// The interval for calling function `count_voting_score`,
-    /// in the interval this function can only be called once.
-    counting_interval_in_seconds: u64,
-    /// The only account that can call function `count_voting_score`
-    operator_of_counting_voting_score: AccountId,
 }
 
 impl Default for AppchainRegistry {
@@ -136,8 +128,10 @@ impl AppchainRegistry {
             contract_code_staging_duration: DEFAULT_CONTRACT_CODE_STAGING_DURATION
                 * NANO_SECONDS_MULTIPLE,
             oct_token,
-            minimum_register_deposit: DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE,
-            voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
+            registry_settings: LazyOption::new(
+                StorageKey::AppchainSettings.into_bytes(),
+                Some(&RegistrySettings::default()),
+            ),
             appchain_ids: UnorderedSet::new(StorageKey::AppchainIds.into_bytes()),
             appchain_basedatas: LookupMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
@@ -145,8 +139,6 @@ impl AppchainRegistry {
             top_appchain_id_in_queue: String::new(),
             total_stake: 0,
             time_of_last_count_voting_score: 0,
-            counting_interval_in_seconds: SECONDS_OF_A_DAY,
-            operator_of_counting_voting_score: env::signer_account_id(),
         }
     }
     // Assert that the contract called by the owner.
@@ -304,7 +296,12 @@ impl AppchainRegistry {
             "Appchain already registered."
         );
         assert!(
-            register_deposit.eq(&self.minimum_register_deposit),
+            register_deposit.eq(&self
+                .registry_settings
+                .get()
+                .unwrap()
+                .minimum_register_deposit
+                .0),
             "Invalid register deposit."
         );
         let appchain_basedata = AppchainBasedata::new(

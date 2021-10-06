@@ -4,6 +4,17 @@ use near_sdk::json_types::U64;
 
 use crate::*;
 
+impl Default for RegistrySettings {
+    fn default() -> Self {
+        Self {
+            minimum_register_deposit: U128::from(DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE),
+            voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
+            counting_interval_in_seconds: U64::from(SECONDS_OF_A_DAY),
+            operator_of_counting_voting_score: env::signer_account_id(),
+        }
+    }
+}
+
 /// The actions related to registry settings
 pub trait RegistrySettingsActions {
     /// Change the value of minimum register deposit
@@ -18,28 +29,38 @@ pub trait RegistrySettingsActions {
 
 #[near_bindgen]
 impl RegistrySettingsActions for AppchainRegistry {
+    //
     fn change_minimum_register_deposit(&mut self, value: U128) {
         self.assert_owner();
-        self.minimum_register_deposit = value.0;
+        let mut registry_settings = self.registry_settings.get().unwrap();
+        registry_settings.minimum_register_deposit = value;
+        self.registry_settings.set(&registry_settings);
     }
-
+    //
     fn change_voting_result_reduction_percent(&mut self, value: U64) {
         self.assert_owner();
         assert!(value.0 <= 100, "Invalid percent value.");
         if let Ok(value) = value.0.try_into() {
-            self.voting_result_reduction_percent = value;
+            let mut registry_settings = self.registry_settings.get().unwrap();
+            registry_settings.voting_result_reduction_percent = value;
+            self.registry_settings.set(&registry_settings);
         }
     }
-
+    //
     fn change_counting_interval_in_seconds(&mut self, value: U64) {
         self.assert_owner();
-        self.counting_interval_in_seconds = value.0;
+        let mut registry_settings = self.registry_settings.get().unwrap();
+        registry_settings.counting_interval_in_seconds = value;
+        self.registry_settings.set(&registry_settings);
     }
-
+    //
     fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId) {
         self.assert_owner();
-        self.operator_of_counting_voting_score.clear();
-        self.operator_of_counting_voting_score
+        let mut registry_settings = self.registry_settings.get().unwrap();
+        registry_settings.operator_of_counting_voting_score.clear();
+        registry_settings
+            .operator_of_counting_voting_score
             .push_str(&operator_account);
+        self.registry_settings.set(&registry_settings);
     }
 }

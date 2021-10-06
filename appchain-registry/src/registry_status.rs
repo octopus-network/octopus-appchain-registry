@@ -7,12 +7,8 @@ use crate::*;
 pub trait RegistryStatus {
     /// Get account id of OCT token
     fn get_oct_token(&self) -> AccountId;
-    /// Get minimum register deposit
-    fn get_minimum_register_deposit(&self) -> U128;
-    /// Get the value of reduction percent for voting result of all appchains still in queue
-    fn get_voting_result_reduction_percent(&self) -> U64;
-    /// Get the counting interval for voting score
-    fn get_counting_interval_in_seconds(&self) -> U64;
+    /// Get registry settings
+    fn get_registry_settings(&self) -> RegistrySettings;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchain ids
@@ -41,30 +37,23 @@ pub trait RegistryStatus {
 
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
+    //
     fn get_oct_token(&self) -> AccountId {
         self.oct_token.clone()
     }
-
-    fn get_minimum_register_deposit(&self) -> U128 {
-        self.minimum_register_deposit.into()
+    //
+    fn get_registry_settings(&self) -> RegistrySettings {
+        self.registry_settings.get().unwrap()
     }
-
-    fn get_voting_result_reduction_percent(&self) -> U64 {
-        U64::from(self.voting_result_reduction_percent as u64)
-    }
-
-    fn get_counting_interval_in_seconds(&self) -> U64 {
-        U64::from(self.counting_interval_in_seconds)
-    }
-
+    //
     fn get_total_stake(&self) -> U128 {
         self.total_stake.into()
     }
-
+    //
     fn get_appchain_ids(&self) -> Vec<String> {
         self.appchain_ids.to_vec()
     }
-
+    //
     fn get_appchains_with_state_of(
         &self,
         appchain_state: Option<Vec<AppchainState>>,
@@ -118,7 +107,7 @@ impl RegistryStatus for AppchainRegistry {
             results
         }
     }
-
+    //
     fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64 {
         let mut count: u64 = 0;
         for id in self.appchain_ids.to_vec() {
@@ -134,19 +123,19 @@ impl RegistryStatus for AppchainRegistry {
         }
         count.into()
     }
-
+    //
     fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus {
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.status()
     }
-
+    //
     fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128 {
         match self.upvote_deposits.get(&(appchain_id, account_id)) {
             Some(value) => value.into(),
             None => 0.into(),
         }
     }
-
+    //
     fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128 {
         match self.downvote_deposits.get(&(appchain_id, account_id)) {
             Some(value) => value.into(),

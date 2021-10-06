@@ -2,7 +2,7 @@ use crate::*;
 use near_contract_standards::upgrade::Upgradable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap};
-use near_sdk::json_types::WrappedDuration;
+use near_sdk::json_types::{WrappedDuration, U64};
 use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, Promise, PublicKey, Timestamp};
 
 #[derive(BorshDeserialize, BorshSerialize)]
@@ -52,7 +52,7 @@ pub struct OldAppchainRegistry {
     /// The set of all appchain ids
     appchain_ids: UnorderedSet<AppchainId>,
     /// The map from appchain id to their basedata
-    appchain_basedatas: LookupMap<AppchainId, OldAppchainBasedata>,
+    appchain_basedatas: LookupMap<AppchainId, AppchainBasedata>,
     /// The map from pair (appchain id, account id) to their upvote deposit
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     /// The map from pair (appchain id, account id) to their downvote deposit
@@ -117,8 +117,6 @@ impl AppchainRegistry {
             "Can only be called by the owner"
         );
 
-        let appchain_ids = old_contract.appchain_ids.to_vec();
-
         // Create the new contract using the data from the old contract.
         let new_appchain_registry = AppchainRegistry {
             owner: old_contract.owner.clone(),
@@ -126,30 +124,26 @@ impl AppchainRegistry {
             contract_code_staging_timestamp: old_contract.contract_code_staging_timestamp,
             contract_code_staging_duration: old_contract.contract_code_staging_duration,
             oct_token: old_contract.oct_token,
-            minimum_register_deposit: old_contract.minimum_register_deposit,
-            voting_result_reduction_percent: old_contract.voting_result_reduction_percent,
+            registry_settings: LazyOption::new(
+                StorageKey::AppchainSettings.into_bytes(),
+                Some(&RegistrySettings {
+                    minimum_register_deposit: U128::from(old_contract.minimum_register_deposit),
+                    voting_result_reduction_percent: old_contract.voting_result_reduction_percent,
+                    counting_interval_in_seconds: U64::from(
+                        old_contract.counting_interval_in_seconds,
+                    ),
+                    operator_of_counting_voting_score: old_contract
+                        .operator_of_counting_voting_score,
+                }),
+            ),
             appchain_ids: old_contract.appchain_ids,
-            appchain_basedatas: LookupMap::new(StorageKey::AppchainBasedatas.into_bytes()),
+            appchain_basedatas: old_contract.appchain_basedatas,
             upvote_deposits: old_contract.upvote_deposits,
             downvote_deposits: old_contract.downvote_deposits,
             top_appchain_id_in_queue: old_contract.top_appchain_id_in_queue,
             total_stake: old_contract.total_stake,
             time_of_last_count_voting_score: old_contract.time_of_last_count_voting_score,
-            counting_interval_in_seconds: old_contract.counting_interval_in_seconds,
-            operator_of_counting_voting_score: old_contract.operator_of_counting_voting_score,
         };
-
-        for appchain_id in appchain_ids {
-            if let Some(old_appchain_basedata) = old_contract.appchain_basedatas.get(&appchain_id) {
-                let mut appchain_basedata = new_appchain_registry
-                    .appchain_basedatas
-                    .get(&appchain_id)
-                    .unwrap();
-                appchain_basedata.set_metadata(&AppchainMetadata::from_old_version(
-                    &old_appchain_basedata.appchain_metadata.get().unwrap(),
-                ));
-            }
-        }
 
         new_appchain_registry
     }

@@ -1,13 +1,17 @@
-use appchain_registry::types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder};
+use appchain_registry::types::{
+    AppchainSortingField, AppchainState, AppchainStatus, RegistrySettings, SortingOrder,
+};
 use appchain_registry::AppchainRegistryContract;
 
 use near_sdk::json_types::U128;
 use near_sdk_sim::{view, ContractAccount, UserAccount};
 
-pub fn get_minimum_register_deposit(registry: &ContractAccount<AppchainRegistryContract>) -> U128 {
-    let view_result = view!(registry.get_minimum_register_deposit());
+pub fn get_registry_settings(
+    registry: &ContractAccount<AppchainRegistryContract>,
+) -> RegistrySettings {
+    let view_result = view!(registry.get_registry_settings());
     assert!(view_result.is_ok());
-    view_result.unwrap_json::<U128>()
+    view_result.unwrap_json::<RegistrySettings>()
 }
 
 pub fn print_appchains(

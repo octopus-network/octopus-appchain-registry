@@ -6,6 +6,21 @@ use crate::*;
 
 pub type AppchainId = String;
 
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct RegistrySettings {
+    /// The minimum deposit amount for registering an appchain
+    pub minimum_register_deposit: U128,
+    /// The reduction percent of voting score of all appchain `inQueue` after each time
+    /// the owner conclude the voting score
+    pub voting_result_reduction_percent: u16,
+    /// The interval for calling function `count_voting_score`,
+    /// in the interval this function can only be called once.
+    pub counting_interval_in_seconds: U64,
+    /// The only account that can call function `count_voting_score`
+    pub operator_of_counting_voting_score: AccountId,
+}
+
 /// Appchain metadata
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]

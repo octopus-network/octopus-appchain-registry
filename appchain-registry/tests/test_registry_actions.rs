@@ -27,7 +27,9 @@ fn test_case1() {
     let (root, oct_token, registry, users) = common::init(total_supply);
     //
     assert_eq!(
-        registry_viewer::get_minimum_register_deposit(&registry).0,
+        registry_viewer::get_registry_settings(&registry)
+            .minimum_register_deposit
+            .0,
         common::to_oct_amount(1000)
     );
     let amount = common::to_oct_amount(1200);
@@ -37,7 +39,9 @@ fn test_case1() {
     let outcome = registry_owner_action::change_minimum_register_deposit(&root, &registry, amount);
     outcome.assert_success();
     assert_eq!(
-        registry_viewer::get_minimum_register_deposit(&registry).0,
+        registry_viewer::get_registry_settings(&registry)
+            .minimum_register_deposit
+            .0,
         common::to_oct_amount(1200)
     );
     //

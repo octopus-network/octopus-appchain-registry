@@ -26,3 +26,10 @@
 
 * Add fields `preminted_wrapped_appchain_token`, `ido_amount_of_wrapped_appchain_token` and `initial_era_reward` to `AppchainMetadata`.
 * Add params `preminted_wrapped_appchain_token`, `ido_amount_of_wrapped_appchain_token` and `initial_era_reward` to function `update_appchain_metadata` of `RegistryOwnerActions`.
+
+## 20211006
+
+* Add checking condition to sudo action `delete_appchain`. Now, if the appchain is still holding deposit(s) of upvote or downvote, this function will NOT remove it.
+* Add sudo action `clear_appchains`. This action can remove all appchain basedata by calling function `delete_appchain` with all registered appchain id(s).
+* Add view function `get_registry_settings` to return all registry settings at a time.
+* Remove view function `get_minimum_register_deposit`, `get_voting_result_reduction_percent` and `get_counting_interval_in_seconds` (as they are covered by function `get_registry_settings`).

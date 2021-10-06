@@ -135,16 +135,17 @@ impl RegistryOwnerActions for AppchainRegistry {
     }
 
     fn count_voting_score(&mut self) {
+        let registry_settings = self.registry_settings.get().unwrap();
         assert_eq!(
             env::predecessor_account_id(),
-            self.operator_of_counting_voting_score,
+            registry_settings.operator_of_counting_voting_score,
             "Only certain operator can call this function."
         );
         assert!(
             env::block_timestamp() - self.time_of_last_count_voting_score
-                > self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE,
+                > registry_settings.counting_interval_in_seconds.0 * NANO_SECONDS_MULTIPLE,
             "Count voting score can only be performed once in every {} seconds.",
-            self.counting_interval_in_seconds
+            registry_settings.counting_interval_in_seconds.0
         );
         assert!(
             self.appchain_ids.len() > 0,
@@ -170,7 +171,7 @@ impl RegistryOwnerActions for AppchainRegistry {
         self.top_appchain_id_in_queue.push_str(&top_appchain_id);
         self.time_of_last_count_voting_score = env::block_timestamp()
             - (env::block_timestamp()
-                % (self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE));
+                % (registry_settings.counting_interval_in_seconds.0 * NANO_SECONDS_MULTIPLE));
     }
 
     fn conclude_voting_score(&mut self) {
@@ -190,6 +191,7 @@ impl RegistryOwnerActions for AppchainRegistry {
         top_appchain_basedata.set_anchor_account(&sub_account_id);
         self.appchain_basedatas
             .insert(top_appchain_basedata.id(), &top_appchain_basedata);
+        let registry_settings = self.registry_settings.get().unwrap();
         // Reduce the voting score of all appchains in queue by the given percent
         for id in self.appchain_ids.to_vec() {
             let mut appchain_basedata = self.get_appchain_basedata(&id);
@@ -199,8 +201,9 @@ impl RegistryOwnerActions for AppchainRegistry {
                     self.appchain_basedatas
                         .insert(appchain_basedata.id(), &appchain_basedata);
                 } else {
-                    appchain_basedata
-                        .reduce_voting_score_by_percent(self.voting_result_reduction_percent);
+                    appchain_basedata.reduce_voting_score_by_percent(
+                        registry_settings.voting_result_reduction_percent,
+                    );
                 }
             }
         }
