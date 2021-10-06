@@ -204,10 +204,6 @@ impl RegistryOwnerActions for AppchainRegistry {
                 }
             }
         }
-        // Deploy contract of anchor of the appchain with the largest voting score, and initialize it.
-        env::storage_remove(
-            &StorageKey::AppchainAnchorCode(self.top_appchain_id_in_queue.clone()).into_bytes(),
-        );
         self.top_appchain_id_in_queue.clear();
         Promise::new(sub_account_id)
             .create_account()
@@ -237,8 +233,7 @@ impl RegistryOwnerActions for AppchainRegistry {
                 .as_bytes(),
             );
         }
-        self.appchain_ids.remove(&appchain_id);
-        self.appchain_basedatas.remove(&appchain_id);
+        self.internal_remove_appchain(&appchain_id);
         env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
     }
 }

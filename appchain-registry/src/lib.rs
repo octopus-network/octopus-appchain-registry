@@ -348,3 +348,14 @@ impl Ownable for AppchainRegistry {
         self.owner = owner;
     }
 }
+
+impl AppchainRegistry {
+    ///
+    fn internal_remove_appchain(&mut self, appchain_id: &AppchainId) {
+        env::storage_remove(&StorageKey::AppchainAnchorCode(appchain_id.clone()).into_bytes());
+        env::storage_remove(&StorageKey::AppchainMetadata(appchain_id.clone()).into_bytes());
+        env::storage_remove(&StorageKey::AppchainVotingScore(appchain_id.clone()).into_bytes());
+        self.appchain_ids.remove(&appchain_id);
+        self.appchain_basedatas.remove(&appchain_id);
+    }
+}
