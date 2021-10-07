@@ -60,8 +60,14 @@ Contents:
   * `upvote deposit`: The total amount of OCT token which the `voter` (s) deposited to this contract for upvoting an appchain.
   * `downvote deposit`: The total amount of OCT token which the `voter` (s) deposited to this contract for downvoting an appchain.
   * `voting score`: A value representing the result of appchain voting. It is calculated by the total upvote and downvote deposit for an appchain.
-* `minimum register deposit`: The minimum amount of `register deposit` which is specified by Octopus DAO.
-* `voting result reduction percent`: The value of reduction percent for voting result of all appchains still in queue, after an appchain is selected for `staging`.
+* `registry settings`: A set of settings for this contract, which contains the following fields:
+  * `minimum register deposit`: The minimum amount of `register deposit` which is specified by Octopus DAO.
+  * `voting result reduction percent`: The value of reduction percent for voting result of all appchains still in queue, after an appchain is selected for `staging`.
+  * `counting_interval_in_seconds`: The time interval of the frequency of action `count voting score` of appchains `inQueue`.
+  * `operator_of_counting_voting_score`: The account id that can perform action `count voting score`.
+* `wrapped appchain token`: The wrapped token of the appchain native token, which is managed by a contract in NEAR protocol.
+* `era`: A certain period in the corresponding appchain that the reward distribution and validator set switching need to be performed.
+* `era reward`: The total reward (in unit of `wrapped appchain token`) of an ended era.
 * `voter`: Who can `upvote` or `downvote` an appchain when its `appchain state` is `inQueue`.
 * `validator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to be the validator of an appchain after the appchain goes `booting` state.
 * `delegator`: Who can deposit a certain amount of OCT token for an appchain when its `appchain state` is `staging`, to indicate that he/she wants to delegate his/her voting rights to an validator of an appchain after the appchain goes `booting` state.
@@ -81,11 +87,8 @@ pub struct AppchainRegistry {
     contract_code_staging_duration: Duration,
     /// The account of OCT token contract
     oct_token: AccountId,
-    /// The minimum deposit amount for registering an appchain
-    minimum_register_deposit: Balance,
-    /// The reduction percent of voting score of all appchain `inQueue` after each time
-    /// the owner conclude the voting score
-    voting_result_reduction_percent: u16,
+    /// The settings of appchain registry
+    registry_settings: LazyOption<RegistrySettings>,
     /// The set of all appchain ids
     appchain_ids: UnorderedSet<AppchainId>,
     /// The map from appchain id to their basedata
@@ -100,17 +103,25 @@ pub struct AppchainRegistry {
     total_stake: Balance,
     /// The time of the last calling of function `count_voting_score`
     time_of_last_count_voting_score: Timestamp,
-    /// The interval for calling function `count_voting_score`,
-    /// in the interval this function can only be called once.
-    counting_interval_in_seconds: u64,
-    /// The only account that can call function `count_voting_score`
-    operator_of_counting_voting_score: AccountId,
 }
 ```
 
 ## Custom Types
 
 ```rust
+pub struct RegistrySettings {
+    /// The minimum deposit amount for registering an appchain
+    pub minimum_register_deposit: U128,
+    /// The reduction percent of voting score of all appchain `inQueue` after each time
+    /// the owner conclude the voting score
+    pub voting_result_reduction_percent: u16,
+    /// The interval for calling function `count_voting_score`,
+    /// in the interval this function can only be called once.
+    pub counting_interval_in_seconds: U64,
+    /// The only account that can call function `count_voting_score`
+    pub operator_of_counting_voting_score: AccountId,
+}
+
 /// Appchain metadata
 pub struct AppchainMetadata {
     pub website_url: String,
@@ -118,6 +129,9 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub preminted_wrapped_appchain_token: U128,
+    pub ido_amount_of_wrapped_appchain_token: U128,
+    pub initial_era_reward: U128,
     pub custom_metadata: HashMap<String, String>,
 }
 
@@ -200,7 +214,7 @@ Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-The `self.minimum_register_deposit` is set to `value`.
+The `registry_settings.minimum_register_deposit` is set to `value`.
 
 ### Change reduction percent of voting result
 
@@ -213,7 +227,7 @@ Qualification of this action:
 * The `sender` must be the `owner`.
 * The `value` must be not smaller than 0 and not bigger than 100.
 
-The `self.voting_result_reduction_percent` is set to `value`.
+The `registry_settings.voting_result_reduction_percent` is set to `value`.
 
 ### Change the interval of counting voting score
 
@@ -225,7 +239,7 @@ Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-The `self.counting_interval_in_seconds` is set to `value`.
+The `registry_settings.counting_interval_in_seconds` is set to `value`.
 
 ### Change operator account of counting voting score
 
@@ -237,7 +251,7 @@ Qualification of this action:
 
 * The `sender` must be the `owner`.
 
-The `self.operator_of_counting_voting_score` is set to `operator_account`.
+The `registry_settings.operator_of_counting_voting_score` is set to `operator_account`.
 
 ## Appchain owner actions
 
@@ -269,12 +283,15 @@ This action needs the following parameters:
 * `github_release`: The release vesion of the github repository of the appchain.
 * `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
+* `preminted_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
+* `ido_amount_of_wrapped_appchain_token`: The IDO amount of `wrapped appchain token`.
+* `initial_era_reward`: The initial `era reward` when the appchain go live.
 * `custom_metadata`: The extra custom metadata organized by a key-value map.
 
 Qualification of this action:
 
 * The `appchain_id` must NOT be registered in this contract.
-* The amount of deposit must be equal to `self.minimum_register_deposit`.
+* The amount of deposit must be equal to `registry_settings.minimum_register_deposit`.
 
 Processing steps:
 
@@ -329,6 +346,9 @@ pub trait RegistryOwnerActions {
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
+        preminted_wrapped_appchain_token: Option<U128>,
+        ido_amount_of_wrapped_appchain_token: Option<U128>,
+        initial_era_reward: Option<U128>,
         custom_metadata: Option<HashMap<String, String>>,
     );
     /// Start auditing of an appchain
@@ -356,6 +376,9 @@ This action needs the following parameters:
 * `github_release`: The release vesion of the github repository of the appchain.
 * `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
+* `preminted_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
+* `ido_amount_of_wrapped_appchain_token`: The IDO amount of `wrapped appchain token`.
+* `initial_era_reward`: The initial `era reward` when the appchain go live.
 * `custom_metadata`: The extra custom metadata organized by a key-value map.
 
 Qualification of this action:
@@ -415,10 +438,12 @@ Generate log: `Appchain <appchain_id> is rejected.`
 
 ### Count voting score
 
+This action will calculate the `voting score` of all appchains `inQueue`. This action can only be performed once in each period of `registry_settings.counting_interval_in_seconds`.
+
 Qualification of this action:
 
-* The `sender` must be `self.operator_of_counting_voting_score`.
-* The value of `env::block_timestamp() - self.time_of_last_count_voting_score` must be bigger than `self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE`.
+* The `sender` must be `registry_settings.operator_of_counting_voting_score`.
+* The value of `env::block_timestamp() - self.time_of_last_count_voting_score` must be bigger than `registry_settings.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE`.
 
 Processing steps:
 
@@ -428,9 +453,11 @@ Processing steps:
 voting_score_of_an_appchain += sum(upvote_amount_from_a_voter_of_the_appchain) - sum(downvote_amount_from_a_voter_of_the_appchain);
 ```
 
-* The `self.time_of_last_count_voting_score` is set to `env::block_timestamp() - (env::block_timestamp() % (self.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE)`.
+* The `self.time_of_last_count_voting_score` is set to `env::block_timestamp() - (env::block_timestamp() % (registry_settings.counting_interval_in_seconds * NANO_SECONDS_MULTIPLE)`.
 
 ### Conclude voting score
+
+This action will select the appchain with the biggest `voting score` to become the one that will goes to `staging`, and reduce the `voting score` of all appchains that are still `inQueue` by a certain percentage.
 
 Qualification of this action:
 
@@ -443,7 +470,7 @@ Processing steps:
   * Transfer a certain amount of NEAR token to account `<appchain_id>.<account id of this contract>` for storage deposit.
   * Add a new full access key to the new `appchain anchor` for the `owner`.
   * Store the account of new `appchain anchor` for the appchain in this contract.
-* The `voting score` of all appchains with state `inQueue` will be reduced by value of `self.voting_result_reduction_percent`.
+* The `voting score` of all appchains with state `inQueue` will be reduced by value of `registry_settings.voting_result_reduction_percent`.
 * If the `voting score` of an appchain goes to negative number, the state of the appchain will be set to `dead`.
 * Generate log: `Appchain <appchain_id> goes staging at <account>.`
 
@@ -568,7 +595,7 @@ The callback function `ft_on_transfer` needs the following parameters:
 
 If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` with the following patterns:
 
-* `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>`: Perform [Register an appchain](#register-an-appchain).
+* `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>,<preminted_wrapped_appchain_token>,<ido_amount_of_wrapped_appchain_token>,<initial_era_reward>`: Perform [Register an appchain](#register-an-appchain).
 * `upvote_appchain,<appchain_id>`: Perform [Upvote for an appchain](#upvote-for-an-appchain).
 * `downvote_appchain,<appchain_id>`: Perform [Downvote for an appchain](#downvote-for-an-appchain).
 * other cases: Throws an error: `Invalid deposit <amount> of OCT token from <sender_id>.`.
@@ -650,16 +677,15 @@ The interface of registry status is defined as:
 ```rust
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
-    /// Get minimum register deposit
-    fn get_minimum_register_deposit(&self) -> U128;
-    /// Get the value of reduction percent for voting result of all appchains still in queue
-    fn get_voting_result_reduction_percent(&self) -> U64;
-    /// Get the counting interval for voting score
-    fn get_counting_interval_in_seconds(&self) -> U64;
+    /// Get account id of OCT token
+    fn get_oct_token(&self) -> AccountId;
+    /// Get registry settings
+    fn get_registry_settings(&self) -> RegistrySettings;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
+    /// Get appchain ids
+    fn get_appchain_ids(&self) -> Vec<String>;
     /// Get appchains whose state is equal to the given AppchainState
-    ///
     /// If param `appchain_state` is `Option::None`, return all appchains in registry
     fn get_appchains_with_state_of(
         &self,
