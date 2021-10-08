@@ -110,6 +110,29 @@ pub struct AppchainRegistry {
     time_of_last_count_voting_score: Timestamp,
 }
 
+#[derive(Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+enum RegistryDepositMessage {
+    RegisterAppchain {
+        appchain_id: String,
+        website_url: String,
+        github_address: String,
+        github_release: String,
+        commit_id: String,
+        contact_email: String,
+        preminted_wrapped_appchain_token: U128,
+        ido_amount_of_wrapped_appchain_token: U128,
+        initial_era_reward: U128,
+        custom_metadata: HashMap<String, String>,
+    },
+    UpvoteAppchain {
+        appchain_id: String,
+    },
+    DownvoteAppchain {
+        appchain_id: String,
+    },
+}
+
 impl Default for AppchainRegistry {
     fn default() -> Self {
         env::panic(b"The contract needs be initialized before use.")
@@ -195,37 +218,47 @@ impl AppchainRegistry {
             sender_id,
         );
 
-        let msg_vec: Vec<String> = msg.split(",").map(|s| s.to_string()).collect();
-
-        match msg_vec.get(0).unwrap().as_str() {
-            "register_appchain" => {
-                assert_eq!(
-                    msg_vec.len(),
-                    10,
-                    "Invalid params for `register_appchain`. Return deposit."
+        let deposit_message: RegistryDepositMessage = match serde_json::from_str(msg.as_str()) {
+            Ok(msg) => msg,
+            Err(_) => {
+                log!(
+                    "Invalid msg '{}' attached in `ft_transfer_call`. Return deposit.",
+                    msg
                 );
+                return PromiseOrValue::Value(amount);
+            }
+        };
+
+        match deposit_message {
+            RegistryDepositMessage::RegisterAppchain {
+                appchain_id,
+                website_url,
+                github_address,
+                github_release,
+                commit_id,
+                contact_email,
+                preminted_wrapped_appchain_token,
+                ido_amount_of_wrapped_appchain_token,
+                initial_era_reward,
+                custom_metadata,
+            } => {
                 self.register_appchain(
                     sender_id,
-                    msg_vec.get(1).unwrap().to_string(),
+                    appchain_id,
                     amount.0,
-                    msg_vec.get(2).unwrap().to_string(),
-                    msg_vec.get(3).unwrap().to_string(),
-                    msg_vec.get(4).unwrap().to_string(),
-                    msg_vec.get(5).unwrap().to_string(),
-                    msg_vec.get(6).unwrap().to_string(),
-                    serde_json::from_str(msg_vec.get(7).unwrap().as_str()).unwrap(),
-                    serde_json::from_str(msg_vec.get(8).unwrap().as_str()).unwrap(),
-                    serde_json::from_str(msg_vec.get(9).unwrap().as_str()).unwrap(),
+                    website_url,
+                    github_address,
+                    github_release,
+                    commit_id,
+                    contact_email,
+                    preminted_wrapped_appchain_token,
+                    ido_amount_of_wrapped_appchain_token,
+                    initial_era_reward,
+                    custom_metadata,
                 );
                 PromiseOrValue::Value(0.into())
             }
-            "upvote_appchain" => {
-                assert_eq!(
-                    msg_vec.len(),
-                    2,
-                    "Invalid params for `upvote_appchain`. Return deposit."
-                );
-                let appchain_id = msg_vec.get(1).unwrap().to_string();
+            RegistryDepositMessage::UpvoteAppchain { appchain_id } => {
                 let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
                 assert_eq!(
                     &appchain_basedata.state(),
@@ -243,13 +276,7 @@ impl AppchainRegistry {
                     .insert(&(appchain_id, sender_id), &(voter_upvote + amount.0));
                 PromiseOrValue::Value(0.into())
             }
-            "downvote_appchain" => {
-                assert_eq!(
-                    msg_vec.len(),
-                    2,
-                    "Invalid params for `downvote_appchain`. Return deposit."
-                );
-                let appchain_id = msg_vec.get(1).unwrap().to_string();
+            RegistryDepositMessage::DownvoteAppchain { appchain_id } => {
                 let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
                 assert_eq!(
                     &appchain_basedata.state(),
@@ -267,13 +294,6 @@ impl AppchainRegistry {
                     .insert(&(appchain_id, sender_id), &(voter_downvote + amount.0));
                 PromiseOrValue::Value(0.into())
             }
-            _ => {
-                log!(
-                    "Invalid msg '{}' attached in `ft_transfer_call`. Return deposit.",
-                    msg
-                );
-                PromiseOrValue::Value(amount)
-            }
         }
     }
     //
@@ -287,9 +307,10 @@ impl AppchainRegistry {
         github_release: String,
         commit_id: String,
         contact_email: String,
-        preminted_amount: U128,
-        ido_amount: U128,
+        preminted_wrapped_appchain_token: U128,
+        ido_amount_of_wrapped_appchain_token: U128,
         initial_era_reward: U128,
+        custom_metadata: HashMap<String, String>,
     ) {
         assert!(
             self.appchain_basedatas.get(&appchain_id).is_none(),
@@ -312,10 +333,10 @@ impl AppchainRegistry {
                 github_release,
                 commit_id,
                 contact_email,
-                preminted_wrapped_appchain_token: preminted_amount,
-                ido_amount_of_wrapped_appchain_token: ido_amount,
+                preminted_wrapped_appchain_token,
+                ido_amount_of_wrapped_appchain_token,
                 initial_era_reward,
-                custom_metadata: HashMap::new(),
+                custom_metadata,
             },
             sender_id,
             register_deposit,

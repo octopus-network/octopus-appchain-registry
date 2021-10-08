@@ -25,22 +25,8 @@ pub fn register_appchain(
         signer,
         &registry.user_account,
         amount,
-        format!("register_appchain,{},website_url_string,github_address_string,github_release_string,commit_id,email_string,\"10000000000000000000000000\",\"1000000000000000000000000\",\"100000000000000000000\"", appchain_id),
+        format!("{{\"RegisterAppchain\":{{\"appchain_id\":\"{}\",\"website_url\":\"http://ddfs.dsdfs\",\"github_address\":\"https://jldfs.yoasdfasd\",\"github_release\":\"v1.0.0\",\"commit_id\":\"commit_id\",\"contact_email\":\"joe@lksdf.com\",\"preminted_wrapped_appchain_token\":\"10000000\",\"ido_amount_of_wrapped_appchain_token\":\"1000000\",\"initial_era_reward\":\"100\",\"custom_metadata\":{{\"key1\":\"value1\"}}}}}}", appchain_id),
         oct_token)
-}
-
-pub fn update_appchain_custom_metadata(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    appchain_id: &String,
-    custom_metadata: &HashMap<String, String>,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.update_appchain_custom_metadata(appchain_id.clone(), custom_metadata.clone())
-    );
-    common::print_outcome_result("update_appchain_custom_metadata", &outcome);
-    outcome
 }
 
 pub fn transfer_appchain_ownership(
