@@ -25,7 +25,7 @@ pub fn register_appchain(
         signer,
         &registry.user_account,
         amount,
-        format!("{{\"RegisterAppchain\":{{\"appchain_id\":\"{}\",\"website_url\":\"http://ddfs.dsdfs\",\"github_address\":\"https://jldfs.yoasdfasd\",\"github_release\":\"v1.0.0\",\"commit_id\":\"commit_id\",\"contact_email\":\"joe@lksdf.com\",\"preminted_wrapped_appchain_token\":\"10000000\",\"ido_amount_of_wrapped_appchain_token\":\"1000000\",\"initial_era_reward\":\"100\",\"custom_metadata\":{{\"key1\":\"value1\"}}}}}}", appchain_id),
+        format!("{{\"RegisterAppchain\":{{\"appchain_id\":\"{}\",\"website_url\":\"http://ddfs.dsdfs\",\"github_address\":\"https://jldfs.yoasdfasd\",\"github_release\":\"v1.0.0\",\"commit_id\":\"commit_id\",\"contact_email\":\"joe@lksdf.com\",\"premined_wrapped_appchain_token\":\"10000000\",\"ido_amount_of_wrapped_appchain_token\":\"1000000\",\"initial_era_reward\":\"100\",\"custom_metadata\":{{\"key1\":\"value1\"}}}}}}", appchain_id),
         oct_token)
 }
 

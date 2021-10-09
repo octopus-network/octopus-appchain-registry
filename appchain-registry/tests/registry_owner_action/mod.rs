@@ -15,7 +15,7 @@ pub fn update_appchain_metadata(
     github_release: Option<String>,
     commit_id: Option<String>,
     contact_email: Option<String>,
-    preminted_wrapped_appchain_token: Option<U128>,
+    premined_wrapped_appchain_token: Option<U128>,
     ido_amount_of_wrapped_appchain_token: Option<U128>,
     initial_era_reward: Option<U128>,
     custom_metadata: Option<HashMap<String, String>>,
@@ -29,7 +29,7 @@ pub fn update_appchain_metadata(
             github_release,
             commit_id,
             contact_email,
-            preminted_wrapped_appchain_token,
+            premined_wrapped_appchain_token,
             ido_amount_of_wrapped_appchain_token,
             initial_era_reward,
             custom_metadata
