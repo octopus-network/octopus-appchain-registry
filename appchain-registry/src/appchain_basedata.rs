@@ -34,9 +34,9 @@ impl AppchainMetadata {
             github_release: old_version.github_release.clone(),
             commit_id: old_version.commit_id.clone(),
             contact_email: old_version.contact_email.clone(),
-            preminted_wrapped_appchain_token: 0.into(),
-            ido_amount_of_wrapped_appchain_token: 0.into(),
-            initial_era_reward: 0.into(),
+            premined_wrapped_appchain_token: old_version.preminted_wrapped_appchain_token,
+            ido_amount_of_wrapped_appchain_token: old_version.ido_amount_of_wrapped_appchain_token,
+            initial_era_reward: old_version.initial_era_reward,
             custom_metadata: old_version.custom_metadata.clone(),
         }
     }

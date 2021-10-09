@@ -119,22 +119,6 @@ fn test_case1() {
     let mut custom_metadata: HashMap<String, String> = HashMap::new();
     custom_metadata.insert("key1".to_string(), "value1".to_string());
     custom_metadata.insert("key2".to_string(), "value2".to_string());
-    let outcome = appchain_owner_action::update_appchain_custom_metadata(
-        &users[0],
-        &registry,
-        &appchain_id,
-        &custom_metadata,
-    );
-    assert!(!outcome.is_ok());
-    let outcome = appchain_owner_action::update_appchain_custom_metadata(
-        &users[1],
-        &registry,
-        &appchain_id,
-        &custom_metadata,
-    );
-    outcome.assert_success();
-    let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id);
-    assert_eq!(appchain.appchain_metadata.custom_metadata.keys().len(), 2);
     //
     custom_metadata.clear();
     custom_metadata.insert("key3".to_string(), "value3".to_string());

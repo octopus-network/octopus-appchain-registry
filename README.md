@@ -129,7 +129,7 @@ pub struct AppchainMetadata {
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
-    pub preminted_wrapped_appchain_token: U128,
+    pub premined_wrapped_appchain_token: U128,
     pub ido_amount_of_wrapped_appchain_token: U128,
     pub initial_era_reward: U128,
     pub custom_metadata: HashMap<String, String>,
@@ -283,7 +283,7 @@ This action needs the following parameters:
 * `github_release`: The release vesion of the github repository of the appchain.
 * `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
-* `preminted_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
+* `premined_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
 * `ido_amount_of_wrapped_appchain_token`: The IDO amount of `wrapped appchain token`.
 * `initial_era_reward`: The initial `era reward` when the appchain go live.
 * `custom_metadata`: The extra custom metadata organized by a key-value map.
@@ -346,7 +346,7 @@ pub trait RegistryOwnerActions {
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
-        preminted_wrapped_appchain_token: Option<U128>,
+        premined_wrapped_appchain_token: Option<U128>,
         ido_amount_of_wrapped_appchain_token: Option<U128>,
         initial_era_reward: Option<U128>,
         custom_metadata: Option<HashMap<String, String>>,
@@ -376,7 +376,7 @@ This action needs the following parameters:
 * `github_release`: The release vesion of the github repository of the appchain.
 * `commit_id`: The commit id of source code of the github repository of the appchain.
 * `contact_email`: The email of the contact of the appchain project, which is used for communidating with the appchain team.
-* `preminted_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
+* `premined_wrapped_appchain_token`: The pre-minted amount of `wrapped appchain token`.
 * `ido_amount_of_wrapped_appchain_token`: The IDO amount of `wrapped appchain token`.
 * `initial_era_reward`: The initial `era reward` when the appchain go live.
 * `custom_metadata`: The extra custom metadata organized by a key-value map.
@@ -593,12 +593,37 @@ The callback function `ft_on_transfer` needs the following parameters:
 * `amount`: The amount of the transfer.
 * `msg`: The message attached to the transfer, which indicates the purpose of the deposit.
 
-If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` with the following patterns:
+We define the message format which will be attached to this function as the param `msg` as:
 
-* `register_appchain,<appchain_id>,<website_url>,<github_address>,<github_release>,<commit_id>,<contact_email>,<preminted_wrapped_appchain_token>,<ido_amount_of_wrapped_appchain_token>,<initial_era_reward>`: Perform [Register an appchain](#register-an-appchain).
-* `upvote_appchain,<appchain_id>`: Perform [Upvote for an appchain](#upvote-for-an-appchain).
-* `downvote_appchain,<appchain_id>`: Perform [Downvote for an appchain](#downvote-for-an-appchain).
-* other cases: Throws an error: `Invalid deposit <amount> of OCT token from <sender_id>.`.
+```rust
+enum RegistryDepositMessage {
+    RegisterAppchain {
+        appchain_id: String,
+        website_url: String,
+        github_address: String,
+        github_release: String,
+        commit_id: String,
+        contact_email: String,
+        premined_wrapped_appchain_token: U128,
+        ido_amount_of_wrapped_appchain_token: U128,
+        initial_era_reward: U128,
+        custom_metadata: HashMap<String, String>,
+    },
+    UpvoteAppchain {
+        appchain_id: String,
+    },
+    DownvoteAppchain {
+        appchain_id: String,
+    },
+}
+```
+
+If the caller of this callback (`env::predecessor_account_id()`) is `oct_token_contract` which is initialized at construction time of this contract, parse `msg` as `RegistryDepositMessage`:
+
+* `RegistryDepositMessage::RegisterAppchain`: Perform [Register an appchain](#register-an-appchain).
+* `RegistryDepositMessage::UpvoteAppchain`: Perform [Upvote for an appchain](#upvote-for-an-appchain).
+* `RegistryDepositMessage::UpvoteAppchain`: Perform [Downvote for an appchain](#downvote-for-an-appchain).
+* other cases: Throws an error: `Invalid msg '<msg>' attached in 'ft_transfer_call'. Return deposit.`.
 
 If the caller of this callback (`env::predecessor_account_id()`) is NOT `oct_token_contract`, throws an error: `Invalid deposit <amount> of unknown NEP-141 asset from <sender_id>.`.
 

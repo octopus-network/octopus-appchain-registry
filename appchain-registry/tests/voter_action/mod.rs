@@ -15,7 +15,10 @@ pub fn upvote_appchain(
         signer,
         &registry.user_account,
         amount,
-        format!("upvote_appchain,{}", appchain_id),
+        format!(
+            "{{\"UpvoteAppchain\":{{\"appchain_id\":\"{}\"}}}}",
+            appchain_id
+        ),
         oct_token,
     )
 }
@@ -31,7 +34,10 @@ pub fn downvote_appchain(
         signer,
         &registry.user_account,
         amount,
-        format!("downvote_appchain,{}", appchain_id),
+        format!(
+            "{{\"DownvoteAppchain\":{{\"appchain_id\":\"{}\"}}}}",
+            appchain_id
+        ),
         oct_token,
     )
 }
