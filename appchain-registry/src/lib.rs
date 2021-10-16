@@ -11,6 +11,7 @@ mod upgradable;
 mod voter_actions;
 use std::collections::HashMap;
 
+use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
@@ -116,13 +117,16 @@ enum RegistryDepositMessage {
     RegisterAppchain {
         appchain_id: String,
         website_url: String,
+        function_spec_url: String,
         github_address: String,
         github_release: String,
         commit_id: String,
         contact_email: String,
+        premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
         ido_amount_of_wrapped_appchain_token: U128,
         initial_era_reward: U128,
+        fungible_token_metadata: FungibleTokenMetadata,
         custom_metadata: HashMap<String, String>,
     },
     UpvoteAppchain {
@@ -233,13 +237,16 @@ impl AppchainRegistry {
             RegistryDepositMessage::RegisterAppchain {
                 appchain_id,
                 website_url,
+                function_spec_url,
                 github_address,
                 github_release,
                 commit_id,
                 contact_email,
+                premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,
                 initial_era_reward,
+                fungible_token_metadata,
                 custom_metadata,
             } => {
                 self.register_appchain(
@@ -247,13 +254,16 @@ impl AppchainRegistry {
                     appchain_id,
                     amount.0,
                     website_url,
+                    function_spec_url,
                     github_address,
                     github_release,
                     commit_id,
                     contact_email,
+                    premined_wrapped_appchain_token_beneficiary,
                     premined_wrapped_appchain_token,
                     ido_amount_of_wrapped_appchain_token,
                     initial_era_reward,
+                    fungible_token_metadata,
                     custom_metadata,
                 );
                 PromiseOrValue::Value(0.into())
@@ -303,13 +313,16 @@ impl AppchainRegistry {
         appchain_id: AppchainId,
         register_deposit: Balance,
         website_url: String,
+        function_spec_url: String,
         github_address: String,
         github_release: String,
         commit_id: String,
         contact_email: String,
+        premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
         ido_amount_of_wrapped_appchain_token: U128,
         initial_era_reward: U128,
+        fungible_token_metadata: FungibleTokenMetadata,
         custom_metadata: HashMap<String, String>,
     ) {
         assert!(
@@ -329,13 +342,16 @@ impl AppchainRegistry {
             appchain_id.clone(),
             AppchainMetadata {
                 website_url,
+                function_spec_url,
                 github_address,
                 github_release,
                 commit_id,
                 contact_email,
+                premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,
                 initial_era_reward,
+                fungible_token_metadata,
                 custom_metadata,
             },
             sender_id,

@@ -130,10 +130,13 @@ fn test_case1() {
         Option::None,
         Option::None,
         Option::None,
+        Option::None,
         Option::from(String::from("yangzhen@oct.network")),
+        Option::None,
         Option::from(U128::from(10_000_000_000_000_000_000_000_000)),
         Option::from(U128::from(1_000_000_000_000_000_000_000_000)),
         Option::from(U128::from(100_000_000_000_000_000_000)),
+        Option::None,
         Option::from(custom_metadata.clone()),
     );
     assert!(!outcome.is_ok());
@@ -145,10 +148,13 @@ fn test_case1() {
         Option::None,
         Option::None,
         Option::None,
+        Option::None,
         Option::from(String::from("yangzhen@oct.network")),
+        Option::None,
         Option::from(U128::from(10_000_000_000_000_000_000_000_000)),
         Option::from(U128::from(1_000_000_000_000_000_000_000_000)),
         Option::from(U128::from(100_000_000_000_000_000_000)),
+        Option::None,
         Option::from(custom_metadata.clone()),
     );
     outcome.assert_success();
