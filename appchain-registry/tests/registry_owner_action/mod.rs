@@ -1,5 +1,6 @@
 use appchain_registry::AppchainRegistryContract;
-use near_sdk::{json_types::U128, Timestamp};
+use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
+use near_sdk::{json_types::U128, AccountId, Timestamp};
 use std::collections::HashMap;
 
 use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
@@ -11,13 +12,16 @@ pub fn update_appchain_metadata(
     registry: &ContractAccount<AppchainRegistryContract>,
     appchain_id: &String,
     website_url: Option<String>,
+    function_spec_url: Option<String>,
     github_address: Option<String>,
     github_release: Option<String>,
     commit_id: Option<String>,
     contact_email: Option<String>,
+    premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
     premined_wrapped_appchain_token: Option<U128>,
     ido_amount_of_wrapped_appchain_token: Option<U128>,
     initial_era_reward: Option<U128>,
+    fungible_token_metadata: Option<FungibleTokenMetadata>,
     custom_metadata: Option<HashMap<String, String>>,
 ) -> ExecutionResult {
     let outcome = call!(
@@ -25,13 +29,16 @@ pub fn update_appchain_metadata(
         registry.update_appchain_metadata(
             appchain_id.clone(),
             website_url,
+            function_spec_url,
             github_address,
             github_release,
             commit_id,
             contact_email,
+            premined_wrapped_appchain_token_beneficiary,
             premined_wrapped_appchain_token,
             ido_amount_of_wrapped_appchain_token,
             initial_era_reward,
+            fungible_token_metadata,
             custom_metadata
         )
     );

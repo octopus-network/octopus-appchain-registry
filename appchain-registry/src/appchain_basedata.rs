@@ -30,13 +30,24 @@ impl AppchainMetadata {
     pub fn from_old_version(old_version: &OldAppchainMetadata) -> Self {
         Self {
             website_url: old_version.website_url.clone(),
+            function_spec_url: String::new(),
             github_address: old_version.github_address.clone(),
             github_release: old_version.github_release.clone(),
             commit_id: old_version.commit_id.clone(),
             contact_email: old_version.contact_email.clone(),
-            premined_wrapped_appchain_token: old_version.preminted_wrapped_appchain_token,
+            premined_wrapped_appchain_token_beneficiary: String::new(),
+            premined_wrapped_appchain_token: old_version.premined_wrapped_appchain_token,
             ido_amount_of_wrapped_appchain_token: old_version.ido_amount_of_wrapped_appchain_token,
             initial_era_reward: old_version.initial_era_reward,
+            fungible_token_metadata: FungibleTokenMetadata {
+                spec: String::new(),
+                name: String::new(),
+                symbol: String::new(),
+                icon: None,
+                reference: None,
+                reference_hash: None,
+                decimals: 0,
+            },
             custom_metadata: old_version.custom_metadata.clone(),
         }
     }

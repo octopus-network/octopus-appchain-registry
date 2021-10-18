@@ -26,13 +26,16 @@ pub struct RegistrySettings {
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainMetadata {
     pub website_url: String,
+    pub function_spec_url: String,
     pub github_address: String,
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub premined_wrapped_appchain_token_beneficiary: AccountId,
     pub premined_wrapped_appchain_token: U128,
     pub ido_amount_of_wrapped_appchain_token: U128,
     pub initial_era_reward: U128,
+    pub fungible_token_metadata: FungibleTokenMetadata,
     pub custom_metadata: HashMap<String, String>,
 }
 

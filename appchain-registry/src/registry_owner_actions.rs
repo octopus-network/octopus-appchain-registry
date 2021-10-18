@@ -9,13 +9,16 @@ pub trait RegistryOwnerActions {
         &mut self,
         appchain_id: AppchainId,
         website_url: Option<String>,
+        function_spec_url: Option<String>,
         github_address: Option<String>,
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
+        premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
         ido_amount_of_wrapped_appchain_token: Option<U128>,
         initial_era_reward: Option<U128>,
+        fungible_token_metadata: Option<FungibleTokenMetadata>,
         custom_metadata: Option<HashMap<String, String>>,
     );
     /// Start auditing of an appchain
@@ -38,13 +41,16 @@ impl RegistryOwnerActions for AppchainRegistry {
         &mut self,
         appchain_id: AppchainId,
         website_url: Option<String>,
+        function_spec_url: Option<String>,
         github_address: Option<String>,
         github_release: Option<String>,
         commit_id: Option<String>,
         contact_email: Option<String>,
+        premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
         ido_amount_of_wrapped_appchain_token: Option<U128>,
         initial_era_reward: Option<U128>,
+        fungible_token_metadata: Option<FungibleTokenMetadata>,
         custom_metadata: Option<HashMap<String, String>>,
     ) {
         self.assert_owner();
@@ -53,6 +59,10 @@ impl RegistryOwnerActions for AppchainRegistry {
         if let Some(website_url) = website_url {
             metadata.website_url.clear();
             metadata.website_url.push_str(&website_url);
+        }
+        if let Some(function_spec_url) = function_spec_url {
+            metadata.function_spec_url.clear();
+            metadata.function_spec_url.push_str(&function_spec_url);
         }
         if let Some(github_address) = github_address {
             metadata.github_address.clear();
@@ -70,6 +80,14 @@ impl RegistryOwnerActions for AppchainRegistry {
             metadata.contact_email.clear();
             metadata.contact_email.push_str(&contact_email);
         }
+        if let Some(premined_wrapped_appchain_token_beneficiary) =
+            premined_wrapped_appchain_token_beneficiary
+        {
+            metadata.premined_wrapped_appchain_token_beneficiary.clear();
+            metadata
+                .premined_wrapped_appchain_token_beneficiary
+                .push_str(&premined_wrapped_appchain_token_beneficiary);
+        }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;
         }
@@ -78,6 +96,9 @@ impl RegistryOwnerActions for AppchainRegistry {
         }
         if let Some(initial_era_reward) = initial_era_reward {
             metadata.initial_era_reward = initial_era_reward;
+        }
+        if let Some(fungible_token_metadata) = fungible_token_metadata {
+            metadata.fungible_token_metadata = fungible_token_metadata;
         }
         if let Some(custom_metadata) = custom_metadata {
             metadata.custom_metadata.clear();
