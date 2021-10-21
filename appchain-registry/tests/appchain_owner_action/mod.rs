@@ -24,7 +24,7 @@ pub fn register_appchain(
     appchain_id: &String,
     amount: u128,
 ) -> ExecutionResult {
-    common::ft_transfer_call_oct_token(
+    let outcome = common::ft_transfer_call_oct_token(
         signer,
         &registry.user_account,
         amount,
@@ -57,7 +57,9 @@ pub fn register_appchain(
         })
         .to_string(),
         oct_token,
-    )
+    );
+    common::print_outcome_result("ft_transfer_call_oct_token", &outcome);
+    outcome
 }
 
 pub fn transfer_appchain_ownership(

@@ -34,7 +34,7 @@ pub use voter_actions::VoterActions;
 
 const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 3_000_000_000_000_000_000_000_000; // 3e24yN, 3N
+const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 10_000_000_000_000_000_000_000_000; // 10e24yN, 10 NEAR
 const T_GAS: u64 = 1_000_000_000_000;
 const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
@@ -222,16 +222,13 @@ impl AppchainRegistry {
             sender_id,
         );
 
-        let deposit_message: RegistryDepositMessage = match serde_json::from_str(msg.as_str()) {
-            Ok(msg) => msg,
-            Err(_) => {
-                log!(
-                    "Invalid msg '{}' attached in `ft_transfer_call`. Return deposit.",
-                    msg
-                );
-                return PromiseOrValue::Value(amount);
-            }
-        };
+        let parse_result = serde_json::from_str(msg.as_str());
+        assert!(
+            parse_result.is_ok(),
+            "Invalid msg '{}' attached in `ft_transfer_call`. Refund deposit.",
+            msg
+        );
+        let deposit_message = parse_result.unwrap();
 
         match deposit_message {
             RegistryDepositMessage::RegisterAppchain {

@@ -17,6 +17,7 @@ pub trait SudoActions {
 impl SudoActions for AppchainRegistry {
     //
     fn change_oct_token(&mut self, oct_token: AccountId) {
+        self.assert_owner();
         self.oct_token = oct_token;
     }
     //
