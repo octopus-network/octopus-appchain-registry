@@ -193,17 +193,31 @@ pub fn to_oct_amount(amount: u128) -> u128 {
     amount * bt_decimals_base
 }
 
-pub fn print_outcome_result(function_name: &str, outcome: &ExecutionResult) {
+pub fn print_outcome_result(function_name: &str, result: &ExecutionResult) {
     println!(
         "Gas burnt of function '{}': {}",
         function_name,
-        outcome.gas_burnt().to_formatted_string(&Locale::en)
+        result.gas_burnt().to_formatted_string(&Locale::en)
     );
-    let results = outcome.promise_results();
-    for result in results {
-        let logs = result.as_ref().unwrap().logs();
+    let results = result.promise_results();
+    for sub_result in results {
+        if let Some(sub_result) = sub_result {
+            if sub_result.is_ok() {
+                let logs = sub_result.logs();
+                if logs.len() > 0 {
+                    println!("{:#?}", logs);
+                }
+            } else {
+                println!("{:#?}", sub_result.outcome());
+            }
+        }
+    }
+    if result.is_ok() {
+        let logs = result.logs();
         if logs.len() > 0 {
             println!("{:#?}", logs);
         }
+    } else {
+        println!("{:#?}", result.outcome());
     }
 }

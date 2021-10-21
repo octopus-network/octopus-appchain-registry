@@ -1,10 +1,12 @@
-use near_sdk::json_types::U64;
+use near_sdk::json_types::{Base58PublicKey, U64};
 
 use crate::types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder};
 use crate::*;
 
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Get the public key of current owner
+    fn get_owner_pk(&self) -> String;
     /// Get account id of OCT token
     fn get_oct_token(&self) -> AccountId;
     /// Get registry settings
@@ -37,6 +39,10 @@ pub trait RegistryStatus {
 
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
+    //
+    fn get_owner_pk(&self) -> String {
+        String::from(&Base58PublicKey(self.owner_pk.clone()))
+    }
     //
     fn get_oct_token(&self) -> AccountId {
         self.oct_token.clone()
