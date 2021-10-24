@@ -170,8 +170,7 @@ impl AppchainBasedata {
         self.total_stake = total_stake;
     }
     /// Change state
-    pub fn change_state(&mut self, new_state: AppchainState) {
-        assert_ne!(self.appchain_state, new_state, "The state not changed.");
+    pub fn set_state(&mut self, new_state: AppchainState) {
         self.appchain_state = new_state;
     }
     /// Sync staking status

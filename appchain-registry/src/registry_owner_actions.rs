@@ -125,7 +125,7 @@ impl RegistryOwnerActions for AppchainRegistry {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Registered);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        appchain_basedata.change_state(AppchainState::Auditing);
+        appchain_basedata.set_state(AppchainState::Auditing);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
@@ -135,7 +135,7 @@ impl RegistryOwnerActions for AppchainRegistry {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        appchain_basedata.change_state(AppchainState::InQueue);
+        appchain_basedata.set_state(AppchainState::InQueue);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
@@ -150,7 +150,7 @@ impl RegistryOwnerActions for AppchainRegistry {
                 || appchain_basedata.state().eq(&AppchainState::InQueue),
             "Appchain state must be 'registered', 'auditing' or 'inQueue'."
         );
-        appchain_basedata.change_state(AppchainState::Dead);
+        appchain_basedata.set_state(AppchainState::Dead);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
     }
@@ -208,7 +208,7 @@ impl RegistryOwnerActions for AppchainRegistry {
             env::current_account_id()
         );
         let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
-        top_appchain_basedata.change_state(AppchainState::Staging);
+        top_appchain_basedata.set_state(AppchainState::Staging);
         top_appchain_basedata.set_anchor_account(&sub_account_id);
         self.appchain_basedatas
             .insert(top_appchain_basedata.id(), &top_appchain_basedata);
@@ -218,7 +218,7 @@ impl RegistryOwnerActions for AppchainRegistry {
             let mut appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
                 if appchain_basedata.voting_score() <= 0 {
-                    appchain_basedata.change_state(AppchainState::Dead);
+                    appchain_basedata.set_state(AppchainState::Dead);
                     self.appchain_basedatas
                         .insert(appchain_basedata.id(), &appchain_basedata);
                 } else {
