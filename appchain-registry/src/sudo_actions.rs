@@ -1,3 +1,7 @@
+use std::convert::TryFrom;
+
+use near_sdk::json_types::Base58PublicKey;
+
 use crate::*;
 
 pub trait SudoActions {
@@ -7,6 +11,8 @@ pub trait SudoActions {
     fn delete_appchain(&mut self, appchain_id: AppchainId);
     /// Clear all data of registry
     fn clear_appchains(&mut self);
+    /// Set public key of owner
+    fn set_owner_pk(&mut self, public_key: String);
 }
 
 #[near_bindgen]
@@ -37,5 +43,12 @@ impl SudoActions for AppchainRegistry {
             }
             self.delete_appchain(appchain_id);
         }
+    }
+    //
+    fn set_owner_pk(&mut self, public_key: String) {
+        self.assert_owner();
+        let parse_result = Base58PublicKey::try_from(public_key);
+        assert!(parse_result.is_ok(), "Invalid public key.");
+        self.owner_pk = parse_result.unwrap().0;
     }
 }
