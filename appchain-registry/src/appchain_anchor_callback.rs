@@ -32,7 +32,7 @@ impl AppchainAnchorCallback for AppchainRegistry {
             appchain_state.is_managed_by_anchor(),
             "Invalid state to sync."
         );
-        appchain_basedata.change_state(appchain_state);
+        appchain_basedata.set_state(appchain_state);
         appchain_basedata.sync_staking_status(validator_count, total_stake);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);

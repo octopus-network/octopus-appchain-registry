@@ -1,3 +1,7 @@
+use std::convert::TryFrom;
+
+use near_sdk::json_types::Base58PublicKey;
+
 use crate::*;
 
 pub trait SudoActions {
@@ -7,10 +11,8 @@ pub trait SudoActions {
     fn delete_appchain(&mut self, appchain_id: AppchainId);
     /// Clear all data of registry
     fn clear_appchains(&mut self);
-    /// Go booting an appchain
-    fn go_booting(&mut self, appchain_id: AppchainId);
-    /// Add an appchain id to set appchain_ids
-    fn add_appchain_id(&mut self, appchain_id: AppchainId);
+    /// Set public key of owner
+    fn set_owner_pk(&mut self, public_key: String);
 }
 
 #[near_bindgen]
@@ -43,18 +45,10 @@ impl SudoActions for AppchainRegistry {
         }
     }
     //
-    fn go_booting(&mut self, appchain_id: AppchainId) {
+    fn set_owner_pk(&mut self, public_key: String) {
         self.assert_owner();
-        self.assert_appchain_state(&appchain_id, AppchainState::Staging);
-        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        appchain_basedata.change_state(AppchainState::Booting);
-        self.appchain_basedatas
-            .insert(&appchain_id, &appchain_basedata);
-        env::log(format!("Appchain '{}' is 'booting'.", appchain_basedata.id()).as_bytes())
-    }
-    //
-    fn add_appchain_id(&mut self, appchain_id: AppchainId) {
-        self.assert_owner();
-        self.appchain_ids.insert(&appchain_id);
+        let parse_result = Base58PublicKey::try_from(public_key);
+        assert!(parse_result.is_ok(), "Invalid public key.");
+        self.owner_pk = parse_result.unwrap().0;
     }
 }

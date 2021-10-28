@@ -1,6 +1,6 @@
 [package]
 name = "appchain-registry"
-version = "0.1.0"
+version = "1.0.4"
 authors = ["Octopus Network"]
 edition = "2018"
 
