@@ -12,7 +12,6 @@ pub trait RegistryOwnerActions {
         function_spec_url: Option<String>,
         github_address: Option<String>,
         github_release: Option<String>,
-        commit_id: Option<String>,
         contact_email: Option<String>,
         premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
@@ -44,7 +43,6 @@ impl RegistryOwnerActions for AppchainRegistry {
         function_spec_url: Option<String>,
         github_address: Option<String>,
         github_release: Option<String>,
-        commit_id: Option<String>,
         contact_email: Option<String>,
         premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
@@ -57,36 +55,25 @@ impl RegistryOwnerActions for AppchainRegistry {
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         let mut metadata = appchain_basedata.metadata();
         if let Some(website_url) = website_url {
-            metadata.website_url.clear();
-            metadata.website_url.push_str(&website_url);
+            metadata.website_url = website_url;
         }
         if let Some(function_spec_url) = function_spec_url {
-            metadata.function_spec_url.clear();
-            metadata.function_spec_url.push_str(&function_spec_url);
+            metadata.function_spec_url = function_spec_url;
         }
         if let Some(github_address) = github_address {
-            metadata.github_address.clear();
-            metadata.github_address.push_str(&github_address);
+            metadata.github_address = github_address;
         }
         if let Some(github_release) = github_release {
-            metadata.github_release.clear();
-            metadata.github_release.push_str(&github_release);
-        }
-        if let Some(commit_id) = commit_id {
-            metadata.commit_id.clear();
-            metadata.commit_id.push_str(&commit_id);
+            metadata.github_release = github_release;
         }
         if let Some(contact_email) = contact_email {
-            metadata.contact_email.clear();
-            metadata.contact_email.push_str(&contact_email);
+            metadata.contact_email = contact_email;
         }
         if let Some(premined_wrapped_appchain_token_beneficiary) =
             premined_wrapped_appchain_token_beneficiary
         {
-            metadata.premined_wrapped_appchain_token_beneficiary.clear();
-            metadata
-                .premined_wrapped_appchain_token_beneficiary
-                .push_str(&premined_wrapped_appchain_token_beneficiary);
+            metadata.premined_wrapped_appchain_token_beneficiary =
+                premined_wrapped_appchain_token_beneficiary;
         }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;
@@ -101,12 +88,7 @@ impl RegistryOwnerActions for AppchainRegistry {
             metadata.fungible_token_metadata = fungible_token_metadata;
         }
         if let Some(custom_metadata) = custom_metadata {
-            metadata.custom_metadata.clear();
-            custom_metadata.keys().for_each(|key| {
-                metadata
-                    .custom_metadata
-                    .insert(key.clone(), custom_metadata.get(key).unwrap().clone());
-            });
+            metadata.custom_metadata = custom_metadata;
         }
         appchain_basedata.set_metadata(&metadata);
         self.appchain_basedatas

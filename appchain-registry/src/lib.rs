@@ -120,7 +120,6 @@ enum RegistryDepositMessage {
         function_spec_url: String,
         github_address: String,
         github_release: String,
-        commit_id: String,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -237,7 +236,6 @@ impl AppchainRegistry {
                 function_spec_url,
                 github_address,
                 github_release,
-                commit_id,
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
@@ -254,7 +252,6 @@ impl AppchainRegistry {
                     function_spec_url,
                     github_address,
                     github_release,
-                    commit_id,
                     contact_email,
                     premined_wrapped_appchain_token_beneficiary,
                     premined_wrapped_appchain_token,
@@ -313,7 +310,6 @@ impl AppchainRegistry {
         function_spec_url: String,
         github_address: String,
         github_release: String,
-        commit_id: String,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -322,6 +318,10 @@ impl AppchainRegistry {
         fungible_token_metadata: FungibleTokenMetadata,
         custom_metadata: HashMap<String, String>,
     ) {
+        assert_ne!(
+            sender_id, self.owner,
+            "The register account should NOT be the contract owner."
+        );
         assert!(
             self.appchain_basedatas.get(&appchain_id).is_none(),
             "Appchain already registered."
@@ -335,6 +335,45 @@ impl AppchainRegistry {
                 .0),
             "Invalid register deposit."
         );
+        assert!(
+            !appchain_id.trim().is_empty(),
+            "Missing necessary field 'appchain_id'."
+        );
+        assert!(
+            !website_url.trim().is_empty(),
+            "Missing necessary field 'website_url'."
+        );
+        assert!(
+            !function_spec_url.trim().is_empty(),
+            "Missing necessary field 'function_spec_url'."
+        );
+        assert!(
+            !github_address.trim().is_empty(),
+            "Missing necessary field 'github_address'."
+        );
+        assert!(
+            !github_release.trim().is_empty(),
+            "Missing necessary field 'github_release'."
+        );
+        assert!(
+            !contact_email.trim().is_empty(),
+            "Missing necessary field 'contact_email'."
+        );
+        assert!(
+            !premined_wrapped_appchain_token_beneficiary
+                .trim()
+                .is_empty(),
+            "Missing necessary field 'premined_wrapped_appchain_token_beneficiary'."
+        );
+        fungible_token_metadata.assert_valid();
+        assert!(
+            !fungible_token_metadata.name.trim().is_empty(),
+            "Missing necessary field 'fungible token name'."
+        );
+        assert!(
+            !fungible_token_metadata.symbol.trim().is_empty(),
+            "Missing necessary field 'fungible token symbol'."
+        );
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             AppchainMetadata {
@@ -342,7 +381,6 @@ impl AppchainRegistry {
                 function_spec_url,
                 github_address,
                 github_release,
-                commit_id,
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
@@ -370,12 +408,14 @@ impl AppchainRegistry {
 
 #[near_bindgen]
 impl Ownable for AppchainRegistry {
+    //
     fn get_owner(&self) -> AccountId {
         self.owner.clone()
     }
-
+    //
     fn set_owner(&mut self, owner: AccountId) {
         self.assert_owner();
+        assert_ne!(owner, self.owner, "The account is the same.");
         self.owner = owner;
     }
 }
