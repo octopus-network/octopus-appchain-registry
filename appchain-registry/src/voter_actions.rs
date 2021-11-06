@@ -25,20 +25,15 @@ impl VoterActions for AppchainRegistry {
             "Not enough upvote deposit to withdraw."
         );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        let account_id = env::predecessor_account_id();
-        let voter_upvote = self
-            .upvote_deposits
-            .get(&(appchain_id.clone(), account_id.clone()))
-            .unwrap_or_default();
         appchain_basedata.decrease_upvote_deposit(amount.0);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         if amount.0 == voter_upvote {
             self.upvote_deposits
-                .remove(&(appchain_id.clone(), account_id.clone()));
+                .remove(&(appchain_id.clone(), voter.clone()));
         } else {
             self.upvote_deposits.insert(
-                &(appchain_id.clone(), account_id.clone()),
+                &(appchain_id.clone(), voter.clone()),
                 &(voter_upvote - amount.0),
             );
         }
@@ -71,20 +66,15 @@ impl VoterActions for AppchainRegistry {
             "Not enough downvote deposit to withdraw."
         );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        let account_id = env::predecessor_account_id();
-        let voter_downvote = self
-            .downvote_deposits
-            .get(&(appchain_id.clone(), account_id.clone()))
-            .unwrap_or_default();
         appchain_basedata.decrease_downvote_deposit(amount.0);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         if amount.0 == voter_downvote {
             self.downvote_deposits
-                .remove(&(appchain_id.clone(), account_id.clone()));
+                .remove(&(appchain_id.clone(), voter.clone()));
         } else {
             self.downvote_deposits.insert(
-                &(appchain_id.clone(), account_id.clone()),
+                &(appchain_id.clone(), voter.clone()),
                 &(voter_downvote - amount.0),
             );
         }
