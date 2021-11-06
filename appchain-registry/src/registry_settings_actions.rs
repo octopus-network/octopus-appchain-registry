@@ -50,6 +50,7 @@ impl RegistrySettingsActions for AppchainRegistry {
     //
     fn change_counting_interval_in_seconds(&mut self, value: U64) {
         self.assert_owner();
+        assert!(value.0 > 3600, "Too short interval.");
         let mut registry_settings = self.registry_settings.get().unwrap();
         registry_settings.counting_interval_in_seconds = value;
         self.registry_settings.set(&registry_settings);
@@ -62,6 +63,10 @@ impl RegistrySettingsActions for AppchainRegistry {
             "The account should NOT be the owner."
         );
         let mut registry_settings = self.registry_settings.get().unwrap();
+        assert_ne!(
+            operator_account, registry_settings.operator_of_counting_voting_score,
+            "The account is not changed."
+        );
         registry_settings.operator_of_counting_voting_score = operator_account;
         self.registry_settings.set(&registry_settings);
     }
