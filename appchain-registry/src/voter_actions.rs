@@ -1,7 +1,24 @@
-use near_sdk::{env, Balance};
+use near_sdk::env;
 
 use crate::*;
 use crate::{types::AppchainId, AppchainRegistry};
+
+pub trait VoterActionsResultResolver {
+    /// Resolver for withdrawing the upvote deposit of a voter
+    fn resolve_withdraw_upvote_deposit(
+        &mut self,
+        appchain_id: AppchainId,
+        account_id: AccountId,
+        amount: U128,
+    );
+    /// Resolver for withdrawing the downvote deposit of a voter
+    fn resolve_withdraw_downvote_deposit(
+        &mut self,
+        appchain_id: AppchainId,
+        account_id: AccountId,
+        amount: U128,
+    );
+}
 
 /// The actions which the voter can perform
 pub trait VoterActions {
@@ -48,7 +65,7 @@ impl VoterActions for AppchainRegistry {
         .then(ext_self::resolve_withdraw_upvote_deposit(
             appchain_id.clone(),
             voter.clone(),
-            amount.0,
+            amount,
             &env::current_account_id(),
             NO_DEPOSIT,
             env::prepaid_gas() / 2,
@@ -89,7 +106,7 @@ impl VoterActions for AppchainRegistry {
         .then(ext_self::resolve_withdraw_downvote_deposit(
             appchain_id.clone(),
             voter.clone(),
-            amount.0,
+            amount,
             &env::current_account_id(),
             NO_DEPOSIT,
             env::prepaid_gas() / 2,
@@ -97,13 +114,14 @@ impl VoterActions for AppchainRegistry {
     }
 }
 
-impl AppchainRegistry {
+#[near_bindgen]
+impl VoterActionsResultResolver for AppchainRegistry {
     //
-    pub fn resolve_withdraw_upvote_deposit(
+    fn resolve_withdraw_upvote_deposit(
         &mut self,
         appchain_id: AppchainId,
         account_id: AccountId,
-        amount: Balance,
+        amount: U128,
     ) {
         assert_self();
         match env::promise_result(0) {
@@ -111,7 +129,7 @@ impl AppchainRegistry {
             PromiseResult::Successful(_) => env::log(
                 format!(
                     "Upvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
-                    &appchain_id, &account_id, &amount
+                    &appchain_id, &account_id, &amount.0
                 )
                 .as_bytes(),
             ),
@@ -119,11 +137,11 @@ impl AppchainRegistry {
         }
     }
     //
-    pub fn resolve_withdraw_downvote_deposit(
+    fn resolve_withdraw_downvote_deposit(
         &mut self,
         appchain_id: AppchainId,
         account_id: AccountId,
-        amount: Balance,
+        amount: U128,
     ) {
         assert_self();
         match env::promise_result(0) {
@@ -131,7 +149,7 @@ impl AppchainRegistry {
             PromiseResult::Successful(_) => env::log(
                 format!(
                     "Downvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
-                    &appchain_id, &account_id, &amount
+                    &appchain_id, &account_id, &amount.0
                 )
                 .as_bytes(),
             ),

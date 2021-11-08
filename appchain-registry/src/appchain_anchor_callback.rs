@@ -9,7 +9,7 @@ pub trait AppchainAnchorCallback {
         appchain_id: AppchainId,
         appchain_state: AppchainState,
         validator_count: u32,
-        total_stake: Balance,
+        total_stake: U128,
     );
 }
 
@@ -20,7 +20,7 @@ impl AppchainAnchorCallback for AppchainRegistry {
         appchain_id: AppchainId,
         appchain_state: AppchainState,
         validator_count: u32,
-        total_stake: Balance,
+        total_stake: U128,
     ) {
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert_eq!(
@@ -33,7 +33,7 @@ impl AppchainAnchorCallback for AppchainRegistry {
             "Invalid state to sync."
         );
         appchain_basedata.set_state(appchain_state);
-        appchain_basedata.sync_staking_status(validator_count, total_stake);
+        appchain_basedata.sync_staking_status(validator_count, total_stake.0);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
     }

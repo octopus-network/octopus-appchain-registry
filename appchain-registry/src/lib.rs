@@ -59,24 +59,20 @@ pub trait FungibleToken {
 }
 
 #[ext_contract(ext_self)]
-pub trait CrossContractResultResolver {
-    /// Resolver for refunding to the owner of an appchain when reject it to go-live
-    fn resolve_appchain_refunding(&mut self, appchain_id: AppchainId, amount: Balance);
-    /// Resolver for deletion of an appchain anchor
-    fn resolve_appchain_anchor_deletion(&mut self, appchain_id: AppchainId);
+pub trait ResolverForSelfCallback {
     /// Resolver for withdrawing the upvote deposit of a voter
     fn resolve_withdraw_upvote_deposit(
         &mut self,
         appchain_id: AppchainId,
         account_id: AccountId,
-        amount: Balance,
+        amount: U128,
     );
     /// Resolver for withdrawing the downvote deposit of a voter
     fn resolve_withdraw_downvote_deposit(
         &mut self,
         appchain_id: AppchainId,
         account_id: AccountId,
-        amount: Balance,
+        amount: U128,
     );
 }
 
