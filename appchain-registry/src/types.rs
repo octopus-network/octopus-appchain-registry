@@ -29,7 +29,6 @@ pub struct AppchainMetadata {
     pub function_spec_url: String,
     pub github_address: String,
     pub github_release: String,
-    pub commit_id: String,
     pub contact_email: String,
     pub premined_wrapped_appchain_token_beneficiary: AccountId,
     pub premined_wrapped_appchain_token: U128,

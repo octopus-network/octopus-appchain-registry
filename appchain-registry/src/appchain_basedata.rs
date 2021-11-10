@@ -27,28 +27,20 @@ pub struct AppchainBasedata {
 impl AppchainMetadata {
     ///
     /// Construct a new instance from an old version of this struct
-    pub fn from_old_version(old_version: &OldAppchainMetadata) -> Self {
+    pub fn from_old_version(old_version: OldAppchainMetadata) -> Self {
         Self {
-            website_url: old_version.website_url.clone(),
-            function_spec_url: String::new(),
-            github_address: old_version.github_address.clone(),
-            github_release: old_version.github_release.clone(),
-            commit_id: old_version.commit_id.clone(),
-            contact_email: old_version.contact_email.clone(),
-            premined_wrapped_appchain_token_beneficiary: String::new(),
+            website_url: old_version.website_url,
+            function_spec_url: old_version.function_spec_url,
+            github_address: old_version.github_address,
+            github_release: old_version.github_release,
+            contact_email: old_version.contact_email,
+            premined_wrapped_appchain_token_beneficiary: old_version
+                .premined_wrapped_appchain_token_beneficiary,
             premined_wrapped_appchain_token: old_version.premined_wrapped_appchain_token,
             ido_amount_of_wrapped_appchain_token: old_version.ido_amount_of_wrapped_appchain_token,
             initial_era_reward: old_version.initial_era_reward,
-            fungible_token_metadata: FungibleTokenMetadata {
-                spec: String::new(),
-                name: String::new(),
-                symbol: String::new(),
-                icon: None,
-                reference: None,
-                reference_hash: None,
-                decimals: 0,
-            },
-            custom_metadata: old_version.custom_metadata.clone(),
+            fungible_token_metadata: old_version.fungible_token_metadata,
+            custom_metadata: old_version.custom_metadata,
         }
     }
 }
@@ -220,19 +212,19 @@ impl AppchainBasedata {
         );
     }
     /// Construct a new instance from an old version of this struct
-    pub fn from_old_version(old_version: &OldAppchainBasedata) -> Self {
+    pub fn from_old_version(old_version: OldAppchainBasedata) -> Self {
         Self {
             appchain_id: old_version.appchain_id.clone(),
             appchain_metadata: LazyOption::new(
                 StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
                 Some(&AppchainMetadata::from_old_version(
-                    &old_version.appchain_metadata.get().unwrap(),
+                    old_version.appchain_metadata.get().unwrap(),
                 )),
             ),
-            appchain_anchor: old_version.appchain_anchor.clone(),
-            appchain_owner: old_version.appchain_owner.clone(),
+            appchain_anchor: old_version.appchain_anchor,
+            appchain_owner: old_version.appchain_owner,
             register_deposit: old_version.register_deposit,
-            appchain_state: old_version.appchain_state.clone(),
+            appchain_state: old_version.appchain_state,
             upvote_deposit: old_version.upvote_deposit,
             downvote_deposit: old_version.downvote_deposit,
             registered_time: old_version.registered_time,

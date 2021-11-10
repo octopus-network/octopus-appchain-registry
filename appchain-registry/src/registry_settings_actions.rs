@@ -32,6 +32,7 @@ impl RegistrySettingsActions for AppchainRegistry {
     //
     fn change_minimum_register_deposit(&mut self, value: U128) {
         self.assert_owner();
+        assert!(value.0 > 0, "The minimum register deposit should NOT be 0.");
         let mut registry_settings = self.registry_settings.get().unwrap();
         registry_settings.minimum_register_deposit = value;
         self.registry_settings.set(&registry_settings);
@@ -49,6 +50,7 @@ impl RegistrySettingsActions for AppchainRegistry {
     //
     fn change_counting_interval_in_seconds(&mut self, value: U64) {
         self.assert_owner();
+        assert!(value.0 > 3600, "Too short interval.");
         let mut registry_settings = self.registry_settings.get().unwrap();
         registry_settings.counting_interval_in_seconds = value;
         self.registry_settings.set(&registry_settings);
@@ -56,11 +58,16 @@ impl RegistrySettingsActions for AppchainRegistry {
     //
     fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId) {
         self.assert_owner();
+        assert_ne!(
+            operator_account, self.owner,
+            "The account should NOT be the owner."
+        );
         let mut registry_settings = self.registry_settings.get().unwrap();
-        registry_settings.operator_of_counting_voting_score.clear();
-        registry_settings
-            .operator_of_counting_voting_score
-            .push_str(&operator_account);
+        assert_ne!(
+            operator_account, registry_settings.operator_of_counting_voting_score,
+            "The account is not changed."
+        );
+        registry_settings.operator_of_counting_voting_score = operator_account;
         self.registry_settings.set(&registry_settings);
     }
 }

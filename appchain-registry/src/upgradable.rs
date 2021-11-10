@@ -8,13 +8,16 @@ use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, Promise, PublicK
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct OldAppchainMetadata {
     pub website_url: String,
+    pub function_spec_url: String,
     pub github_address: String,
     pub github_release: String,
     pub commit_id: String,
     pub contact_email: String,
+    pub premined_wrapped_appchain_token_beneficiary: AccountId,
     pub premined_wrapped_appchain_token: U128,
     pub ido_amount_of_wrapped_appchain_token: U128,
     pub initial_era_reward: U128,
+    pub fungible_token_metadata: FungibleTokenMetadata,
     pub custom_metadata: HashMap<String, String>,
 }
 
@@ -135,7 +138,7 @@ impl AppchainRegistry {
             let old_basedata = old_contract.appchain_basedatas.get(&appchain_id).unwrap();
             new_appchain_registry.appchain_basedatas.insert(
                 &appchain_id,
-                &AppchainBasedata::from_old_version(&old_basedata),
+                &AppchainBasedata::from_old_version(old_basedata),
             );
         }
 
