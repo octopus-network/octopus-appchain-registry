@@ -29,6 +29,7 @@ impl SudoActions for AppchainRegistry {
     }
     //
     fn create_anchor_account(&mut self, appchain_id: AppchainId) {
+        self.assert_owner();
         let sub_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
         Promise::new(sub_account_id)
             .create_account()
