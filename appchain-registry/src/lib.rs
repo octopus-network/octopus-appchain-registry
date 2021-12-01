@@ -9,17 +9,19 @@ mod sudo_actions;
 pub mod types;
 mod upgradable;
 mod voter_actions;
+
+use core::convert::TryFrom;
 use std::collections::HashMap;
 
 use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{ValidAccountId, U128};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
-    Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
+    PanicOnDefault, Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
 };
 
 pub use appchain_anchor_callback::AppchainAnchorCallback;
@@ -77,7 +79,7 @@ pub trait ResolverForSelfCallback {
 }
 
 #[near_bindgen]
-#[derive(BorshDeserialize, BorshSerialize)]
+#[derive(BorshDeserialize, BorshSerialize, PanicOnDefault)]
 pub struct AppchainRegistry {
     /// The account of the owner of this contract
     owner: AccountId,
@@ -132,12 +134,6 @@ enum RegistryDepositMessage {
     },
 }
 
-impl Default for AppchainRegistry {
-    fn default() -> Self {
-        env::panic(b"The contract needs be initialized before use.")
-    }
-}
-
 #[near_bindgen]
 impl AppchainRegistry {
     #[init]
@@ -175,7 +171,7 @@ impl AppchainRegistry {
     fn assert_appchain_owner(&self, appchain_id: &AppchainId) {
         let appchain_basedata = self.get_appchain_basedata(appchain_id);
         assert_eq!(
-            env::signer_account_id(),
+            env::predecessor_account_id(),
             appchain_basedata.owner().clone(),
             "Function can only be called by appchain owner."
         );
@@ -334,6 +330,12 @@ impl AppchainRegistry {
         assert!(
             !appchain_id.trim().is_empty(),
             "Missing necessary field 'appchain_id'."
+        );
+        assert!(appchain_id.find(".").is_none(), "Invalid 'appchain_id'.");
+        assert!(
+            ValidAccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id()))
+                .is_ok(),
+            "Invalid 'appchain_id'."
         );
         assert!(
             !website_url.trim().is_empty(),
