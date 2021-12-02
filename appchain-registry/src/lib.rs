@@ -31,7 +31,7 @@ use types::{AppchainId, AppchainMetadata, AppchainState, RegistrySettings};
 
 const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 10_000_000_000_000_000_000_000_000; // 10e24yN, 10 NEAR
+const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 23_000_000_000_000_000_000_000_000; // 23e24yN, 23 NEAR
 const T_GAS: u64 = 1_000_000_000_000;
 const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
