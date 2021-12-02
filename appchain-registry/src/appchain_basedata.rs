@@ -163,6 +163,9 @@ impl AppchainBasedata {
     }
     /// Change state
     pub fn set_state(&mut self, new_state: AppchainState) {
+        if self.appchain_state.eq(&AppchainState::Booting) && new_state.eq(&AppchainState::Active) {
+            self.go_live_time = env::block_timestamp();
+        }
         self.appchain_state = new_state;
     }
     /// Sync staking status
