@@ -1,7 +1,6 @@
 use near_sdk::env;
 
-use crate::*;
-use crate::{types::AppchainId, AppchainRegistry};
+use crate::{interfaces::VoterActions, types::AppchainId, *};
 
 pub trait VoterActionsResultResolver {
     /// Resolver for withdrawing the upvote deposit of a voter
@@ -21,13 +20,6 @@ pub trait VoterActionsResultResolver {
 }
 
 /// The actions which the voter can perform
-pub trait VoterActions {
-    /// Withdraw a certain amount of upvote deposit for an appchain
-    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
-    /// Withdraw a certain amount of downvote deposit for an appchain
-    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
-}
-
 #[near_bindgen]
 impl VoterActions for AppchainRegistry {
     //

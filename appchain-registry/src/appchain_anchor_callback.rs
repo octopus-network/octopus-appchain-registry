@@ -1,17 +1,8 @@
-use crate::types::{AppchainId, AppchainState};
-use crate::*;
-
-/// The callback interface for appchain anchor
-pub trait AppchainAnchorCallback {
-    /// Sync state of an appchain to registry
-    fn sync_state_of(
-        &mut self,
-        appchain_id: AppchainId,
-        appchain_state: AppchainState,
-        validator_count: u32,
-        total_stake: U128,
-    );
-}
+use crate::{
+    interfaces::AppchainAnchorCallback,
+    types::{AppchainId, AppchainState},
+    *,
+};
 
 #[near_bindgen]
 impl AppchainAnchorCallback for AppchainRegistry {

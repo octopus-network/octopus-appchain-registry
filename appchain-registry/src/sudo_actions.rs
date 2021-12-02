@@ -2,16 +2,7 @@ use std::convert::TryFrom;
 
 use near_sdk::json_types::Base58PublicKey;
 
-use crate::*;
-
-pub trait SudoActions {
-    /// Change account id of OCT token
-    fn change_oct_token(&mut self, oct_token: AccountId);
-    /// Set public key of owner
-    fn set_owner_pk(&mut self, public_key: String);
-    /// Create subaccount for a specific appchain
-    fn create_anchor_account(&mut self, appchain_id: AppchainId);
-}
+use crate::{interfaces::SudoActions, *};
 
 #[near_bindgen]
 impl SudoActions for AppchainRegistry {

@@ -1,8 +1,8 @@
-use std::convert::TryInto;
+use core::convert::TryInto;
 
 use near_sdk::json_types::U64;
 
-use crate::*;
+use crate::{interfaces::RegistrySettingsActions, *};
 
 impl Default for RegistrySettings {
     fn default() -> Self {
@@ -13,18 +13,6 @@ impl Default for RegistrySettings {
             operator_of_counting_voting_score: env::signer_account_id(),
         }
     }
-}
-
-/// The actions related to registry settings
-pub trait RegistrySettingsActions {
-    /// Change the value of minimum register deposit
-    fn change_minimum_register_deposit(&mut self, value: U128);
-    /// Change the value of reduction percent for voting result of all appchains still in queue
-    fn change_voting_result_reduction_percent(&mut self, value: U64);
-    /// Change the interval for counting voting score of appchains
-    fn change_counting_interval_in_seconds(&mut self, value: U64);
-    /// Change operator of counting voting score
-    fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId);
 }
 
 #[near_bindgen]

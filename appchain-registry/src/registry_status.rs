@@ -1,41 +1,10 @@
 use near_sdk::json_types::{Base58PublicKey, U64};
 
-use crate::types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder};
-use crate::*;
-
-/// The interface for querying status of appchain registry
-pub trait RegistryStatus {
-    /// Get the public key of current owner
-    fn get_owner_pk(&self) -> String;
-    /// Get account id of OCT token
-    fn get_oct_token(&self) -> AccountId;
-    /// Get registry settings
-    fn get_registry_settings(&self) -> RegistrySettings;
-    /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
-    fn get_total_stake(&self) -> U128;
-    /// Get appchain ids
-    fn get_appchain_ids(&self) -> Vec<String>;
-    /// Get appchains whose state is equal to the given AppchainState
-    /// If param `appchain_state` is `Option::None`, return all appchains in registry
-    fn get_appchains_with_state_of(
-        &self,
-        appchain_state: Option<Vec<AppchainState>>,
-        page_number: u16,
-        page_size: u16,
-        sorting_field: AppchainSortingField,
-        sorting_order: SortingOrder,
-    ) -> Vec<AppchainStatus>;
-    /// Get appchains count whose state is equal to the given AppchainState
-    ///
-    /// If param `appchain_state` is `Option::None`, return count of all appchains in registry
-    fn get_appchains_count_of(&self, appchain_state: Option<AppchainState>) -> U64;
-    /// Get status of an appchain
-    fn get_appchain_status_of(&self, appchain_id: AppchainId) -> AppchainStatus;
-    /// Get upvote deposit of a given account id for a certain appchain
-    fn get_upvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
-    /// Get downvote deposit of a given account id for a certain appchain
-    fn get_downvote_deposit_for(&self, appchain_id: AppchainId, account_id: AccountId) -> U128;
-}
+use crate::{
+    interfaces::RegistryStatus,
+    types::{AppchainSortingField, AppchainState, AppchainStatus, SortingOrder},
+    *,
+};
 
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {

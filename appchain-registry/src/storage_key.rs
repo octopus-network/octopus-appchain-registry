@@ -9,7 +9,6 @@ pub enum StorageKey {
     UpvoteDeposits,
     DownvoteDeposits,
     AppchainMetadata(AppchainId),
-    AppchainBasedata(AppchainId),
     AppchainAnchorCode(AppchainId),
     AppchainVotingScore(AppchainId),
 }
@@ -24,7 +23,6 @@ impl StorageKey {
             StorageKey::UpvoteDeposits => "u".to_string(),
             StorageKey::DownvoteDeposits => "d".to_string(),
             StorageKey::AppchainMetadata(appchain_id) => format!("{}md", appchain_id),
-            StorageKey::AppchainBasedata(appchain_id) => format!("{}bd", appchain_id),
             StorageKey::AppchainAnchorCode(appchain_id) => format!("{}ac", appchain_id),
             StorageKey::AppchainVotingScore(appchain_id) => format!("{}vs", appchain_id),
         }
