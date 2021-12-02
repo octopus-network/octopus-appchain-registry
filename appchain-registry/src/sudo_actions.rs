@@ -7,11 +7,6 @@ use crate::{interfaces::SudoActions, *};
 #[near_bindgen]
 impl SudoActions for AppchainRegistry {
     //
-    fn change_oct_token(&mut self, oct_token: AccountId) {
-        self.assert_owner();
-        self.oct_token = oct_token;
-    }
-    //
     fn set_owner_pk(&mut self, public_key: String) {
         self.assert_owner();
         let parse_result = Base58PublicKey::try_from(public_key);

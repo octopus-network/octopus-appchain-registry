@@ -102,8 +102,6 @@ pub trait RegistryStatus {
 }
 
 pub trait SudoActions {
-    /// Change account id of OCT token
-    fn change_oct_token(&mut self, oct_token: AccountId);
     /// Set public key of owner
     fn set_owner_pk(&mut self, public_key: String);
     /// Create subaccount for a specific appchain
