@@ -24,6 +24,7 @@ pub trait VoterActionsResultResolver {
 impl VoterActions for AppchainRegistry {
     //
     fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
+        self.assert_asset_transfer_is_not_paused();
         assert!(amount.0 > 0, "Withdraw amount is zero.");
         let voter = env::predecessor_account_id();
         let voter_upvote = self
@@ -66,6 +67,7 @@ impl VoterActions for AppchainRegistry {
     }
     //
     fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
+        self.assert_asset_transfer_is_not_paused();
         assert!(amount.0 > 0, "Withdraw amount is zero.");
         let voter = env::predecessor_account_id();
         let voter_downvote = self

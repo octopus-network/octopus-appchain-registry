@@ -23,8 +23,7 @@ pub trait AppchainOwnerActions {
     fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
 }
 
-/// The actions which the owner of appchain registry can perform
-pub trait RegistryOwnerActions {
+pub trait AppchainLifecycleManager {
     /// Update metadata of an appchain
     fn update_appchain_metadata(
         &mut self,
@@ -47,24 +46,19 @@ pub trait RegistryOwnerActions {
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId);
-    /// Count voting score of appchains
-    fn count_voting_score(&mut self);
     /// Conclude voting score of appchains
     fn conclude_voting_score(&mut self);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
 
-/// The actions related to registry settings
-pub trait RegistrySettingsActions {
+pub trait RegistrySettingsManager {
     /// Change the value of minimum register deposit
     fn change_minimum_register_deposit(&mut self, value: U128);
     /// Change the value of reduction percent for voting result of all appchains still in queue
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
-    /// Change operator of counting voting score
-    fn change_operator_of_counting_voting_score(&mut self, operator_account: AccountId);
 }
 
 /// The interface for querying status of appchain registry
@@ -102,10 +96,14 @@ pub trait RegistryStatus {
 }
 
 pub trait SudoActions {
-    /// Set public key of owner
+    /// Set public key of owner.
     fn set_owner_pk(&mut self, public_key: String);
-    /// Create subaccount for a specific appchain
+    /// Create subaccount for a specific appchain.
     fn create_anchor_account(&mut self, appchain_id: AppchainId);
+    /// Pause asset transfer in this contract.
+    fn pause_asset_transfer(&mut self);
+    /// Resume asset transfer in this contract.
+    fn resume_asset_transfer(&mut self);
 }
 
 pub trait VoterActions {

@@ -22,4 +22,14 @@ impl SudoActions for AppchainRegistry {
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
             .add_full_access_key(self.owner_pk.clone());
     }
+    //
+    fn pause_asset_transfer(&mut self) {
+        self.assert_owner();
+        self.asset_transfer_is_paused = true;
+    }
+    //
+    fn resume_asset_transfer(&mut self) {
+        self.assert_owner();
+        self.asset_transfer_is_paused = false;
+    }
 }
