@@ -1,8 +1,16 @@
 #
 export NEAR_ENV=testnet
+export REGISTRY_ACCOUNT_ID=dev-oct-registry.testnet
+export OWNER_ACCOUNT_ID=dev-oct-registry.testnet
 #
-near deploy --accountId dev-oct-registry.testnet --wasmFile res/appchain_registry.wasm
+near deploy --accountId $REGISTRY_ACCOUNT_ID --wasmFile res/appchain_registry.wasm
 #
-near call dev-oct-registry.testnet migrate_state '' --accountId dev-oct-registry.testnet --gas 200000000000000
+near call $REGISTRY_ACCOUNT_ID migrate_state '' --accountId $REGISTRY_ACCOUNT_ID --gas 200000000000000
 #
-near view dev-oct-registry.testnet get_appchains_with_state_of '{"appchain_state":null,"page_number":1,"page_size":50,"sorting_field":"AppchainId","sorting_order":"Ascending"}' --accountId dev-oct-registry.testnet
+# view functions
+#
+near view $REGISTRY_ACCOUNT_ID get_appchain_ids '{}'
+#
+near view $REGISTRY_ACCOUNT_ID get_appchains_with_state_of '{"appchain_state":null,"page_number":1,"page_size":50,"sorting_field":"AppchainId","sorting_order":"Ascending"}'
+#
+near view $REGISTRY_ACCOUNT_ID get_appchain_status_of '{"appchain_id":"easydeal"}'
