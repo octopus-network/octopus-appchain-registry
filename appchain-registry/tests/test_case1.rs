@@ -7,6 +7,7 @@ mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
 mod registry_owner_action;
+mod registry_settings;
 mod registry_viewer;
 mod voter_action;
 
@@ -25,10 +26,9 @@ fn test_case1() {
         common::to_oct_amount(1000)
     );
     let amount = common::to_oct_amount(1200);
-    let outcome =
-        registry_owner_action::change_minimum_register_deposit(&users[0], &registry, amount);
+    let outcome = registry_settings::change_minimum_register_deposit(&users[0], &registry, amount);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::change_minimum_register_deposit(&root, &registry, amount);
+    let outcome = registry_settings::change_minimum_register_deposit(&root, &registry, amount);
     outcome.assert_success();
     assert_eq!(
         registry_viewer::get_registry_settings(&registry)

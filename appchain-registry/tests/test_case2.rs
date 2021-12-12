@@ -4,6 +4,8 @@ mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
 mod registry_owner_action;
+mod registry_roles;
+mod registry_settings;
 mod registry_viewer;
 mod voter_action;
 
@@ -164,6 +166,11 @@ fn test_case2() {
     let outcome = registry_owner_action::count_voting_score(&users[1], &registry);
     assert!(!outcome.is_ok());
     let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    assert!(!outcome.is_ok());
+    let outcome =
+        registry_roles::change_operator_of_counting_voting_score(&root, &registry, &users[4]);
+    outcome.assert_success();
+    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -234,7 +241,7 @@ fn test_case2() {
     //
     let outcome = registry_owner_action::count_voting_score(&users[2], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -285,7 +292,7 @@ fn test_case2() {
     //
     let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -304,13 +311,11 @@ fn test_case2() {
     );
     //
     let outcome =
-        registry_owner_action::change_voting_result_reduction_percent(&users[4], &registry, 60);
+        registry_settings::change_voting_result_reduction_percent(&users[4], &registry, 60);
     assert!(!outcome.is_ok());
-    let outcome =
-        registry_owner_action::change_voting_result_reduction_percent(&root, &registry, 101);
+    let outcome = registry_settings::change_voting_result_reduction_percent(&root, &registry, 101);
     assert!(!outcome.is_ok());
-    let outcome =
-        registry_owner_action::change_voting_result_reduction_percent(&root, &registry, 60);
+    let outcome = registry_settings::change_voting_result_reduction_percent(&root, &registry, 60);
     outcome.assert_success();
     //
     let outcome = registry_owner_action::conclude_voting_score(&users[0], &registry);

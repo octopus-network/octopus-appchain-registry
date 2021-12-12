@@ -4,6 +4,7 @@ mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
 mod registry_owner_action;
+mod registry_roles;
 mod registry_viewer;
 mod voter_action;
 
@@ -62,13 +63,17 @@ fn test_case3() {
         50
     );
     //
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome =
+        registry_roles::change_operator_of_counting_voting_score(&root, &registry, &users[3]);
     outcome.assert_success();
     //
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
     outcome.assert_success();
     //
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
+    outcome.assert_success();
+    //
+    let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
     outcome.assert_success();
     //
     let outcome = registry_owner_action::conclude_voting_score(&root, &registry);
