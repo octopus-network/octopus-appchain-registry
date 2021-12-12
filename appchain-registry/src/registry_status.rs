@@ -21,8 +21,18 @@ impl RegistryStatus for AppchainRegistry {
         self.registry_settings.get().unwrap()
     }
     //
+    fn get_registry_roles(&self) -> RegistryRoles {
+        self.registry_roles.get().unwrap()
+    }
+    //
     fn get_total_stake(&self) -> U128 {
-        self.total_stake.into()
+        let mut total_stake: u128 = 0;
+        self.appchain_ids.to_vec().iter().for_each(|appchain_id| {
+            if let Some(appchain_basedata) = self.appchain_basedatas.get(appchain_id) {
+                total_stake += appchain_basedata.status().total_stake.0;
+            }
+        });
+        U128::from(total_stake)
     }
     //
     fn get_appchain_ids(&self) -> Vec<String> {

@@ -83,6 +83,7 @@ fn get_genesis_config() -> GenesisConfig {
 
 pub fn init(
     total_supply: u128,
+    with_old_version: bool,
 ) -> (
     UserAccount,
     ContractAccount<MockOctTokenContract>,
@@ -108,12 +109,21 @@ pub fn init(
         signer_account: root,
         init_method: new(root.valid_account_id(), U128::from(total_supply), ft_metadata)
     };
-    let registry = deploy! {
-        contract: AppchainRegistryContract,
-        contract_id: "registry",
-        bytes: &REGISTRY_WASM_BYTES,
-        signer_account: root,
-        init_method: new(oct_token.valid_account_id().to_string())
+    let registry = match with_old_version {
+        true => deploy! {
+            contract: AppchainRegistryContract,
+            contract_id: "registry",
+            bytes: &PREVIOUS_REGISTRY_WASM_BYTES,
+            signer_account: root,
+            init_method: new(oct_token.valid_account_id().to_string())
+        },
+        false => deploy! {
+            contract: AppchainRegistryContract,
+            contract_id: "registry",
+            bytes: &REGISTRY_WASM_BYTES,
+            signer_account: root,
+            init_method: new(oct_token.valid_account_id().to_string())
+        },
     };
     register_user_to_oct_token(&registry.user_account, &oct_token);
     // Create users and transfer a certain amount of OCT token to them
@@ -141,51 +151,23 @@ pub fn init(
     (root, oct_token, registry, users)
 }
 
-pub fn init_by_previous(
-    total_supply: u128,
-) -> (
-    UserAccount,
-    ContractAccount<MockOctTokenContract>,
-    ContractAccount<AppchainRegistryContract>,
-) {
-    let root = init_simulator(None);
-    // Deploy and initialize contracts
-    let ft_metadata = FungibleTokenMetadata {
-        spec: FT_METADATA_SPEC.to_string(),
-        name: "OCTToken".to_string(),
-        symbol: "OCT".to_string(),
-        icon: None,
-        reference: None,
-        reference_hash: None,
-        decimals: 24,
-    };
-    let oct_token = deploy! {
-        contract: MockOctTokenContract,
-        contract_id: "oct_token",
-        bytes: &TOKEN_WASM_BYTES,
-        signer_account: root,
-        init_method: new(root.valid_account_id(), U128::from(total_supply), ft_metadata)
-    };
-    let registry = deploy! {
-        contract: AppchainRegistryContract,
-        contract_id: "registry",
-        bytes: &PREVIOUS_REGISTRY_WASM_BYTES,
-        signer_account: root,
-        init_method: new(oct_token.valid_account_id().to_string())
-    };
-    register_user_to_oct_token(&registry.user_account, &oct_token);
-
-    (root, oct_token, registry)
+pub fn deploy_new_registry_contract(registry: &ContractAccount<AppchainRegistryContract>) {
+    let transaction = registry
+        .user_account
+        .create_transaction(registry.account_id());
+    let result = transaction
+        .deploy_contract((&REGISTRY_WASM_BYTES).to_vec())
+        .submit();
+    result.assert_success();
 }
 
-pub fn upgrade_contract_code_and_perform_migration(root: &UserAccount, registry: &UserAccount) {
-    let outcome = root
-        .create_transaction(registry.account_id())
-        .deploy_contract(PREVIOUS_REGISTRY_WASM_BYTES.to_vec())
-        .submit();
-    print_outcome_result("deploy_registry_contract", &outcome);
-    //
-    todo!("call function for storage migration");
+pub fn migrate_state(
+    signer: &UserAccount,
+    registry: &ContractAccount<AppchainRegistryContract>,
+) -> ExecutionResult {
+    let outcome = call!(signer, registry.migrate_state());
+    print_outcome_result("migrate_state", &outcome);
+    outcome
 }
 
 pub fn to_oct_amount(amount: u128) -> u128 {

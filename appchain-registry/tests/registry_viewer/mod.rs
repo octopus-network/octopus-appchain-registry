@@ -1,5 +1,6 @@
 use appchain_registry::types::{
-    AppchainSortingField, AppchainState, AppchainStatus, RegistrySettings, SortingOrder,
+    AppchainSortingField, AppchainState, AppchainStatus, RegistryRoles, RegistrySettings,
+    SortingOrder,
 };
 use appchain_registry::AppchainRegistryContract;
 
@@ -15,6 +16,15 @@ pub fn get_registry_settings(
     }
     assert!(view_result.is_ok());
     view_result.unwrap_json::<RegistrySettings>()
+}
+
+pub fn get_registry_roles(registry: &ContractAccount<AppchainRegistryContract>) -> RegistryRoles {
+    let view_result = view!(registry.get_registry_roles());
+    if view_result.is_err() {
+        println!("{:#?}", view_result);
+    }
+    assert!(view_result.is_ok());
+    view_result.unwrap_json::<RegistryRoles>()
 }
 
 pub fn print_appchains(

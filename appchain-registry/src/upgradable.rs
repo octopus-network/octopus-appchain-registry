@@ -127,8 +127,8 @@ impl AppchainRegistry {
             registry_roles: LazyOption::new(
                 StorageKey::RegistryRoles.into_bytes(),
                 Some(&RegistryRoles {
-                    appchain_lifecycle_manager: String::new(),
-                    registry_settings_manager: String::new(),
+                    appchain_lifecycle_manager: old_contract.owner.clone(),
+                    registry_settings_manager: old_contract.owner.clone(),
                     operator_of_counting_voting_score: old_registry_settings
                         .operator_of_counting_voting_score,
                 }),

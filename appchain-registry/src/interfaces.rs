@@ -69,6 +69,8 @@ pub trait RegistryStatus {
     fn get_oct_token(&self) -> AccountId;
     /// Get registry settings
     fn get_registry_settings(&self) -> RegistrySettings;
+    /// Get registry roles
+    fn get_registry_roles(&self) -> RegistryRoles;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
     fn get_total_stake(&self) -> U128;
     /// Get appchain ids

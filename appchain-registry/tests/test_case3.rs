@@ -13,7 +13,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 #[test]
 fn test_case3() {
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) = common::init(total_supply);
+    let (root, oct_token, registry, users) = common::init(total_supply, false);
     //
     let mut i = 1;
     while i <= 50 {

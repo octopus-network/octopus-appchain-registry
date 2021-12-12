@@ -15,7 +15,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 #[test]
 fn test_case2() {
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) = common::init(total_supply);
+    let (root, oct_token, registry, users) = common::init(total_supply, false);
     //
     let appchain_id1 = "test_appchain1".to_string();
     let amount = common::to_oct_amount(1000);
