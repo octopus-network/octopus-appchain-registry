@@ -1,10 +1,10 @@
 use appchain_registry::types::{RegistryRoles, RegistrySettings};
 use near_sdk::serde_json;
 
+mod appchain_lifecycle_manager;
 mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
-mod registry_owner_action;
 mod registry_viewer;
 mod voter_action;
 

@@ -1,12 +1,13 @@
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 
+mod appchain_lifecycle_manager;
 mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
-mod registry_owner_action;
 mod registry_roles;
 mod registry_settings;
 mod registry_viewer;
+mod sudo_actions;
 mod voter_action;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
@@ -73,38 +74,45 @@ fn test_case2() {
         common::to_oct_amount(3000)
     );
     //
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id1);
+    let outcome =
+        appchain_lifecycle_manager::pass_auditing_appchain(&root, &registry, &appchain_id1);
     assert!(!outcome.is_ok());
     let outcome =
-        registry_owner_action::pass_auditing_appchain(&users[0], &registry, &appchain_id1);
+        appchain_lifecycle_manager::pass_auditing_appchain(&users[0], &registry, &appchain_id1);
     assert!(!outcome.is_ok());
     let outcome =
-        registry_owner_action::pass_auditing_appchain(&users[1], &registry, &appchain_id1);
+        appchain_lifecycle_manager::pass_auditing_appchain(&users[1], &registry, &appchain_id1);
     assert!(!outcome.is_ok());
     //
-    let outcome = registry_owner_action::start_auditing_appchain(&root, &registry, &appchain_id1);
+    let outcome =
+        appchain_lifecycle_manager::start_auditing_appchain(&root, &registry, &appchain_id1);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id1);
+    let outcome =
+        appchain_lifecycle_manager::pass_auditing_appchain(&root, &registry, &appchain_id1);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
     //
-    let outcome = registry_owner_action::start_auditing_appchain(&root, &registry, &appchain_id2);
+    let outcome =
+        appchain_lifecycle_manager::start_auditing_appchain(&root, &registry, &appchain_id2);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id2);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id2);
+    let outcome =
+        appchain_lifecycle_manager::pass_auditing_appchain(&root, &registry, &appchain_id2);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id2);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
     //
-    let outcome = registry_owner_action::start_auditing_appchain(&root, &registry, &appchain_id3);
+    let outcome =
+        appchain_lifecycle_manager::start_auditing_appchain(&root, &registry, &appchain_id3);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id3);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    let outcome = registry_owner_action::pass_auditing_appchain(&root, &registry, &appchain_id3);
+    let outcome =
+        appchain_lifecycle_manager::pass_auditing_appchain(&root, &registry, &appchain_id3);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id3);
     assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
@@ -120,6 +128,31 @@ fn test_case2() {
         ),
         3
     );
+    //
+    let result = sudo_actions::pause_asset_transfer(&root, &registry);
+    result.assert_success();
+    let outcome = voter_action::upvote_appchain(
+        &users[0],
+        &oct_token,
+        &registry,
+        &appchain_id1,
+        common::to_oct_amount(1000),
+    );
+    outcome.assert_success();
+    let outcome = voter_action::downvote_appchain(
+        &users[0],
+        &oct_token,
+        &registry,
+        &appchain_id2,
+        common::to_oct_amount(1500),
+    );
+    outcome.assert_success();
+    let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
+    let appchain2 = registry_viewer::get_appchain_status(&registry, &appchain_id2);
+    assert_eq!(appchain1.upvote_deposit.0, 0);
+    assert_eq!(appchain2.downvote_deposit.0, 0);
+    let result = sudo_actions::resume_asset_transfer(&root, &registry);
+    result.assert_success();
     //
     let outcome = voter_action::upvote_appchain(
         &users[0],
@@ -163,14 +196,14 @@ fn test_case2() {
     assert_eq!(appchain3.upvote_deposit.0, 0);
     assert_eq!(appchain3.downvote_deposit.0, common::to_oct_amount(800));
     //
-    let outcome = registry_owner_action::count_voting_score(&users[1], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[1], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::count_voting_score(&root, &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&root, &registry);
     assert!(!outcome.is_ok());
     let outcome =
         registry_roles::change_operator_of_counting_voting_score(&root, &registry, &users[4]);
     outcome.assert_success();
-    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -208,6 +241,25 @@ fn test_case2() {
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2800)
     );
     //
+    let result = sudo_actions::pause_asset_transfer(&root, &registry);
+    result.assert_success();
+    let outcome = voter_action::withdraw_upvote_deposit_of(
+        &users[0],
+        &registry,
+        &appchain_id1,
+        common::to_oct_amount(550),
+    );
+    assert!(!outcome.is_ok());
+    let outcome = voter_action::withdraw_downvote_deposit_of(
+        &users[4],
+        &registry,
+        &appchain_id3,
+        common::to_oct_amount(450),
+    );
+    assert!(!outcome.is_ok());
+    let result = sudo_actions::resume_asset_transfer(&root, &registry);
+    result.assert_success();
+    //
     let outcome = voter_action::withdraw_upvote_deposit_of(
         &users[0],
         &registry,
@@ -239,9 +291,9 @@ fn test_case2() {
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2350)
     );
     //
-    let outcome = registry_owner_action::count_voting_score(&users[2], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[2], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -290,9 +342,9 @@ fn test_case2() {
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2300)
     );
     //
-    let outcome = registry_owner_action::count_voting_score(&users[3], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[3], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::count_voting_score(&users[4], &registry);
+    let outcome = appchain_lifecycle_manager::count_voting_score(&users[4], &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(
@@ -318,9 +370,9 @@ fn test_case2() {
     let outcome = registry_settings::change_voting_result_reduction_percent(&root, &registry, 60);
     outcome.assert_success();
     //
-    let outcome = registry_owner_action::conclude_voting_score(&users[0], &registry);
+    let outcome = appchain_lifecycle_manager::conclude_voting_score(&users[0], &registry);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::conclude_voting_score(&root, &registry);
+    let outcome = appchain_lifecycle_manager::conclude_voting_score(&root, &registry);
     outcome.assert_success();
     let appchain1 = registry_viewer::get_appchain_status(&registry, &appchain_id1);
     assert_eq!(appchain1.voting_score.0, common::to_oct_amount(760) as i128);

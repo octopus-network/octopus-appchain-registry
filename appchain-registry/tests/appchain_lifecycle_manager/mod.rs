@@ -104,17 +104,3 @@ pub fn remove_appchain(
     common::print_outcome_result("remove_appchain", &outcome);
     outcome
 }
-
-pub fn stage_code(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    contract_code: Vec<u8>,
-    staging_timestamp: Timestamp,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.stage_code(contract_code, staging_timestamp)
-    );
-    common::print_outcome_result("stage_code", &outcome);
-    outcome
-}

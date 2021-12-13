@@ -3,12 +3,13 @@ use std::collections::HashMap;
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 use near_sdk::json_types::U128;
 
+mod appchain_lifecycle_manager;
 mod appchain_owner_action;
 mod common;
 mod oct_token_viewer;
-mod registry_owner_action;
 mod registry_settings;
 mod registry_viewer;
+mod sudo_actions;
 mod voter_action;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
@@ -46,6 +47,7 @@ fn test_case1() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
+    //
     let appchain_id = String::from("test_appchain");
     let amount = common::to_oct_amount(1000);
     let outcome = appchain_owner_action::register_appchain(
@@ -71,7 +73,36 @@ fn test_case1() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
+    //
     let amount = common::to_oct_amount(1200);
+    let result = sudo_actions::pause_asset_transfer(&root, &registry);
+    result.assert_success();
+    let outcome = appchain_owner_action::register_appchain(
+        &users[0],
+        &oct_token,
+        &registry,
+        &appchain_id,
+        amount,
+    );
+    outcome.assert_success();
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            5,
+            AppchainSortingField::AppchainId,
+            SortingOrder::Ascending
+        ),
+        0
+    );
+    assert_eq!(
+        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        total_supply / 10
+    );
+    //
+    let result = sudo_actions::resume_asset_transfer(&root, &registry);
+    result.assert_success();
     let outcome = appchain_owner_action::register_appchain(
         &users[0],
         &oct_token,
@@ -114,7 +145,7 @@ fn test_case1() {
     //
     custom_metadata.clear();
     custom_metadata.insert("key3".to_string(), "value3".to_string());
-    let outcome = registry_owner_action::update_appchain_metadata(
+    let outcome = appchain_lifecycle_manager::update_appchain_metadata(
         &users[0],
         &registry,
         &appchain_id,
@@ -131,7 +162,7 @@ fn test_case1() {
         Option::from(custom_metadata.clone()),
     );
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::update_appchain_metadata(
+    let outcome = appchain_lifecycle_manager::update_appchain_metadata(
         &root,
         &registry,
         &appchain_id,
@@ -160,9 +191,10 @@ fn test_case1() {
     assert!(appchain.appchain_metadata.custom_metadata.keys().len() == 1);
     //
     let outcome =
-        registry_owner_action::start_auditing_appchain(&users[1], &registry, &appchain_id);
+        appchain_lifecycle_manager::start_auditing_appchain(&users[1], &registry, &appchain_id);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::start_auditing_appchain(&root, &registry, &appchain_id);
+    let outcome =
+        appchain_lifecycle_manager::start_auditing_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id);
     assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
@@ -207,9 +239,9 @@ fn test_case1() {
         common::to_oct_amount(1200)
     );
     //
-    let outcome = registry_owner_action::reject_appchain(&users[4], &registry, &appchain_id);
+    let outcome = appchain_lifecycle_manager::reject_appchain(&users[4], &registry, &appchain_id);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::reject_appchain(&root, &registry, &appchain_id);
+    let outcome = appchain_lifecycle_manager::reject_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
     assert_eq!(
         oct_token_viewer::get_ft_balance_of(&users[1], &oct_token).0,
@@ -220,9 +252,9 @@ fn test_case1() {
         common::to_oct_amount(1200)
     );
     //
-    let outcome = registry_owner_action::remove_appchain(&users[2], &registry, &appchain_id);
+    let outcome = appchain_lifecycle_manager::remove_appchain(&users[2], &registry, &appchain_id);
     assert!(!outcome.is_ok());
-    let outcome = registry_owner_action::remove_appchain(&root, &registry, &appchain_id);
+    let outcome = appchain_lifecycle_manager::remove_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
     assert_eq!(
         registry_viewer::print_appchains(
