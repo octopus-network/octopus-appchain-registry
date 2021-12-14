@@ -23,6 +23,19 @@ impl SudoActions for AppchainRegistry {
             .add_full_access_key(self.owner_pk.clone());
     }
     //
+    fn force_change_appchain_state(&mut self, appchain_id: AppchainId, new_state: AppchainState) {
+        self.assert_owner();
+        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            !appchain_basedata.state().eq(&new_state),
+            "Appchain is already in state '{}'",
+            &new_state
+        );
+        appchain_basedata.set_state(new_state);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
+    }
+    //
     fn pause_asset_transfer(&mut self) {
         self.assert_owner();
         self.asset_transfer_is_paused = true;

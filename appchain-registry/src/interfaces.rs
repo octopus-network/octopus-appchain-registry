@@ -102,6 +102,8 @@ pub trait SudoActions {
     fn set_owner_pk(&mut self, public_key: String);
     /// Create subaccount for a specific appchain.
     fn create_anchor_account(&mut self, appchain_id: AppchainId);
+    /// Force change state of an appchain
+    fn force_change_appchain_state(&mut self, appchain_id: AppchainId, state: AppchainState);
     /// Pause asset transfer in this contract.
     fn pause_asset_transfer(&mut self);
     /// Resume asset transfer in this contract.
