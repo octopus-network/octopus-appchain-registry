@@ -126,7 +126,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         for id in self.appchain_ids.to_vec() {
             let mut appchain_basedata = self.get_appchain_basedata(&id);
             if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                if appchain_basedata.voting_score() <= 0 {
+                if appchain_basedata.voting_score() < 0 {
                     appchain_basedata.set_state(AppchainState::Dead);
                     self.appchain_basedatas
                         .insert(appchain_basedata.id(), &appchain_basedata);
