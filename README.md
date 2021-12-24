@@ -103,7 +103,10 @@ Anyone who upvoted or downvoted for an appchain can withdraw any amount of OCT t
 
 ### Pause or resume asset transfer
 
-The owner account of this contract can pause or resume asset transfer in this contract (that is to transfer OCT tokens into or out of this contract).
+The owner account of this contract can pause or resume asset transfer in this contract. The actions that will be limited should be:
+
+* Transfer OCT token into this contract by function `ft_transfer_call` of OCT token contract, with a certain message attached (to register an appchain or upvote/downvote for an appchain).
+* Withdraw upvote/downvote deposit from this contract.
 
 ### View functions
 
