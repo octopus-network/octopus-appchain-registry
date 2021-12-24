@@ -4,7 +4,6 @@ use near_sdk::collections::LazyOption;
 use near_sdk::Timestamp;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
-use crate::upgradable::{OldAppchainBasedata, OldAppchainMetadata};
 use crate::*;
 
 /// Appchain basedata
@@ -22,27 +21,6 @@ pub struct AppchainBasedata {
     go_live_time: Timestamp,
     validator_count: u32,
     total_stake: Balance,
-}
-
-impl AppchainMetadata {
-    ///
-    /// Construct a new instance from an old version of this struct
-    pub fn from_old_version(old_version: OldAppchainMetadata) -> Self {
-        Self {
-            website_url: old_version.website_url,
-            function_spec_url: old_version.function_spec_url,
-            github_address: old_version.github_address,
-            github_release: old_version.github_release,
-            contact_email: old_version.contact_email,
-            premined_wrapped_appchain_token_beneficiary: old_version
-                .premined_wrapped_appchain_token_beneficiary,
-            premined_wrapped_appchain_token: old_version.premined_wrapped_appchain_token,
-            ido_amount_of_wrapped_appchain_token: old_version.ido_amount_of_wrapped_appchain_token,
-            initial_era_reward: old_version.initial_era_reward,
-            fungible_token_metadata: old_version.fungible_token_metadata,
-            custom_metadata: old_version.custom_metadata,
-        }
-    }
 }
 
 impl AppchainBasedata {
@@ -213,27 +191,5 @@ impl AppchainBasedata {
             &StorageKey::AppchainVotingScore(self.appchain_id.clone()).into_bytes(),
             &voting_score.to_be_bytes(),
         );
-    }
-    /// Construct a new instance from an old version of this struct
-    pub fn from_old_version(old_version: OldAppchainBasedata) -> Self {
-        Self {
-            appchain_id: old_version.appchain_id.clone(),
-            appchain_metadata: LazyOption::new(
-                StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
-                Some(&AppchainMetadata::from_old_version(
-                    old_version.appchain_metadata.get().unwrap(),
-                )),
-            ),
-            appchain_anchor: old_version.appchain_anchor,
-            appchain_owner: old_version.appchain_owner,
-            register_deposit: old_version.register_deposit,
-            appchain_state: old_version.appchain_state,
-            upvote_deposit: old_version.upvote_deposit,
-            downvote_deposit: old_version.downvote_deposit,
-            registered_time: old_version.registered_time,
-            go_live_time: old_version.go_live_time,
-            validator_count: old_version.validator_count,
-            total_stake: old_version.total_stake,
-        }
     }
 }

@@ -11,5 +11,9 @@ cp target/wasm32-unknown-unknown/release/*.wasm ./res/
 cp target/wasm32-unknown-unknown/release/appchain_registry.wasm ./out/main.wasm
 
 if [ "$1" == "test" ]; then
-    RUST_BACKTRACE=1 cargo test --test test_registry_actions -- --nocapture
+    if [ "$2" == "" ]; then
+        RUST_BACKTRACE=1 cargo test --tests -- --nocapture
+    else
+        RUST_BACKTRACE=1 cargo test --test $2 -- --nocapture
+    fi
 fi

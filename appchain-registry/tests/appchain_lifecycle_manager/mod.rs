@@ -44,32 +44,6 @@ pub fn update_appchain_metadata(
     outcome
 }
 
-pub fn change_minimum_register_deposit(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    value: u128,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.change_minimum_register_deposit(value.into())
-    );
-    common::print_outcome_result("change_minimum_register_deposit", &outcome);
-    outcome
-}
-
-pub fn change_voting_result_reduction_percent(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    value: u64,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.change_voting_result_reduction_percent(value.into())
-    );
-    common::print_outcome_result("change_voting_result_reduction_percent", &outcome);
-    outcome
-}
-
 pub fn start_auditing_appchain(
     signer: &UserAccount,
     registry: &ContractAccount<AppchainRegistryContract>,
@@ -128,19 +102,5 @@ pub fn remove_appchain(
 ) -> ExecutionResult {
     let outcome = call!(signer, registry.remove_appchain(appchain_id.clone()));
     common::print_outcome_result("remove_appchain", &outcome);
-    outcome
-}
-
-pub fn stage_code(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-    contract_code: Vec<u8>,
-    staging_timestamp: Timestamp,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.stage_code(contract_code, staging_timestamp)
-    );
-    common::print_outcome_result("stage_code", &outcome);
     outcome
 }

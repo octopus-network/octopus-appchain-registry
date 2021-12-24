@@ -1,9 +1,10 @@
 mod appchain_anchor_callback;
 mod appchain_basedata;
+mod appchain_lifecycle;
 mod appchain_owner_actions;
 pub mod interfaces;
-mod registry_owner_actions;
-mod registry_settings_actions;
+mod registry_roles;
+mod registry_settings;
 mod registry_status;
 mod storage_key;
 mod sudo_actions;
@@ -27,7 +28,7 @@ use near_sdk::{
 
 use appchain_basedata::AppchainBasedata;
 use storage_key::StorageKey;
-use types::{AppchainId, AppchainMetadata, AppchainState, RegistrySettings};
+use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, RegistrySettings};
 
 const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
@@ -102,6 +103,10 @@ pub struct AppchainRegistry {
     total_stake: Balance,
     /// The time of the last calling of function `count_voting_score`
     time_of_last_count_voting_score: Timestamp,
+    /// The roles of appchain registry
+    registry_roles: LazyOption<RegistryRoles>,
+    /// Whether the asset transfer is paused
+    asset_transfer_is_paused: bool,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
@@ -142,7 +147,7 @@ impl AppchainRegistry {
                 * NANO_SECONDS_MULTIPLE,
             oct_token,
             registry_settings: LazyOption::new(
-                StorageKey::AppchainSettings.into_bytes(),
+                StorageKey::RegistrySettings.into_bytes(),
                 Some(&RegistrySettings::default()),
             ),
             appchain_ids: UnorderedSet::new(StorageKey::AppchainIds.into_bytes()),
@@ -152,7 +157,19 @@ impl AppchainRegistry {
             top_appchain_id_in_queue: String::new(),
             total_stake: 0,
             time_of_last_count_voting_score: 0,
+            registry_roles: LazyOption::new(
+                StorageKey::RegistryRoles.into_bytes(),
+                Some(&RegistryRoles::default()),
+            ),
+            asset_transfer_is_paused: false,
         }
+    }
+    // Assert the asset transfer is not paused.
+    fn assert_asset_transfer_is_not_paused(&self) {
+        assert!(
+            !self.asset_transfer_is_paused,
+            "The asset transfer in this contract has been paused."
+        );
     }
     // Assert that the contract called by the owner.
     fn assert_owner(&self) {
@@ -162,7 +179,33 @@ impl AppchainRegistry {
             "Function can only be called by owner."
         );
     }
-    // Assert that the contract called by the owner of the given appchain.
+    // Assert that the contract is called by appchain lifecycle manager.
+    fn assert_appchain_lifecycle_manager(&self) {
+        let registry_roles = self.registry_roles.get().unwrap();
+        assert_eq!(
+            env::predecessor_account_id(),
+            registry_roles.appchain_lifecycle_manager,
+            "Function can only be called by appchain lifecycle manager."
+        );
+    }
+    // Assert that the contract is called by registry settings manager.
+    fn assert_registry_settings_manager(&self) {
+        let registry_roles = self.registry_roles.get().unwrap();
+        assert_eq!(
+            env::predecessor_account_id(),
+            registry_roles.registry_settings_manager,
+            "Function can only be called by registry settings manager."
+        );
+    }
+    // Assert that the given account has no role in this contract.
+    fn assert_account_has_no_role(&self, account: &AccountId) {
+        let registry_roles = self.registry_roles.get().unwrap();
+        assert!(
+            !registry_roles.has_role(&account) && !account.eq(&self.owner),
+            "The account already has role in contract."
+        );
+    }
+    // Assert that the contract is called by the owner of the given appchain.
     fn assert_appchain_owner(&self, appchain_id: &AppchainId) {
         let appchain_basedata = self.get_appchain_basedata(appchain_id);
         assert_eq!(
@@ -187,6 +230,10 @@ impl AppchainRegistry {
             .get(appchain_id)
             .expect(APPCHAIN_NOT_FOUND)
     }
+}
+
+#[near_bindgen]
+impl AppchainRegistry {
     /// Callback function for `ft_transfer_call` of NEP-141 compatible contracts
     pub fn ft_on_transfer(
         &mut self,
@@ -194,6 +241,7 @@ impl AppchainRegistry {
         amount: U128,
         msg: String,
     ) -> PromiseOrValue<U128> {
+        self.assert_asset_transfer_is_not_paused();
         log!(
             "Deposit {} from @{} received. msg: {}",
             amount.0,

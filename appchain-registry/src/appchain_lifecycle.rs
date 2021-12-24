@@ -1,7 +1,8 @@
-use crate::{interfaces::RegistryOwnerActions, types::AppchainId, *};
+use crate::{interfaces::AppchainLifecycleManager, types::AppchainId, *};
 
 #[near_bindgen]
-impl RegistryOwnerActions for AppchainRegistry {
+impl AppchainLifecycleManager for AppchainRegistry {
+    //
     fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
@@ -17,7 +18,7 @@ impl RegistryOwnerActions for AppchainRegistry {
         fungible_token_metadata: Option<FungibleTokenMetadata>,
         custom_metadata: Option<HashMap<String, String>>,
     ) {
-        self.assert_owner();
+        self.assert_appchain_lifecycle_manager();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         let mut metadata = appchain_basedata.metadata();
         if let Some(website_url) = website_url {
@@ -68,9 +69,9 @@ impl RegistryOwnerActions for AppchainRegistry {
             .as_bytes(),
         )
     }
-
+    //
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {
-        self.assert_owner();
+        self.assert_appchain_lifecycle_manager();
         self.assert_appchain_state(&appchain_id, AppchainState::Registered);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::Auditing);
@@ -78,9 +79,9 @@ impl RegistryOwnerActions for AppchainRegistry {
             .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
     }
-
+    //
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId) {
-        self.assert_owner();
+        self.assert_appchain_lifecycle_manager();
         self.assert_appchain_state(&appchain_id, AppchainState::Auditing);
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::InQueue);
@@ -88,9 +89,9 @@ impl RegistryOwnerActions for AppchainRegistry {
             .insert(&appchain_id, &appchain_basedata);
         env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
     }
-
+    //
     fn reject_appchain(&mut self, appchain_id: AppchainId) {
-        self.assert_owner();
+        self.assert_appchain_lifecycle_manager();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert!(
             appchain_basedata.state().eq(&AppchainState::Registered)
@@ -102,12 +103,83 @@ impl RegistryOwnerActions for AppchainRegistry {
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
     }
-
-    fn count_voting_score(&mut self) {
+    //
+    fn conclude_voting_score(&mut self) {
+        self.assert_appchain_lifecycle_manager();
+        assert!(
+            !self.top_appchain_id_in_queue.is_empty(),
+            "There is no appchain on the top of queue yet."
+        );
+        // Set the appchain with the largest voting score to go `staging`
+        let sub_account_id = format!(
+            "{}.{}",
+            &self.top_appchain_id_in_queue,
+            env::current_account_id()
+        );
+        let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
+        top_appchain_basedata.set_state(AppchainState::Staging);
+        top_appchain_basedata.set_anchor_account(&sub_account_id);
+        self.appchain_basedatas
+            .insert(top_appchain_basedata.id(), &top_appchain_basedata);
         let registry_settings = self.registry_settings.get().unwrap();
+        // Reduce the voting score of all appchains in queue by the given percent
+        for id in self.appchain_ids.to_vec() {
+            let mut appchain_basedata = self.get_appchain_basedata(&id);
+            if appchain_basedata.state().eq(&AppchainState::InQueue) {
+                if appchain_basedata.voting_score() < 0 {
+                    appchain_basedata.set_state(AppchainState::Dead);
+                    self.appchain_basedatas
+                        .insert(appchain_basedata.id(), &appchain_basedata);
+                } else {
+                    appchain_basedata.reduce_voting_score_by_percent(
+                        registry_settings.voting_result_reduction_percent,
+                    );
+                }
+            }
+        }
+        self.top_appchain_id_in_queue.clear();
+        Promise::new(sub_account_id)
+            .create_account()
+            .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
+            .add_full_access_key(self.owner_pk.clone());
+    }
+    //
+    fn remove_appchain(&mut self, appchain_id: AppchainId) {
+        self.assert_appchain_lifecycle_manager();
+        self.assert_appchain_state(&appchain_id, AppchainState::Dead);
+        let appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            appchain_basedata.upvote_deposit() == 0,
+            "The appchain still has upvote deposit(s)."
+        );
+        assert!(
+            appchain_basedata.downvote_deposit() == 0,
+            "The appchain still has downvote deposit(s)."
+        );
+        if !appchain_basedata.anchor().trim().is_empty() {
+            let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
+            env::log(
+                format!(
+                    "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
+                    &anchor_account_id, &appchain_id
+                )
+                .as_bytes(),
+            );
+        }
+        self.internal_remove_appchain(&appchain_id);
+        env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
+    }
+}
+
+#[near_bindgen]
+impl AppchainRegistry {
+    //
+    pub fn count_voting_score(&mut self) {
+        let registry_settings = self.registry_settings.get().unwrap();
+        let registry_roles = self.registry_roles.get().unwrap();
         assert_eq!(
             env::predecessor_account_id(),
-            registry_settings.operator_of_counting_voting_score,
+            registry_roles.operator_of_counting_voting_score,
             "Only certain operator can call this function."
         );
         assert!(
@@ -141,71 +213,5 @@ impl RegistryOwnerActions for AppchainRegistry {
         self.time_of_last_count_voting_score = env::block_timestamp()
             - (env::block_timestamp()
                 % (registry_settings.counting_interval_in_seconds.0 * NANO_SECONDS_MULTIPLE));
-    }
-
-    fn conclude_voting_score(&mut self) {
-        self.assert_owner();
-        assert!(
-            !self.top_appchain_id_in_queue.is_empty(),
-            "There is no appchain on the top of queue yet."
-        );
-        // Set the appchain with the largest voting score to go `staging`
-        let sub_account_id = format!(
-            "{}.{}",
-            &self.top_appchain_id_in_queue,
-            env::current_account_id()
-        );
-        let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
-        top_appchain_basedata.set_state(AppchainState::Staging);
-        top_appchain_basedata.set_anchor_account(&sub_account_id);
-        self.appchain_basedatas
-            .insert(top_appchain_basedata.id(), &top_appchain_basedata);
-        let registry_settings = self.registry_settings.get().unwrap();
-        // Reduce the voting score of all appchains in queue by the given percent
-        for id in self.appchain_ids.to_vec() {
-            let mut appchain_basedata = self.get_appchain_basedata(&id);
-            if appchain_basedata.state().eq(&AppchainState::InQueue) {
-                if appchain_basedata.voting_score() <= 0 {
-                    appchain_basedata.set_state(AppchainState::Dead);
-                    self.appchain_basedatas
-                        .insert(appchain_basedata.id(), &appchain_basedata);
-                } else {
-                    appchain_basedata.reduce_voting_score_by_percent(
-                        registry_settings.voting_result_reduction_percent,
-                    );
-                }
-            }
-        }
-        self.top_appchain_id_in_queue.clear();
-        Promise::new(sub_account_id)
-            .create_account()
-            .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
-            .add_full_access_key(self.owner_pk.clone());
-    }
-
-    fn remove_appchain(&mut self, appchain_id: AppchainId) {
-        self.assert_owner();
-        self.assert_appchain_state(&appchain_id, AppchainState::Dead);
-        let appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        assert!(
-            appchain_basedata.upvote_deposit() == 0,
-            "The appchain still has upvote deposit(s)."
-        );
-        assert!(
-            appchain_basedata.downvote_deposit() == 0,
-            "The appchain still has downvote deposit(s)."
-        );
-        if !appchain_basedata.anchor().trim().is_empty() {
-            let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
-            env::log(
-                format!(
-                    "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
-                    &anchor_account_id, &appchain_id
-                )
-                .as_bytes(),
-            );
-        }
-        self.internal_remove_appchain(&appchain_id);
-        env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
     }
 }
