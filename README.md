@@ -17,6 +17,7 @@ Contents:
   * [Pause or resume asset transfer](#pause-or-resume-asset-transfer)
   * [View functions](#view-functions)
 * [Registry roles](#registry-roles)
+* [Auditing](#auditing)
 * [Build and test](#build-and-test)
 
 ## Terminology
@@ -135,6 +136,10 @@ pause_asset_transfer | allowed |  |  |
 resume_asset_transfer | allowed |  |  |
 
 > An account can NOT has different roles at the same time.
+
+## Auditing
+
+This contract had been audited by [Halborn](https://halborn.com). Here is the [report](https://github.com/octopus-network/octopus-appchain-registry/blob/main/Octopus_Network_NEAR_Smart_Contract_Security_Audit_Report_Halborn_Final.pdf).
 
 ## Build and test
 
