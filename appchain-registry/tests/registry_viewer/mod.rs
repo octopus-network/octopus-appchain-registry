@@ -46,7 +46,10 @@ pub fn print_appchains(
         println!("{:#?}", view_result);
     }
     assert!(view_result.is_ok());
-    println!("{}", String::from_utf8(view_result.unwrap()).unwrap());
+    println!(
+        "Appchains: {}",
+        String::from_utf8(view_result.unwrap()).unwrap()
+    );
     let appchains: Vec<AppchainStatus> = view_result.unwrap_json();
     appchains.len()
 }

@@ -39,6 +39,7 @@ pub fn register_appchain(
                 "contact_email":"joe@lksdf.com",
                 "premined_wrapped_appchain_token_beneficiary":"bob",
                 "premined_wrapped_appchain_token":"10000000",
+                "initial_supply_of_wrapped_appchain_token":"10000000",
                 "ido_amount_of_wrapped_appchain_token":"1000000",
                 "initial_era_reward":"100",
                 "fungible_token_metadata":{
