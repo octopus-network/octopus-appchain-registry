@@ -35,6 +35,7 @@ pub trait AppchainLifecycleManager {
         contact_email: Option<String>,
         premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
+        initial_supply_of_wrapped_appchain_token: Option<U128>,
         ido_amount_of_wrapped_appchain_token: Option<U128>,
         initial_era_reward: Option<U128>,
         fungible_token_metadata: Option<FungibleTokenMetadata>,

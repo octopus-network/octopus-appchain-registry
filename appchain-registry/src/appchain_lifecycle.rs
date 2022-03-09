@@ -13,6 +13,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         contact_email: Option<String>,
         premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
         premined_wrapped_appchain_token: Option<U128>,
+        initial_supply_of_wrapped_appchain_token: Option<U128>,
         ido_amount_of_wrapped_appchain_token: Option<U128>,
         initial_era_reward: Option<U128>,
         fungible_token_metadata: Option<FungibleTokenMetadata>,
@@ -44,6 +45,16 @@ impl AppchainLifecycleManager for AppchainRegistry {
         }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;
+        }
+        if let Some(initial_supply_of_wrapped_appchain_token) =
+            initial_supply_of_wrapped_appchain_token
+        {
+            assert!(
+                initial_supply_of_wrapped_appchain_token.0 >= metadata.premined_wrapped_appchain_token.0,
+                "The initial supply of wrapped appchain token should not be less than the premined amount."
+            );
+            metadata.initial_supply_of_wrapped_appchain_token =
+                initial_supply_of_wrapped_appchain_token;
         }
         if let Some(ido_amount_of_wrapped_appchain_token) = ido_amount_of_wrapped_appchain_token {
             metadata.ido_amount_of_wrapped_appchain_token = ido_amount_of_wrapped_appchain_token;

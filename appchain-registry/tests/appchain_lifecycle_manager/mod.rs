@@ -1,6 +1,6 @@
 use appchain_registry::AppchainRegistryContract;
 use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
-use near_sdk::{json_types::U128, AccountId, Timestamp};
+use near_sdk::{json_types::U128, AccountId};
 use std::collections::HashMap;
 
 use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
@@ -18,6 +18,7 @@ pub fn update_appchain_metadata(
     contact_email: Option<String>,
     premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
     premined_wrapped_appchain_token: Option<U128>,
+    initial_supply_of_wrapped_appchain_token: Option<U128>,
     ido_amount_of_wrapped_appchain_token: Option<U128>,
     initial_era_reward: Option<U128>,
     fungible_token_metadata: Option<FungibleTokenMetadata>,
@@ -34,6 +35,7 @@ pub fn update_appchain_metadata(
             contact_email,
             premined_wrapped_appchain_token_beneficiary,
             premined_wrapped_appchain_token,
+            initial_supply_of_wrapped_appchain_token,
             ido_amount_of_wrapped_appchain_token,
             initial_era_reward,
             fungible_token_metadata,
