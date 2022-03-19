@@ -7,9 +7,9 @@ mod registry_roles;
 mod registry_settings;
 mod registry_status;
 mod storage_key;
+mod storage_migration;
 mod sudo_actions;
 pub mod types;
-mod upgradable;
 mod voter_actions;
 
 use core::convert::TryFrom;
@@ -121,6 +121,7 @@ enum RegistryDepositMessage {
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
+        initial_supply_of_wrapped_appchain_token: U128,
         ido_amount_of_wrapped_appchain_token: U128,
         initial_era_reward: U128,
         fungible_token_metadata: FungibleTokenMetadata,
@@ -274,6 +275,7 @@ impl AppchainRegistry {
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
+                initial_supply_of_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,
                 initial_era_reward,
                 fungible_token_metadata,
@@ -290,6 +292,7 @@ impl AppchainRegistry {
                     contact_email,
                     premined_wrapped_appchain_token_beneficiary,
                     premined_wrapped_appchain_token,
+                    initial_supply_of_wrapped_appchain_token,
                     ido_amount_of_wrapped_appchain_token,
                     initial_era_reward,
                     fungible_token_metadata,
@@ -348,6 +351,7 @@ impl AppchainRegistry {
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
+        initial_supply_of_wrapped_appchain_token: U128,
         ido_amount_of_wrapped_appchain_token: U128,
         initial_era_reward: U128,
         fungible_token_metadata: FungibleTokenMetadata,
@@ -415,6 +419,10 @@ impl AppchainRegistry {
             !fungible_token_metadata.symbol.trim().is_empty(),
             "Missing necessary field 'fungible token symbol'."
         );
+        assert!(
+            initial_supply_of_wrapped_appchain_token.0 >= premined_wrapped_appchain_token.0,
+            "The initial supply of wrapped appchain token should not be less than the premined amount."
+        );
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             AppchainMetadata {
@@ -425,6 +433,7 @@ impl AppchainRegistry {
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
+                initial_supply_of_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,
                 initial_era_reward,
                 fungible_token_metadata,
