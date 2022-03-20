@@ -17,8 +17,8 @@ impl RegistryRoles {
             || account.eq(&self.registry_settings_manager)
             || account.eq(&self
                 .operator_of_counting_voting_score
-                .clone()
-                .unwrap_or(String::new()))
+                .as_ref()
+                .unwrap_or(&AccountId::new_unchecked(String::new())))
     }
 }
 

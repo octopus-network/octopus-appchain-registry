@@ -9,18 +9,18 @@ use crate::*;
 /// Appchain basedata
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
-    pub appchain_id: AppchainId,
-    pub appchain_metadata: LazyOption<AppchainMetadata>,
-    pub appchain_anchor: Option<AccountId>,
-    pub appchain_owner: AccountId,
-    pub register_deposit: Balance,
-    pub appchain_state: AppchainState,
-    pub upvote_deposit: Balance,
-    pub downvote_deposit: Balance,
-    pub registered_time: Timestamp,
-    pub go_live_time: Timestamp,
-    pub validator_count: u32,
-    pub total_stake: Balance,
+    appchain_id: AppchainId,
+    appchain_metadata: LazyOption<AppchainMetadata>,
+    appchain_anchor: Option<AccountId>,
+    appchain_owner: AccountId,
+    register_deposit: Balance,
+    appchain_state: AppchainState,
+    upvote_deposit: Balance,
+    downvote_deposit: Balance,
+    registered_time: Timestamp,
+    go_live_time: Timestamp,
+    validator_count: u32,
+    total_stake: Balance,
 }
 
 impl AppchainBasedata {
@@ -53,8 +53,8 @@ impl AppchainBasedata {
     pub fn id(&self) -> &AppchainId {
         &self.appchain_id
     }
-    /// Get mutable metadata
-    pub fn metadata(&mut self) -> AppchainMetadata {
+    /// Get metadata
+    pub fn metadata(&self) -> AppchainMetadata {
         self.appchain_metadata.get().unwrap()
     }
     /// Get acount id of anchor
@@ -62,8 +62,8 @@ impl AppchainBasedata {
         self.appchain_anchor.clone()
     }
     /// Get account id of owner
-    pub fn owner(&self) -> &AccountId {
-        &self.appchain_owner
+    pub fn owner(&self) -> AccountId {
+        self.appchain_owner.clone()
     }
     /// Get initial deposit
     pub fn register_deposit(&self) -> Balance {
@@ -113,18 +113,17 @@ impl AppchainBasedata {
         }
     }
     /// Change owner
-    pub fn change_owner(&mut self, new_owner: &AccountId) {
+    pub fn change_owner(&mut self, new_owner: AccountId) {
         assert_ne!(
             self.appchain_owner,
             new_owner.clone(),
             "The owner not changed."
         );
-        self.appchain_owner.clear();
-        self.appchain_owner.push_str(new_owner);
+        self.appchain_owner = new_owner;
     }
     /// Set metadata
-    pub fn set_metadata(&mut self, metadata: &AppchainMetadata) {
-        self.appchain_metadata.set(metadata);
+    pub fn set_metadata(&mut self, metadata: AppchainMetadata) {
+        self.appchain_metadata.set(&metadata);
     }
     /// Set initial deposit
     pub fn set_initial_deposit(&mut self, deposit: Balance) {

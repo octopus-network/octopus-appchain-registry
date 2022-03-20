@@ -1,6 +1,6 @@
 [package]
 name = "appchain-registry"
-version = "2.0.0-pre"
+version = "2.0.0"
 authors = ["Octopus Network"]
 edition = "2018"
 
@@ -11,13 +11,13 @@ crate-type = ["cdylib", "rlib"]
 overflow-checks = true
 
 [dependencies]
-near-sdk = "3.1.0"
-near-contract-standards = "3.1.0"
+near-sdk = "4.0.0-pre.7"
+near-contract-standards = "4.0.0-pre.7"
 hex = "0.4.2"
 
 [dev-dependencies]
-near-sdk = "3.1.0"
-near-sdk-sim = "3.1.0"
+near-sdk = "4.0.0-pre.7"
+near-sdk-sim = "4.0.0-pre.7"
 hex = "0.4.2"
 num-format = "0.4.0"
 # remember to include related mock contracts

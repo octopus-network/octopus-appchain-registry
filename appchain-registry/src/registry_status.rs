@@ -1,4 +1,4 @@
-use near_sdk::json_types::{Base58PublicKey, U64};
+use near_sdk::json_types::U64;
 
 use crate::{
     interfaces::RegistryStatus,
@@ -10,7 +10,7 @@ use crate::{
 impl RegistryStatus for AppchainRegistry {
     //
     fn get_owner_pk(&self) -> String {
-        String::from(&Base58PublicKey(self.owner_pk.clone()))
+        format!("{:?}", self.owner_pk)
     }
     //
     fn get_oct_token(&self) -> AccountId {

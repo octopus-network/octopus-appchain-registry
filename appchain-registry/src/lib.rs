@@ -19,7 +19,7 @@ use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
@@ -33,8 +33,7 @@ use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, Registry
 const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 23_000_000_000_000_000_000_000_000; // 23e24yN, 23 NEAR
-const T_GAS: u64 = 1_000_000_000_000;
-const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
+const T_GAS_FOR_FT_TRANSFER_CALL: u64 = 35;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 /// Default register deposit amount
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
@@ -48,8 +47,6 @@ const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
 const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
-
-near_sdk::setup_alloc!();
 
 #[ext_contract(ext_fungible_token)]
 pub trait FungibleToken {
@@ -380,8 +377,7 @@ impl AppchainRegistry {
         );
         assert!(appchain_id.find(".").is_none(), "Invalid 'appchain_id'.");
         assert!(
-            ValidAccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id()))
-                .is_ok(),
+            AccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id())).is_ok(),
             "Invalid 'appchain_id'."
         );
         assert!(
@@ -403,12 +399,6 @@ impl AppchainRegistry {
         assert!(
             !contact_email.trim().is_empty(),
             "Missing necessary field 'contact_email'."
-        );
-        assert!(
-            !premined_wrapped_appchain_token_beneficiary
-                .trim()
-                .is_empty(),
-            "Missing necessary field 'premined_wrapped_appchain_token_beneficiary'."
         );
         fungible_token_metadata.assert_valid();
         assert!(
@@ -445,14 +435,11 @@ impl AppchainRegistry {
         self.appchain_ids.insert(&appchain_id);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        env::log(
-            format!(
-                "Appchain '{}' is registered by '{}'.",
-                appchain_basedata.id(),
-                appchain_basedata.owner()
-            )
-            .as_bytes(),
-        )
+        log!(
+            "Appchain '{}' is registered by '{}'.",
+            appchain_basedata.id(),
+            appchain_basedata.owner()
+        );
     }
 }
 

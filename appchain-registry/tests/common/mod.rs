@@ -2,7 +2,7 @@ use appchain_registry::AppchainRegistryContract;
 use mock_oct_token::MockOctTokenContract;
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 
-use near_sdk::json_types::U128;
+use near_sdk::{json_types::U128, AccountId};
 use near_sdk_sim::{
     call, deploy, init_simulator, lazy_static_include, runtime::GenesisConfig, to_yocto,
     ContractAccount, ExecutionResult, UserAccount,
@@ -24,7 +24,7 @@ fn register_user_to_oct_token(
 ) {
     let outcome = call!(
         account,
-        contract.storage_deposit(Option::from(account.valid_account_id()), Option::None),
+        contract.storage_deposit(Option::from(account.account_id()), Option::None),
         near_sdk::env::storage_byte_cost() * 125,
         near_sdk_sim::DEFAULT_GAS / 2
     );
@@ -39,11 +39,7 @@ pub fn ft_transfer_oct_token(
 ) {
     let outcome = call!(
         sender,
-        oct_token.ft_transfer(
-            receiver.valid_account_id(),
-            U128::from(amount),
-            Option::None
-        ),
+        oct_token.ft_transfer(receiver.account_id(), U128::from(amount), Option::None),
         1,
         near_sdk_sim::DEFAULT_GAS
     );
@@ -61,7 +57,7 @@ pub fn ft_transfer_call_oct_token(
     let outcome = call!(
         sender,
         oct_token.ft_transfer_call(
-            receiver.valid_account_id(),
+            receiver.account_id(),
             U128::from(amount),
             Option::None,
             msg.clone()
@@ -106,7 +102,7 @@ pub fn init(
         contract_id: "oct_token",
         bytes: &TOKEN_WASM_BYTES,
         signer_account: root,
-        init_method: new(root.valid_account_id(), U128::from(total_supply), ft_metadata)
+        init_method: new(root.account_id(), U128::from(total_supply), ft_metadata)
     };
     let registry = match with_old_version {
         true => deploy! {
@@ -114,35 +110,44 @@ pub fn init(
             contract_id: "registry",
             bytes: &PREVIOUS_REGISTRY_WASM_BYTES,
             signer_account: root,
-            init_method: new(oct_token.valid_account_id().to_string())
+            init_method: new(oct_token.account_id())
         },
         false => deploy! {
             contract: AppchainRegistryContract,
             contract_id: "registry",
             bytes: &REGISTRY_WASM_BYTES,
             signer_account: root,
-            init_method: new(oct_token.valid_account_id().to_string())
+            init_method: new(oct_token.account_id())
         },
     };
     register_user_to_oct_token(&registry.user_account, &oct_token);
     // Create users and transfer a certain amount of OCT token to them
-    let alice = root.create_user("alice".to_string(), to_yocto("100"));
+    let alice = root.create_user(
+        AccountId::new_unchecked("alice".to_string()),
+        to_yocto("100"),
+    );
     register_user_to_oct_token(&alice, &oct_token);
     ft_transfer_oct_token(&root, &alice, total_supply / 10, &oct_token);
     users.push(alice);
-    let bob = root.create_user("bob".to_string(), to_yocto("100"));
+    let bob = root.create_user(AccountId::new_unchecked("bob".to_string()), to_yocto("100"));
     register_user_to_oct_token(&bob, &oct_token);
     ft_transfer_oct_token(&root, &bob, total_supply / 10, &oct_token);
     users.push(bob);
-    let charlie = root.create_user("charlie".to_string(), to_yocto("100"));
+    let charlie = root.create_user(
+        AccountId::new_unchecked("charlie".to_string()),
+        to_yocto("100"),
+    );
     register_user_to_oct_token(&charlie, &oct_token);
     ft_transfer_oct_token(&root, &charlie, total_supply / 10, &oct_token);
     users.push(charlie);
-    let dave = root.create_user("dave".to_string(), to_yocto("100"));
+    let dave = root.create_user(
+        AccountId::new_unchecked("dave".to_string()),
+        to_yocto("100"),
+    );
     register_user_to_oct_token(&dave, &oct_token);
     ft_transfer_oct_token(&root, &dave, total_supply / 10, &oct_token);
     users.push(dave);
-    let eve = root.create_user("eve".to_string(), to_yocto("100"));
+    let eve = root.create_user(AccountId::new_unchecked("eve".to_string()), to_yocto("100"));
     register_user_to_oct_token(&eve, &oct_token);
     ft_transfer_oct_token(&root, &eve, total_supply / 10, &oct_token);
     users.push(eve);
@@ -178,7 +183,7 @@ pub fn print_outcome_result(function_name: &str, result: &ExecutionResult) {
     println!(
         "Gas burnt of function '{}': {}",
         function_name,
-        result.gas_burnt().to_formatted_string(&Locale::en)
+        result.gas_burnt().0.to_formatted_string(&Locale::en)
     );
     let results = result.promise_results();
     for sub_result in results {

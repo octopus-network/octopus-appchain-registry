@@ -15,13 +15,15 @@ impl AppchainAnchorCallback for AppchainRegistry {
     ) {
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert!(
-            appchain_basedata.appchain_anchor.is_some(),
+            appchain_basedata.anchor().is_some(),
             "Anchor of appchain {} is not set.",
             appchain_id
         );
         assert_eq!(
             env::predecessor_account_id(),
-            appchain_basedata.anchor().unwrap(),
+            appchain_basedata
+                .anchor()
+                .unwrap_or(AccountId::new_unchecked(String::new())),
             "Only appchain anchor can call this function."
         );
         assert!(
