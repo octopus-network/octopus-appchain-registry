@@ -4,9 +4,8 @@ use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, F
 
 use near_sdk::json_types::U128;
 use near_sdk_sim::{
-    call, deploy, init_simulator, lazy_static_include,
-    runtime::{init_runtime, GenesisConfig},
-    to_yocto, ContractAccount, ExecutionResult, UserAccount,
+    call, deploy, init_simulator, lazy_static_include, runtime::GenesisConfig, to_yocto,
+    ContractAccount, ExecutionResult, UserAccount,
 };
 
 use num_format::{Locale, ToFormattedString};

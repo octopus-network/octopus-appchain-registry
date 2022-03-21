@@ -129,7 +129,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         );
         let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
         top_appchain_basedata.set_state(AppchainState::Staging);
-        top_appchain_basedata.set_anchor_account(&sub_account_id);
+        top_appchain_basedata.set_anchor_account(sub_account_id.clone());
         self.appchain_basedatas
             .insert(top_appchain_basedata.id(), &top_appchain_basedata);
         let registry_settings = self.registry_settings.get().unwrap();
@@ -167,7 +167,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
             appchain_basedata.downvote_deposit() == 0,
             "The appchain still has downvote deposit(s)."
         );
-        if !appchain_basedata.anchor().trim().is_empty() {
+        if !appchain_basedata.anchor().is_none() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
             env::log(
                 format!(
@@ -188,9 +188,13 @@ impl AppchainRegistry {
     pub fn count_voting_score(&mut self) {
         let registry_settings = self.registry_settings.get().unwrap();
         let registry_roles = self.registry_roles.get().unwrap();
+        assert!(
+            registry_roles.operator_of_counting_voting_score.is_some(),
+            "Operator for counting voting score is not set."
+        );
         assert_eq!(
             env::predecessor_account_id(),
-            registry_roles.operator_of_counting_voting_score,
+            registry_roles.operator_of_counting_voting_score.unwrap(),
             "Only certain operator can call this function."
         );
         assert!(

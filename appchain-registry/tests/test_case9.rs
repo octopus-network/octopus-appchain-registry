@@ -31,6 +31,7 @@ fn test_case9() {
                 "contact_email":"joe@lksdf.com",
                 "premined_wrapped_appchain_token_beneficiary":"bob",
                 "premined_wrapped_appchain_token":"10000000",
+                "initial_supply_of_wrapped_appchain_token":"10000000",
                 "ido_amount_of_wrapped_appchain_token":"1000000",
                 "initial_era_reward":"100",
                 "fungible_token_metadata":{
@@ -51,6 +52,18 @@ fn test_case9() {
         &oct_token,
     );
     outcome.assert_success();
+    //
+    assert_eq!(
+        registry_viewer::print_appchains(
+            &registry,
+            Option::None,
+            1,
+            5,
+            AppchainSortingField::RegisteredTime,
+            SortingOrder::Descending
+        ),
+        1
+    );
     //
     // perform migration
     //

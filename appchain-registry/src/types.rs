@@ -27,7 +27,7 @@ pub struct RegistryRoles {
     /// The account that manages the settings of appchain registry.
     pub registry_settings_manager: AccountId,
     /// The only account that can call function `count_voting_score`.
-    pub operator_of_counting_voting_score: AccountId,
+    pub operator_of_counting_voting_score: Option<AccountId>,
 }
 
 /// Appchain metadata
@@ -70,7 +70,7 @@ pub enum AppchainState {
 pub struct AppchainStatus {
     pub appchain_id: AppchainId,
     pub appchain_metadata: AppchainMetadata,
-    pub appchain_anchor: AccountId,
+    pub appchain_anchor: Option<AccountId>,
     pub appchain_owner: AccountId,
     pub register_deposit: U128,
     pub appchain_state: AppchainState,

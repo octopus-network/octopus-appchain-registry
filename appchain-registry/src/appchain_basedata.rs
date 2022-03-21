@@ -9,18 +9,18 @@ use crate::*;
 /// Appchain basedata
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
-    appchain_id: AppchainId,
-    appchain_metadata: LazyOption<AppchainMetadata>,
-    appchain_anchor: AccountId,
-    appchain_owner: AccountId,
-    register_deposit: Balance,
-    appchain_state: AppchainState,
-    upvote_deposit: Balance,
-    downvote_deposit: Balance,
-    registered_time: Timestamp,
-    go_live_time: Timestamp,
-    validator_count: u32,
-    total_stake: Balance,
+    pub appchain_id: AppchainId,
+    pub appchain_metadata: LazyOption<AppchainMetadata>,
+    pub appchain_anchor: Option<AccountId>,
+    pub appchain_owner: AccountId,
+    pub register_deposit: Balance,
+    pub appchain_state: AppchainState,
+    pub upvote_deposit: Balance,
+    pub downvote_deposit: Balance,
+    pub registered_time: Timestamp,
+    pub go_live_time: Timestamp,
+    pub validator_count: u32,
+    pub total_stake: Balance,
 }
 
 impl AppchainBasedata {
@@ -37,7 +37,7 @@ impl AppchainBasedata {
                 StorageKey::AppchainMetadata(appchain_id.clone()).into_bytes(),
                 Some(&appchain_metadata),
             ),
-            appchain_anchor: String::new(),
+            appchain_anchor: None,
             appchain_owner,
             register_deposit,
             appchain_state: AppchainState::Registered,
@@ -58,8 +58,8 @@ impl AppchainBasedata {
         self.appchain_metadata.get().unwrap()
     }
     /// Get acount id of anchor
-    pub fn anchor(&self) -> &AccountId {
-        &self.appchain_anchor
+    pub fn anchor(&self) -> Option<AccountId> {
+        self.appchain_anchor.clone()
     }
     /// Get account id of owner
     pub fn owner(&self) -> &AccountId {
@@ -131,9 +131,8 @@ impl AppchainBasedata {
         self.register_deposit = deposit;
     }
     /// Set anchor account
-    pub fn set_anchor_account(&mut self, anchor_account: &AccountId) {
-        self.appchain_anchor.clear();
-        self.appchain_anchor.push_str(anchor_account);
+    pub fn set_anchor_account(&mut self, anchor_account: AccountId) {
+        self.appchain_anchor = Some(anchor_account);
     }
     /// Set total stake
     pub fn set_total_stake(&mut self, total_stake: Balance) {
