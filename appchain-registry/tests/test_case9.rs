@@ -53,18 +53,6 @@ fn test_case9() {
     );
     outcome.assert_success();
     //
-    assert_eq!(
-        registry_viewer::print_appchains(
-            &registry,
-            Option::None,
-            1,
-            5,
-            AppchainSortingField::RegisteredTime,
-            SortingOrder::Descending
-        ),
-        1
-    );
-    //
     // perform migration
     //
     common::deploy_new_registry_contract(&registry);

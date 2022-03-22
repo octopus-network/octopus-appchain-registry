@@ -9,18 +9,18 @@ use crate::*;
 /// Appchain basedata
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
-    appchain_id: AppchainId,
-    appchain_metadata: LazyOption<AppchainMetadata>,
-    appchain_anchor: Option<AccountId>,
-    appchain_owner: AccountId,
-    register_deposit: Balance,
-    appchain_state: AppchainState,
-    upvote_deposit: Balance,
-    downvote_deposit: Balance,
-    registered_time: Timestamp,
-    go_live_time: Timestamp,
-    validator_count: u32,
-    total_stake: Balance,
+    pub appchain_id: AppchainId,
+    pub appchain_metadata: LazyOption<AppchainMetadata>,
+    pub appchain_anchor: Option<AccountId>,
+    pub appchain_owner: AccountId,
+    pub register_deposit: Balance,
+    pub appchain_state: AppchainState,
+    pub upvote_deposit: Balance,
+    pub downvote_deposit: Balance,
+    pub registered_time: Timestamp,
+    pub go_live_time: Timestamp,
+    pub validator_count: u32,
+    pub total_stake: Balance,
 }
 
 impl AppchainBasedata {
