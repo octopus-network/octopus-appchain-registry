@@ -3,12 +3,8 @@ use appchain_registry::types::{
 };
 use near_sdk::serde_json::{self, json};
 
-mod appchain_lifecycle_manager;
-mod appchain_owner_action;
-mod common;
-mod oct_token_viewer;
-mod registry_viewer;
-mod voter_action;
+use crate::common;
+use crate::registry_viewer;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 

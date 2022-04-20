@@ -1,14 +1,14 @@
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 
-mod appchain_lifecycle_manager;
-mod appchain_owner_action;
-mod common;
-mod oct_token_viewer;
-mod registry_roles;
-mod registry_settings;
-mod registry_viewer;
-mod sudo_actions;
-mod voter_action;
+use crate::appchain_lifecycle_manager;
+use crate::appchain_owner_actions;
+use crate::common;
+use crate::oct_token_viewer;
+use crate::registry_roles;
+use crate::registry_settings;
+use crate::registry_viewer;
+use crate::sudo_actions;
+use crate::voter_actions;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
@@ -20,7 +20,7 @@ fn test_case2() {
     //
     let appchain_id1 = "test_appchain1".to_string();
     let amount = common::to_oct_amount(1000);
-    let outcome = appchain_owner_action::register_appchain(
+    let outcome = appchain_owner_actions::register_appchain(
         &users[1],
         &oct_token,
         &registry,
@@ -33,7 +33,7 @@ fn test_case2() {
     //
     let appchain_id2 = "test_appchain2".to_string();
     let amount = common::to_oct_amount(1000);
-    let outcome = appchain_owner_action::register_appchain(
+    let outcome = appchain_owner_actions::register_appchain(
         &users[2],
         &oct_token,
         &registry,
@@ -46,7 +46,7 @@ fn test_case2() {
     //
     let appchain_id3 = "test_appchain3".to_string();
     let amount = common::to_oct_amount(1000);
-    let outcome = appchain_owner_action::register_appchain(
+    let outcome = appchain_owner_actions::register_appchain(
         &users[3],
         &oct_token,
         &registry,
@@ -131,7 +131,7 @@ fn test_case2() {
     //
     let result = sudo_actions::pause_asset_transfer(&root, &registry);
     result.assert_success();
-    let outcome = voter_action::upvote_appchain(
+    let outcome = voter_actions::upvote_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -139,7 +139,7 @@ fn test_case2() {
         common::to_oct_amount(1000),
     );
     outcome.assert_success();
-    let outcome = voter_action::downvote_appchain(
+    let outcome = voter_actions::downvote_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -154,7 +154,7 @@ fn test_case2() {
     let result = sudo_actions::resume_asset_transfer(&root, &registry);
     result.assert_success();
     //
-    let outcome = voter_action::upvote_appchain(
+    let outcome = voter_actions::upvote_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -162,7 +162,7 @@ fn test_case2() {
         common::to_oct_amount(1000),
     );
     outcome.assert_success();
-    let outcome = voter_action::downvote_appchain(
+    let outcome = voter_actions::downvote_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -170,7 +170,7 @@ fn test_case2() {
         common::to_oct_amount(1500),
     );
     outcome.assert_success();
-    let outcome = voter_action::upvote_appchain(
+    let outcome = voter_actions::upvote_appchain(
         &users[4],
         &oct_token,
         &registry,
@@ -178,7 +178,7 @@ fn test_case2() {
         common::to_oct_amount(2000),
     );
     outcome.assert_success();
-    let outcome = voter_action::downvote_appchain(
+    let outcome = voter_actions::downvote_appchain(
         &users[4],
         &oct_token,
         &registry,
@@ -218,7 +218,7 @@ fn test_case2() {
         0 - common::to_oct_amount(800) as i128
     );
     //
-    let outcome = voter_action::withdraw_upvote_deposit_of(
+    let outcome = voter_actions::withdraw_upvote_deposit_of(
         &users[0],
         &registry,
         &appchain_id1,
@@ -229,7 +229,7 @@ fn test_case2() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2500)
     );
-    let outcome = voter_action::withdraw_downvote_deposit_of(
+    let outcome = voter_actions::withdraw_downvote_deposit_of(
         &users[4],
         &registry,
         &appchain_id3,
@@ -243,14 +243,14 @@ fn test_case2() {
     //
     let result = sudo_actions::pause_asset_transfer(&root, &registry);
     result.assert_success();
-    let outcome = voter_action::withdraw_upvote_deposit_of(
+    let outcome = voter_actions::withdraw_upvote_deposit_of(
         &users[0],
         &registry,
         &appchain_id1,
         common::to_oct_amount(550),
     );
     assert!(!outcome.is_ok());
-    let outcome = voter_action::withdraw_downvote_deposit_of(
+    let outcome = voter_actions::withdraw_downvote_deposit_of(
         &users[4],
         &registry,
         &appchain_id3,
@@ -260,7 +260,7 @@ fn test_case2() {
     let result = sudo_actions::resume_asset_transfer(&root, &registry);
     result.assert_success();
     //
-    let outcome = voter_action::withdraw_upvote_deposit_of(
+    let outcome = voter_actions::withdraw_upvote_deposit_of(
         &users[0],
         &registry,
         &appchain_id1,
@@ -275,7 +275,7 @@ fn test_case2() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1950)
     );
-    let outcome = voter_action::withdraw_downvote_deposit_of(
+    let outcome = voter_actions::withdraw_downvote_deposit_of(
         &users[4],
         &registry,
         &appchain_id3,
@@ -311,7 +311,7 @@ fn test_case2() {
         0 - common::to_oct_amount(1150) as i128
     );
     //
-    let outcome = voter_action::withdraw_downvote_deposit_of(
+    let outcome = voter_actions::withdraw_downvote_deposit_of(
         &users[0],
         &registry,
         &appchain_id2,
@@ -326,7 +326,7 @@ fn test_case2() {
         oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1400)
     );
-    let outcome = voter_action::withdraw_upvote_deposit_of(
+    let outcome = voter_actions::withdraw_upvote_deposit_of(
         &users[4],
         &registry,
         &appchain_id2,

@@ -1,12 +1,11 @@
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 
-mod appchain_lifecycle_manager;
-mod appchain_owner_action;
-mod common;
-mod oct_token_viewer;
-mod registry_roles;
-mod registry_viewer;
-mod voter_action;
+use crate::appchain_lifecycle_manager;
+use crate::appchain_owner_actions;
+use crate::common;
+use crate::registry_roles;
+use crate::registry_viewer;
+use crate::voter_actions;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
@@ -19,7 +18,7 @@ fn test_case3() {
     while i <= 50 {
         let appchain_id = format!("test_appchain{}", i);
         let amount = common::to_oct_amount(1000);
-        let outcome = appchain_owner_action::register_appchain(
+        let outcome = appchain_owner_actions::register_appchain(
             &users[1],
             &oct_token,
             &registry,
@@ -41,7 +40,7 @@ fn test_case3() {
         let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id);
         assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
         //
-        let outcome = voter_action::upvote_appchain(
+        let outcome = voter_actions::upvote_appchain(
             &users[0],
             &oct_token,
             &registry,

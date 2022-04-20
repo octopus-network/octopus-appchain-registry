@@ -11,10 +11,10 @@ use near_sdk_sim::{
 use num_format::{Locale, ToFormattedString};
 
 lazy_static_include::lazy_static_include_bytes! {
-    TOKEN_WASM_BYTES => "../res/mock_oct_token.wasm",
-    REGISTRY_WASM_BYTES => "../res/appchain_registry.wasm",
-    PREVIOUS_REGISTRY_WASM_BYTES => "../res/previous_appchain_registry.wasm",
-    ANCHOR_WASM_BYTES => "../res/mock_appchain_anchor.wasm",
+    TOKEN_WASM_BYTES => "./res/mock_oct_token.wasm",
+    REGISTRY_WASM_BYTES => "./res/appchain_registry.wasm",
+    PREVIOUS_REGISTRY_WASM_BYTES => "./res/previous_appchain_registry.wasm",
+    ANCHOR_WASM_BYTES => "./res/mock_appchain_anchor.wasm",
 }
 
 // Register the given `user` to oct_token
