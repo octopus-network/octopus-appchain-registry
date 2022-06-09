@@ -1,16 +1,13 @@
-use std::collections::HashMap;
-
+use crate::{
+    common,
+    contract_interfaces::{
+        appchain_lifecycle_manager, appchain_owner_actions, registry_settings, registry_viewer,
+        sudo_actions, voter_actions,
+    },
+};
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
 use near_sdk::json_types::U128;
-
-use crate::appchain_lifecycle_manager;
-use crate::appchain_owner_actions;
-use crate::common;
-use crate::oct_token_viewer;
-use crate::registry_settings;
-use crate::registry_viewer;
-use crate::sudo_actions;
-use crate::voter_actions;
+use std::collections::HashMap;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
@@ -39,12 +36,12 @@ fn test_case1() {
     );
     //
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         0
     );
     //
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
     //
@@ -70,7 +67,7 @@ fn test_case1() {
         0
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
     //
@@ -97,7 +94,7 @@ fn test_case1() {
         0
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         total_supply / 10
     );
     //
@@ -112,11 +109,11 @@ fn test_case1() {
     );
     outcome.assert_success();
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1200)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         common::to_oct_amount(1200)
     );
     let appchain = registry_viewer::get_appchain_status(&registry, &appchain_id);
@@ -213,11 +210,11 @@ fn test_case1() {
         0
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[2], &oct_token).0,
+        common::get_ft_balance_of(&users[2], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         common::to_oct_amount(1200)
     );
     let outcome = voter_actions::downvote_appchain(
@@ -233,11 +230,11 @@ fn test_case1() {
         0
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[3], &oct_token).0,
+        common::get_ft_balance_of(&users[3], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         common::to_oct_amount(1200)
     );
     //
@@ -246,11 +243,11 @@ fn test_case1() {
     let outcome = appchain_lifecycle_manager::reject_appchain(&root, &registry, &appchain_id);
     outcome.assert_success();
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[1], &oct_token).0,
+        common::get_ft_balance_of(&users[1], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         common::to_oct_amount(1200)
     );
     //

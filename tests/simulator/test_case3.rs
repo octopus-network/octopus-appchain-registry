@@ -1,11 +1,10 @@
+use crate::{
+    common,
+    contract_interfaces::{
+        appchain_lifecycle_manager, appchain_owner_actions, registry_viewer, voter_actions, registry_roles,
+    },
+};
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
-
-use crate::appchain_lifecycle_manager;
-use crate::appchain_owner_actions;
-use crate::common;
-use crate::registry_roles;
-use crate::registry_viewer;
-use crate::voter_actions;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 

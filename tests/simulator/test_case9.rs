@@ -1,10 +1,8 @@
+use crate::{common, contract_interfaces::registry_viewer};
 use appchain_registry::types::{
     AppchainSortingField, RegistryRoles, RegistrySettings, SortingOrder,
 };
 use near_sdk::serde_json::{self, json};
-
-use crate::common;
-use crate::registry_viewer;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 

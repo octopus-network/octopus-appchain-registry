@@ -5,7 +5,7 @@ use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, F
 use near_sdk::{json_types::U128, AccountId};
 use near_sdk_sim::{
     call, deploy, init_simulator, lazy_static_include, runtime::GenesisConfig, to_yocto,
-    ContractAccount, ExecutionResult, UserAccount,
+    ContractAccount, ExecutionResult, UserAccount, view,
 };
 
 use num_format::{Locale, ToFormattedString};
@@ -177,6 +177,15 @@ pub fn migrate_state(
 pub fn to_oct_amount(amount: u128) -> u128 {
     let bt_decimals_base = (10 as u128).pow(18);
     amount * bt_decimals_base
+}
+
+pub fn get_ft_balance_of(
+    user: &UserAccount,
+    oct_token: &ContractAccount<MockOctTokenContract>,
+) -> U128 {
+    let view_result = view!(oct_token.ft_balance_of(user.account_id()));
+    assert!(view_result.is_ok());
+    view_result.unwrap_json::<U128>()
 }
 
 pub fn print_outcome_result(function_name: &str, result: &ExecutionResult) {

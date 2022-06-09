@@ -1,14 +1,11 @@
+use crate::{
+    common,
+    contract_interfaces::{
+        appchain_lifecycle_manager, appchain_owner_actions, registry_roles, registry_settings,
+        registry_viewer, sudo_actions, voter_actions,
+    },
+};
 use appchain_registry::types::{AppchainSortingField, AppchainState, SortingOrder};
-
-use crate::appchain_lifecycle_manager;
-use crate::appchain_owner_actions;
-use crate::common;
-use crate::oct_token_viewer;
-use crate::registry_roles;
-use crate::registry_settings;
-use crate::registry_viewer;
-use crate::sudo_actions;
-use crate::voter_actions;
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
@@ -58,19 +55,19 @@ fn test_case2() {
     assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
     //
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[1], &oct_token).0,
+        common::get_ft_balance_of(&users[1], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[2], &oct_token).0,
+        common::get_ft_balance_of(&users[2], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[3], &oct_token).0,
+        common::get_ft_balance_of(&users[3], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1000)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&registry.user_account, &oct_token).0,
+        common::get_ft_balance_of(&registry.user_account, &oct_token).0,
         common::to_oct_amount(3000)
     );
     //
@@ -226,7 +223,7 @@ fn test_case2() {
     );
     assert!(!outcome.is_ok());
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2500)
     );
     let outcome = voter_actions::withdraw_downvote_deposit_of(
@@ -237,7 +234,7 @@ fn test_case2() {
     );
     assert!(!outcome.is_ok());
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::get_ft_balance_of(&users[4], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2800)
     );
     //
@@ -272,7 +269,7 @@ fn test_case2() {
         common::to_oct_amount(450)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1950)
     );
     let outcome = voter_actions::withdraw_downvote_deposit_of(
@@ -287,7 +284,7 @@ fn test_case2() {
         common::to_oct_amount(350)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::get_ft_balance_of(&users[4], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2350)
     );
     //
@@ -323,7 +320,7 @@ fn test_case2() {
         common::to_oct_amount(950)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[0], &oct_token).0,
+        common::get_ft_balance_of(&users[0], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1400)
     );
     let outcome = voter_actions::withdraw_upvote_deposit_of(
@@ -338,7 +335,7 @@ fn test_case2() {
         common::to_oct_amount(1950)
     );
     assert_eq!(
-        oct_token_viewer::get_ft_balance_of(&users[4], &oct_token).0,
+        common::get_ft_balance_of(&users[4], &oct_token).0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 2300)
     );
     //

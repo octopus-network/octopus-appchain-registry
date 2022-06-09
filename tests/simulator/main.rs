@@ -1,12 +1,5 @@
-mod appchain_lifecycle_manager;
-mod appchain_owner_actions;
 mod common;
-mod oct_token_viewer;
-mod registry_roles;
-mod registry_settings;
-mod registry_viewer;
-mod sudo_actions;
-mod voter_actions;
+mod contract_interfaces;
 
 mod test_case1;
 mod test_case2;
