@@ -1,23 +1,25 @@
-use appchain_registry::AppchainRegistryContract;
+use workspaces::{network::Sandbox, result::CallExecutionDetails, Account, Contract, Worker};
 
-use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
-
-use crate::common;
-
-pub fn pause_asset_transfer(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-) -> ExecutionResult {
-    let outcome = call!(signer, registry.pause_asset_transfer());
-    common::print_outcome_result("pause_asset_transfer", &outcome);
-    outcome
+pub async fn pause_asset_transfer(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    registry: &Contract,
+) -> anyhow::Result<CallExecutionDetails> {
+    signer
+        .call(worker, registry.id(), "pause_asset_transfer")
+        .gas(200_000_000_000_000)
+        .transact()
+        .await
 }
 
-pub fn resume_asset_transfer(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
-) -> ExecutionResult {
-    let outcome = call!(signer, registry.resume_asset_transfer());
-    common::print_outcome_result("resume_asset_transfer", &outcome);
-    outcome
+pub async fn resume_asset_transfer(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    registry: &Contract,
+) -> anyhow::Result<CallExecutionDetails> {
+    signer
+        .call(worker, registry.id(), "resume_asset_transfer")
+        .gas(200_000_000_000_000)
+        .transact()
+        .await
 }

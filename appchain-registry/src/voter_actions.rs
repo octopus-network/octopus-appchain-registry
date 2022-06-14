@@ -1,25 +1,7 @@
-use std::ops::{Div, Mul};
-
-use near_sdk::{env, Gas};
-
 use crate::{interfaces::VoterActions, types::AppchainId, *};
-
-pub trait VoterActionsResultResolver {
-    /// Resolver for withdrawing the upvote deposit of a voter
-    fn resolve_withdraw_upvote_deposit(
-        &mut self,
-        appchain_id: AppchainId,
-        account_id: AccountId,
-        amount: U128,
-    );
-    /// Resolver for withdrawing the downvote deposit of a voter
-    fn resolve_withdraw_downvote_deposit(
-        &mut self,
-        appchain_id: AppchainId,
-        account_id: AccountId,
-        amount: U128,
-    );
-}
+use near_contract_standards::fungible_token::core::ext_ft_core;
+use near_sdk::{env, Gas};
+use std::ops::Mul;
 
 /// The actions which the voter can perform
 #[near_bindgen]
@@ -50,22 +32,17 @@ impl VoterActions for AppchainRegistry {
                 &(voter_upvote - amount.0),
             );
         }
-        ext_fungible_token::ft_transfer(
-            voter.clone(),
-            amount.into(),
-            None,
-            self.oct_token.clone(),
-            1,
-            Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER_CALL),
-        )
-        .then(ext_self::resolve_withdraw_upvote_deposit(
-            appchain_id.clone(),
-            voter.clone(),
-            amount,
-            env::current_account_id(),
-            NO_DEPOSIT,
-            env::prepaid_gas().div(2),
-        ));
+        ext_ft_core::ext(self.oct_token.clone())
+            .with_attached_deposit(1)
+            .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER))
+            .with_unused_gas_weight(0)
+            .ft_transfer(voter.clone(), amount.into(), None)
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVER_FUNCTION))
+                    .with_unused_gas_weight(0)
+                    .resolve_withdraw_upvote_deposit(appchain_id.clone(), voter.clone(), amount),
+            );
     }
     //
     fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
@@ -93,27 +70,22 @@ impl VoterActions for AppchainRegistry {
                 &(voter_downvote - amount.0),
             );
         }
-        ext_fungible_token::ft_transfer(
-            voter.clone(),
-            amount.into(),
-            None,
-            self.oct_token.clone(),
-            1,
-            Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER_CALL),
-        )
-        .then(ext_self::resolve_withdraw_downvote_deposit(
-            appchain_id.clone(),
-            voter.clone(),
-            amount,
-            env::current_account_id(),
-            NO_DEPOSIT,
-            env::prepaid_gas().div(2),
-        ));
+        ext_ft_core::ext(self.oct_token.clone())
+            .with_attached_deposit(1)
+            .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER))
+            .with_unused_gas_weight(0)
+            .ft_transfer(voter.clone(), amount.into(), None)
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVER_FUNCTION))
+                    .with_unused_gas_weight(0)
+                    .resolve_withdraw_upvote_deposit(appchain_id.clone(), voter.clone(), amount),
+            );
     }
 }
 
 #[near_bindgen]
-impl VoterActionsResultResolver for AppchainRegistry {
+impl SelfCallback for AppchainRegistry {
     //
     fn resolve_withdraw_upvote_deposit(
         &mut self,

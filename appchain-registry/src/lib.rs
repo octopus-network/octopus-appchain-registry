@@ -30,10 +30,10 @@ use appchain_basedata::AppchainBasedata;
 use storage_key::StorageKey;
 use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, RegistrySettings};
 
-const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 23_000_000_000_000_000_000_000_000; // 23e24yN, 23 NEAR
-const T_GAS_FOR_FT_TRANSFER_CALL: u64 = 35;
+const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
+const T_GAS_FOR_FT_TRANSFER: u64 = 20;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 /// Default register deposit amount
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
@@ -48,13 +48,8 @@ const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
-#[ext_contract(ext_fungible_token)]
-pub trait FungibleToken {
-    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
-}
-
 #[ext_contract(ext_self)]
-pub trait ResolverForSelfCallback {
+pub trait SelfCallback {
     /// Resolver for withdrawing the upvote deposit of a voter
     fn resolve_withdraw_upvote_deposit(
         &mut self,

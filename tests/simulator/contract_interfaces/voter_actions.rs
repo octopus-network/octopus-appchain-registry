@@ -1,71 +1,87 @@
-use appchain_registry::AppchainRegistryContract;
-use mock_oct_token::MockOctTokenContract;
-use near_sdk_sim::{call, ContractAccount, ExecutionResult, UserAccount};
-
 use crate::common;
+use near_sdk::{json_types::U128, serde_json::json};
+use workspaces::{network::Sandbox, result::CallExecutionDetails, Account, Contract, Worker};
 
-pub fn upvote_appchain(
-    signer: &UserAccount,
-    oct_token: &ContractAccount<MockOctTokenContract>,
-    registry: &ContractAccount<AppchainRegistryContract>,
+pub async fn upvote_appchain(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    oct_token: &Contract,
+    registry: &Contract,
     appchain_id: &String,
     amount: u128,
-) -> ExecutionResult {
-    common::ft_transfer_call_oct_token(
+) -> anyhow::Result<CallExecutionDetails> {
+    common::call_ft_transfer_call(
+        worker,
         signer,
-        &registry.user_account,
+        &registry.as_account(),
         amount,
-        format!(
-            "{{\"UpvoteAppchain\":{{\"appchain_id\":\"{}\"}}}}",
-            appchain_id
-        ),
+        json!({
+            "UpvoteAppchain":{
+                "appchain_id": appchain_id
+            }
+        })
+        .to_string(),
         oct_token,
     )
+    .await
 }
 
-pub fn downvote_appchain(
-    signer: &UserAccount,
-    oct_token: &ContractAccount<MockOctTokenContract>,
-    registry: &ContractAccount<AppchainRegistryContract>,
+pub async fn downvote_appchain(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    oct_token: &Contract,
+    registry: &Contract,
     appchain_id: &String,
     amount: u128,
-) -> ExecutionResult {
-    common::ft_transfer_call_oct_token(
+) -> anyhow::Result<CallExecutionDetails> {
+    common::call_ft_transfer_call(
+        worker,
         signer,
-        &registry.user_account,
+        &registry.as_account(),
         amount,
-        format!(
-            "{{\"DownvoteAppchain\":{{\"appchain_id\":\"{}\"}}}}",
-            appchain_id
-        ),
+        json!({
+            "DownvoteAppchain":{
+                "appchain_id": appchain_id
+            }
+        })
+        .to_string(),
         oct_token,
     )
+    .await
 }
 
-pub fn withdraw_upvote_deposit_of(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
+pub async fn withdraw_upvote_deposit_of(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    registry: &Contract,
     appchain_id: &String,
     amount: u128,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.withdraw_upvote_deposit_of(appchain_id.clone(), amount.into())
-    );
-    common::print_outcome_result("withdraw_upvote_deposit_of", &outcome);
-    outcome
+) -> anyhow::Result<CallExecutionDetails> {
+    signer
+        .call(worker, registry.id(), "withdraw_upvote_deposit_of")
+        .args_json(json!({
+            "appchain_id": appchain_id,
+            "amount": U128::from(amount)
+        }))?
+        .gas(200_000_000_000_000)
+        .transact()
+        .await
 }
 
-pub fn withdraw_downvote_deposit_of(
-    signer: &UserAccount,
-    registry: &ContractAccount<AppchainRegistryContract>,
+pub async fn withdraw_downvote_deposit_of(
+    worker: &Worker<Sandbox>,
+    signer: &Account,
+    registry: &Contract,
     appchain_id: &String,
     amount: u128,
-) -> ExecutionResult {
-    let outcome = call!(
-        signer,
-        registry.withdraw_downvote_deposit_of(appchain_id.clone(), amount.into())
-    );
-    common::print_outcome_result("withdraw_downvote_deposit_of", &outcome);
-    outcome
+) -> anyhow::Result<CallExecutionDetails> {
+    signer
+        .call(worker, registry.id(), "withdraw_downvote_deposit_of")
+        .args_json(json!({
+            "appchain_id": appchain_id,
+            "amount": U128::from(amount)
+        }))?
+        .gas(200_000_000_000_000)
+        .transact()
+        .await
 }
