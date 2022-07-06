@@ -22,6 +22,7 @@ pub async fn register_appchain(
     oct_token: &Contract,
     registry: &Contract,
     appchain_id: &String,
+    description: Option<String>,
     website_url: Option<String>,
     function_spec_url: Option<String>,
     github_address: Option<String>,
@@ -44,6 +45,7 @@ pub async fn register_appchain(
         json!({
             "RegisterAppchain":{
                 "appchain_id": appchain_id,
+                "description": description,
                 "website_url": website_url,
                 "function_spec_url": function_spec_url,
                 "github_address": github_address,

@@ -106,6 +106,7 @@ pub struct AppchainRegistry {
 enum RegistryDepositMessage {
     RegisterAppchain {
         appchain_id: String,
+        description: String,
         website_url: String,
         function_spec_url: String,
         github_address: String,
@@ -260,6 +261,7 @@ impl AppchainRegistry {
         match deposit_message {
             RegistryDepositMessage::RegisterAppchain {
                 appchain_id,
+                description,
                 website_url,
                 function_spec_url,
                 github_address,
@@ -276,6 +278,7 @@ impl AppchainRegistry {
                 self.register_appchain(
                     sender_id,
                     appchain_id,
+                    description,
                     amount.0,
                     website_url,
                     function_spec_url,
@@ -335,6 +338,7 @@ impl AppchainRegistry {
         &mut self,
         sender_id: AccountId,
         appchain_id: AppchainId,
+        description: String,
         register_deposit: Balance,
         website_url: String,
         function_spec_url: String,
@@ -411,6 +415,7 @@ impl AppchainRegistry {
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             AppchainMetadata {
+                description,
                 website_url,
                 function_spec_url,
                 github_address,

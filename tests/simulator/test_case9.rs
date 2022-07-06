@@ -24,6 +24,7 @@ async fn test_case9() -> anyhow::Result<()> {
         &oct_token,
         &registry,
         &"appchain1".to_string(),
+        Some("appchain1 description".to_string()),
         Some("http://ddfs.dsdfs".to_string()),
         Some("https://testchain.org/function_spec".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),

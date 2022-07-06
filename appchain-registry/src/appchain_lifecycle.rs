@@ -6,6 +6,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
+        description: Option<String>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -22,6 +23,9 @@ impl AppchainLifecycleManager for AppchainRegistry {
         self.assert_appchain_lifecycle_manager();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         let mut metadata = appchain_basedata.metadata();
+        if let Some(description) = description {
+            metadata.description = description;
+        }
         if let Some(website_url) = website_url {
             metadata.website_url = website_url;
         }

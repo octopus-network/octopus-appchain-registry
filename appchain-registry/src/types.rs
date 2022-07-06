@@ -34,6 +34,7 @@ pub struct RegistryRoles {
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainMetadata {
+    pub description: String,
     pub website_url: String,
     pub function_spec_url: String,
     pub github_address: String,

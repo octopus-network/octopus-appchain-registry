@@ -5,10 +5,28 @@ use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap};
 use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, PublicKey, Timestamp};
 
+/// Appchain metadata
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OldAppchainMetadata {
+    pub website_url: String,
+    pub function_spec_url: String,
+    pub github_address: String,
+    pub github_release: String,
+    pub contact_email: String,
+    pub premined_wrapped_appchain_token_beneficiary: AccountId,
+    pub premined_wrapped_appchain_token: U128,
+    pub initial_supply_of_wrapped_appchain_token: U128,
+    pub ido_amount_of_wrapped_appchain_token: U128,
+    pub initial_era_reward: U128,
+    pub fungible_token_metadata: FungibleTokenMetadata,
+    pub custom_metadata: HashMap<String, String>,
+}
+
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct OldAppchainBasedata {
     appchain_id: AppchainId,
-    appchain_metadata: LazyOption<AppchainMetadata>,
+    appchain_metadata: LazyOption<OldAppchainMetadata>,
     appchain_anchor: String,
     appchain_owner: AccountId,
     register_deposit: Balance,
@@ -122,8 +140,13 @@ impl AppchainRegistry {
 impl AppchainBasedata {
     pub fn from_old_version(old_version: OldAppchainBasedata) -> Self {
         Self {
-            appchain_id: old_version.appchain_id,
-            appchain_metadata: old_version.appchain_metadata,
+            appchain_id: old_version.appchain_id.clone(),
+            appchain_metadata: LazyOption::new(
+                StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
+                Some(&AppchainMetadata::from_old_version(
+                    old_version.appchain_metadata.get().unwrap(),
+                )),
+            ),
             appchain_anchor: match old_version.appchain_anchor.is_empty() {
                 true => None,
                 false => Some(AccountId::from_str(&old_version.appchain_anchor).unwrap()),
@@ -155,6 +178,28 @@ impl RegistryRoles {
                     AccountId::from_str(&old_version.operator_of_counting_voting_score).unwrap(),
                 ),
             },
+        }
+    }
+}
+
+impl AppchainMetadata {
+    pub fn from_old_version(old_version: OldAppchainMetadata) -> Self {
+        Self {
+            description: String::new(),
+            website_url: old_version.website_url,
+            function_spec_url: old_version.function_spec_url,
+            github_address: old_version.github_address,
+            github_release: old_version.github_release,
+            contact_email: old_version.contact_email,
+            premined_wrapped_appchain_token_beneficiary: old_version
+                .premined_wrapped_appchain_token_beneficiary,
+            premined_wrapped_appchain_token: old_version.premined_wrapped_appchain_token,
+            initial_supply_of_wrapped_appchain_token: old_version
+                .initial_supply_of_wrapped_appchain_token,
+            ido_amount_of_wrapped_appchain_token: old_version.ido_amount_of_wrapped_appchain_token,
+            initial_era_reward: old_version.initial_era_reward,
+            fungible_token_metadata: old_version.fungible_token_metadata,
+            custom_metadata: old_version.custom_metadata,
         }
     }
 }
