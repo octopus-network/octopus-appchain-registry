@@ -31,7 +31,7 @@ use storage_key::StorageKey;
 use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, RegistrySettings};
 
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 23_000_000_000_000_000_000_000_000; // 23e24yN, 23 NEAR
+const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
 const T_GAS_FOR_FT_TRANSFER: u64 = 20;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
