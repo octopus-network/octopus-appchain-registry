@@ -45,7 +45,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
             premined_wrapped_appchain_token_beneficiary
         {
             metadata.premined_wrapped_appchain_token_beneficiary =
-                premined_wrapped_appchain_token_beneficiary;
+                Some(premined_wrapped_appchain_token_beneficiary);
         }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;

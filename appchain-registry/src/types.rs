@@ -40,7 +40,7 @@ pub struct AppchainMetadata {
     pub github_address: String,
     pub github_release: String,
     pub contact_email: String,
-    pub premined_wrapped_appchain_token_beneficiary: AccountId,
+    pub premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
     pub premined_wrapped_appchain_token: U128,
     pub initial_supply_of_wrapped_appchain_token: U128,
     pub ido_amount_of_wrapped_appchain_token: U128,

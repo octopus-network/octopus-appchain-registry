@@ -10,6 +10,7 @@ mod storage_key;
 mod storage_migration;
 mod sudo_actions;
 pub mod types;
+mod upgrade;
 mod voter_actions;
 
 use core::convert::TryFrom;
@@ -421,7 +422,9 @@ impl AppchainRegistry {
                 github_address,
                 github_release,
                 contact_email,
-                premined_wrapped_appchain_token_beneficiary,
+                premined_wrapped_appchain_token_beneficiary: Some(
+                    premined_wrapped_appchain_token_beneficiary,
+                ),
                 premined_wrapped_appchain_token,
                 initial_supply_of_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,

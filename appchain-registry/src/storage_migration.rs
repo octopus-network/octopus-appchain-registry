@@ -14,7 +14,7 @@ pub struct OldAppchainMetadata {
     pub github_address: String,
     pub github_release: String,
     pub contact_email: String,
-    pub premined_wrapped_appchain_token_beneficiary: AccountId,
+    pub premined_wrapped_appchain_token_beneficiary: String,
     pub premined_wrapped_appchain_token: U128,
     pub initial_supply_of_wrapped_appchain_token: U128,
     pub ido_amount_of_wrapped_appchain_token: U128,
@@ -191,8 +191,16 @@ impl AppchainMetadata {
             github_address: old_version.github_address,
             github_release: old_version.github_release,
             contact_email: old_version.contact_email,
-            premined_wrapped_appchain_token_beneficiary: old_version
-                .premined_wrapped_appchain_token_beneficiary,
+            premined_wrapped_appchain_token_beneficiary: match old_version
+                .premined_wrapped_appchain_token_beneficiary
+                .is_empty()
+            {
+                true => None,
+                false => Some(
+                    AccountId::from_str(&old_version.premined_wrapped_appchain_token_beneficiary)
+                        .unwrap(),
+                ),
+            },
             premined_wrapped_appchain_token: old_version.premined_wrapped_appchain_token,
             initial_supply_of_wrapped_appchain_token: old_version
                 .initial_supply_of_wrapped_appchain_token,
