@@ -10,6 +10,7 @@ use crate::*;
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
     pub appchain_id: AppchainId,
+    pub appchain_chain_id: Option<u32>,
     pub appchain_metadata: LazyOption<AppchainMetadata>,
     pub appchain_anchor: Option<AccountId>,
     pub appchain_owner: AccountId,
@@ -27,12 +28,14 @@ impl AppchainBasedata {
     /// Return a new instance of AppchainBasedata with the given parameters
     pub fn new(
         appchain_id: AppchainId,
+        appchain_chain_id: Option<u32>,
         appchain_metadata: AppchainMetadata,
         appchain_owner: AccountId,
         register_deposit: Balance,
     ) -> Self {
         Self {
             appchain_id: appchain_id.clone(),
+            appchain_chain_id,
             appchain_metadata: LazyOption::new(
                 StorageKey::AppchainMetadata(appchain_id.clone()).into_bytes(),
                 Some(&appchain_metadata),
@@ -98,6 +101,7 @@ impl AppchainBasedata {
     pub fn status(&self) -> AppchainStatus {
         AppchainStatus {
             appchain_id: self.appchain_id.clone(),
+            appchain_chain_id: self.appchain_chain_id,
             appchain_metadata: self.appchain_metadata.get().unwrap(),
             appchain_anchor: self.appchain_anchor.clone(),
             appchain_owner: self.appchain_owner.clone(),
@@ -117,7 +121,7 @@ impl AppchainBasedata {
         assert_ne!(
             self.appchain_owner,
             new_owner.clone(),
-            "The owner not changed."
+            "The owner is not changed."
         );
         self.appchain_owner = new_owner;
     }

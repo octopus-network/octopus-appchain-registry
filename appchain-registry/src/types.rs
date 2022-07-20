@@ -17,6 +17,8 @@ pub struct RegistrySettings {
     /// The interval for calling function `count_voting_score`,
     /// in the interval this function can only be called once.
     pub counting_interval_in_seconds: U64,
+    ///
+    pub latest_appchain_chain_id: u32,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
@@ -30,11 +32,19 @@ pub struct RegistryRoles {
     pub operator_of_counting_voting_score: Option<AccountId>,
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+pub enum AppchainTemplateType {
+    Barnacle,
+    BarnacleEvm,
+}
+
 /// Appchain metadata
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainMetadata {
     pub description: String,
+    pub template_type: AppchainTemplateType,
     pub website_url: String,
     pub function_spec_url: String,
     pub github_address: String,
@@ -70,6 +80,7 @@ pub enum AppchainState {
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainStatus {
     pub appchain_id: AppchainId,
+    pub appchain_chain_id: Option<u32>,
     pub appchain_metadata: AppchainMetadata,
     pub appchain_anchor: Option<AccountId>,
     pub appchain_owner: AccountId,

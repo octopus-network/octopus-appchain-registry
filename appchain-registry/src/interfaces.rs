@@ -29,6 +29,7 @@ pub trait AppchainLifecycleManager {
         &mut self,
         appchain_id: AppchainId,
         description: Option<String>,
+        template_type: Option<AppchainTemplateType>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -61,6 +62,8 @@ pub trait RegistrySettingsManager {
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
+    /// Change the latest appchain chain id
+    fn change_latest_appchain_chain_id(&mut self, value: u32);
 }
 
 /// The interface for querying status of appchain registry

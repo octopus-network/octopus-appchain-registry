@@ -1,4 +1,5 @@
 use crate::{interfaces::AppchainLifecycleManager, types::AppchainId, *};
+use near_sdk::AccountId;
 
 #[near_bindgen]
 impl AppchainLifecycleManager for AppchainRegistry {
@@ -7,6 +8,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         &mut self,
         appchain_id: AppchainId,
         description: Option<String>,
+        template_type: Option<AppchainTemplateType>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -24,35 +26,85 @@ impl AppchainLifecycleManager for AppchainRegistry {
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         let mut metadata = appchain_basedata.metadata();
         if let Some(description) = description {
+            assert!(
+                !metadata.description.eq(&description),
+                "The description is not changed."
+            );
             metadata.description = description;
         }
+        if let Some(template_type) = template_type {
+            assert!(
+                !metadata.template_type.eq(&template_type),
+                "The template type is not changed."
+            );
+            metadata.template_type = template_type;
+        }
         if let Some(website_url) = website_url {
+            assert!(
+                !metadata.website_url.eq(&website_url),
+                "The website url is not changed."
+            );
             metadata.website_url = website_url;
         }
         if let Some(function_spec_url) = function_spec_url {
+            assert!(
+                !metadata.function_spec_url.eq(&function_spec_url),
+                "The function spec url is not changed."
+            );
             metadata.function_spec_url = function_spec_url;
         }
         if let Some(github_address) = github_address {
+            assert!(
+                !metadata.github_address.eq(&github_address),
+                "The github address is not changed."
+            );
             metadata.github_address = github_address;
         }
         if let Some(github_release) = github_release {
+            assert!(
+                !metadata.github_release.eq(&github_release),
+                "The github release is not changed."
+            );
             metadata.github_release = github_release;
         }
         if let Some(contact_email) = contact_email {
+            assert!(
+                !metadata.contact_email.eq(&contact_email),
+                "The contact email is not changed."
+            );
             metadata.contact_email = contact_email;
         }
         if let Some(premined_wrapped_appchain_token_beneficiary) =
             premined_wrapped_appchain_token_beneficiary
         {
+            assert!(
+                !metadata
+                    .premined_wrapped_appchain_token_beneficiary
+                    .map_or(AccountId::new_unchecked("".to_string()), |f| f)
+                    .eq(&premined_wrapped_appchain_token_beneficiary),
+                "The premined wrapped appchain token beneficiary is not changed."
+            );
             metadata.premined_wrapped_appchain_token_beneficiary =
                 Some(premined_wrapped_appchain_token_beneficiary);
         }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
+            assert!(
+                !metadata
+                    .premined_wrapped_appchain_token
+                    .eq(&premined_wrapped_appchain_token),
+                "The premined wrapped appchain token is not changed."
+            );
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;
         }
         if let Some(initial_supply_of_wrapped_appchain_token) =
             initial_supply_of_wrapped_appchain_token
         {
+            assert!(
+                !metadata
+                    .initial_supply_of_wrapped_appchain_token
+                    .eq(&initial_supply_of_wrapped_appchain_token),
+                "The initial supply of wrapped appchain token is not changed."
+            );
             assert!(
                 initial_supply_of_wrapped_appchain_token.0 >= metadata.premined_wrapped_appchain_token.0,
                 "The initial supply of wrapped appchain token should not be less than the premined amount."
@@ -61,9 +113,19 @@ impl AppchainLifecycleManager for AppchainRegistry {
                 initial_supply_of_wrapped_appchain_token;
         }
         if let Some(ido_amount_of_wrapped_appchain_token) = ido_amount_of_wrapped_appchain_token {
+            assert!(
+                !metadata
+                    .ido_amount_of_wrapped_appchain_token
+                    .eq(&ido_amount_of_wrapped_appchain_token),
+                "The ido amount of wrapped appchain token is not changed."
+            );
             metadata.ido_amount_of_wrapped_appchain_token = ido_amount_of_wrapped_appchain_token;
         }
         if let Some(initial_era_reward) = initial_era_reward {
+            assert!(
+                !metadata.initial_era_reward.eq(&initial_era_reward),
+                "The initial era reward is not changed."
+            );
             metadata.initial_era_reward = initial_era_reward;
         }
         if let Some(fungible_token_metadata) = fungible_token_metadata {
