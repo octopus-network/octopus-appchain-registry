@@ -143,7 +143,7 @@ impl AppchainBasedata {
     pub fn from_old_version(old_version: OldAppchainBasedata) -> Self {
         Self {
             appchain_id: old_version.appchain_id.clone(),
-            appchain_chain_id: None,
+            evm_chain_id: None,
             appchain_metadata: LazyOption::new(
                 StorageKey::AppchainMetadata(old_version.appchain_id.clone()).into_bytes(),
                 Some(&AppchainMetadata::from_old_version(
@@ -170,7 +170,7 @@ impl RegistrySettings {
             minimum_register_deposit: old_version.minimum_register_deposit,
             voting_result_reduction_percent: old_version.voting_result_reduction_percent,
             counting_interval_in_seconds: old_version.counting_interval_in_seconds,
-            latest_appchain_chain_id: 7900,
+            latest_evm_chain_id: U64::from(7900),
         }
     }
 }

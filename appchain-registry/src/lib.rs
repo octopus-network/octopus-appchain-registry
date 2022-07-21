@@ -20,7 +20,7 @@ use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
@@ -421,17 +421,18 @@ impl AppchainRegistry {
             "The initial supply of wrapped appchain token should not be less than the premined amount."
         );
         let mut registry_settings = self.registry_settings.get().unwrap();
-        let appchain_chain_id = match template_type {
+        let evm_chain_id = match template_type {
             AppchainTemplateType::Barnacle => None,
             AppchainTemplateType::BarnacleEvm => {
-                registry_settings.latest_appchain_chain_id += 1;
+                registry_settings.latest_evm_chain_id =
+                    U64::from(registry_settings.latest_evm_chain_id.0 + 1);
                 self.registry_settings.set(&registry_settings);
-                Some(registry_settings.latest_appchain_chain_id + 1)
+                Some(registry_settings.latest_evm_chain_id)
             }
         };
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
-            appchain_chain_id,
+            evm_chain_id,
             AppchainMetadata {
                 description,
                 template_type,

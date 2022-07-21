@@ -10,7 +10,7 @@ impl Default for RegistrySettings {
             minimum_register_deposit: U128::from(DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE),
             voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
             counting_interval_in_seconds: U64::from(SECONDS_OF_A_DAY),
-            latest_appchain_chain_id: 7900,
+            latest_evm_chain_id: U64::from(7900),
         }
     }
 }
@@ -44,10 +44,10 @@ impl RegistrySettingsManager for AppchainRegistry {
         self.registry_settings.set(&registry_settings);
     }
     //
-    fn change_latest_appchain_chain_id(&mut self, value: u32) {
+    fn change_latest_evm_chain_id(&mut self, value: U64) {
         self.assert_registry_settings_manager();
         let mut registry_settings = self.registry_settings.get().unwrap();
-        registry_settings.latest_appchain_chain_id = value;
+        registry_settings.latest_evm_chain_id = value;
         self.registry_settings.set(&registry_settings);
     }
 }

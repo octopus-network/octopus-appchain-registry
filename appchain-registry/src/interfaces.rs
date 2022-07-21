@@ -63,7 +63,7 @@ pub trait RegistrySettingsManager {
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
     /// Change the latest appchain chain id
-    fn change_latest_appchain_chain_id(&mut self, value: u32);
+    fn change_latest_evm_chain_id(&mut self, value: U64);
 }
 
 /// The interface for querying status of appchain registry

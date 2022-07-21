@@ -2,6 +2,7 @@ use std::convert::TryInto;
 
 use near_sdk::collections::LazyOption;
 use near_sdk::Timestamp;
+use near_sdk::json_types::U64;
 
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
 use crate::*;
@@ -10,7 +11,7 @@ use crate::*;
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct AppchainBasedata {
     pub appchain_id: AppchainId,
-    pub appchain_chain_id: Option<u32>,
+    pub evm_chain_id: Option<U64>,
     pub appchain_metadata: LazyOption<AppchainMetadata>,
     pub appchain_anchor: Option<AccountId>,
     pub appchain_owner: AccountId,
@@ -28,14 +29,14 @@ impl AppchainBasedata {
     /// Return a new instance of AppchainBasedata with the given parameters
     pub fn new(
         appchain_id: AppchainId,
-        appchain_chain_id: Option<u32>,
+        evm_chain_id: Option<U64>,
         appchain_metadata: AppchainMetadata,
         appchain_owner: AccountId,
         register_deposit: Balance,
     ) -> Self {
         Self {
             appchain_id: appchain_id.clone(),
-            appchain_chain_id,
+            evm_chain_id,
             appchain_metadata: LazyOption::new(
                 StorageKey::AppchainMetadata(appchain_id.clone()).into_bytes(),
                 Some(&appchain_metadata),
@@ -101,7 +102,7 @@ impl AppchainBasedata {
     pub fn status(&self) -> AppchainStatus {
         AppchainStatus {
             appchain_id: self.appchain_id.clone(),
-            appchain_chain_id: self.appchain_chain_id,
+            evm_chain_id: self.evm_chain_id,
             appchain_metadata: self.appchain_metadata.get().unwrap(),
             appchain_anchor: self.appchain_anchor.clone(),
             appchain_owner: self.appchain_owner.clone(),

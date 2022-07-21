@@ -18,7 +18,7 @@ pub struct RegistrySettings {
     /// in the interval this function can only be called once.
     pub counting_interval_in_seconds: U64,
     ///
-    pub latest_appchain_chain_id: u32,
+    pub latest_evm_chain_id: U64,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
@@ -80,7 +80,7 @@ pub enum AppchainState {
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainStatus {
     pub appchain_id: AppchainId,
-    pub appchain_chain_id: Option<u32>,
+    pub evm_chain_id: Option<U64>,
     pub appchain_metadata: AppchainMetadata,
     pub appchain_anchor: Option<AccountId>,
     pub appchain_owner: AccountId,
