@@ -1,11 +1,9 @@
-use std::convert::TryInto;
-
-use near_sdk::collections::LazyOption;
-use near_sdk::Timestamp;
-use near_sdk::json_types::U64;
-
 use crate::types::{AppchainMetadata, AppchainState, AppchainStatus};
 use crate::*;
+use near_sdk::collections::LazyOption;
+use near_sdk::json_types::U64;
+use near_sdk::Timestamp;
+use std::convert::TryInto;
 
 /// Appchain basedata
 #[derive(BorshDeserialize, BorshSerialize)]

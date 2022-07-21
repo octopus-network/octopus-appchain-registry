@@ -1,9 +1,8 @@
-use near_sdk::json_types::U64;
-
 use crate::{
     types::{AppchainSortingField, AppchainStatus, SortingOrder},
     *,
 };
+use near_sdk::json_types::U64;
 
 /// The callback interface for appchain anchor
 pub trait AppchainAnchorCallback {
@@ -113,6 +112,8 @@ pub trait SudoActions {
     fn pause_asset_transfer(&mut self);
     /// Resume asset transfer in this contract.
     fn resume_asset_transfer(&mut self);
+    /// Set the evm chain id of an appchain.
+    fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64);
 }
 
 pub trait VoterActions {
