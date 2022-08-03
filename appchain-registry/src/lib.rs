@@ -384,6 +384,10 @@ impl AppchainRegistry {
         );
         assert!(appchain_id.find(".").is_none(), "Invalid 'appchain_id'.");
         assert!(
+            appchain_id.len() <= 20,
+            "Appchain id is too long (max length is 20)."
+        );
+        assert!(
             AccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id())).is_ok(),
             "Invalid 'appchain_id'."
         );
