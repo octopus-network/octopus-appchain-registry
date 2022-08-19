@@ -1,7 +1,7 @@
 #
 export NEAR_ENV=testnet
 export REGISTRY_ACCOUNT_ID=registry.test_oct.testnet
-export OWNER_ACCOUNT_ID=test_oct.testnet
+export OWNER_ACCOUNT_ID=registry.test_oct.testnet
 #
 near deploy --accountId $REGISTRY_ACCOUNT_ID --wasmFile res/appchain_registry.wasm
 #

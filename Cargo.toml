@@ -1,3 +1,32 @@
+[package]
+name = "appchain-registry-wrapper"
+version = "2.0.0"
+authors = ["Octopus Network"]
+edition = "2021"
+
+[dev-dependencies]
+anyhow = "1.0"
+near-sdk = "4.0.0"
+near-contract-standards = "4.0.0"
+near-units = "0.2.0"
+hex = "0.4.2"
+num-format = "0.4.0"
+# remember to include related mock contracts
+appchain-registry = { path = "./appchain-registry" }
+mock-oct-token = { path = "./mock-oct-token" }
+mock-appchain-anchor = { path = "./mock-appchain-anchor" }
+tokio = { version = "1.14", features = ["full"] }
+workspaces = "0.3"
+
+[profile.release]
+codegen-units = 1
+# Tell `rustc` to optimize for small code size.
+opt-level = "z"
+lto = true
+debug = false
+panic = "abort"
+overflow-checks = true
+
 [workspace]
 members = [
     "appchain-registry",

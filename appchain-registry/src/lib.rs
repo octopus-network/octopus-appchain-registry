@@ -10,6 +10,7 @@ mod storage_key;
 mod storage_migration;
 mod sudo_actions;
 pub mod types;
+mod upgrade;
 mod voter_actions;
 
 use core::convert::TryFrom;
@@ -19,7 +20,7 @@ use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::{ValidAccountId, U128};
+use near_sdk::json_types::U128;
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
@@ -30,11 +31,10 @@ use appchain_basedata::AppchainBasedata;
 use storage_key::StorageKey;
 use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, RegistrySettings};
 
-const NO_DEPOSIT: Balance = 0;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 23_000_000_000_000_000_000_000_000; // 23e24yN, 23 NEAR
-const T_GAS: u64 = 1_000_000_000_000;
-const GAS_FOR_FT_TRANSFER_CALL: u64 = 35 * T_GAS;
+const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
+const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
+const T_GAS_FOR_FT_TRANSFER: u64 = 20;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 /// Default register deposit amount
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
@@ -49,15 +49,8 @@ const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
-near_sdk::setup_alloc!();
-
-#[ext_contract(ext_fungible_token)]
-pub trait FungibleToken {
-    fn ft_transfer(&mut self, receiver_id: AccountId, amount: U128, memo: Option<String>);
-}
-
 #[ext_contract(ext_self)]
-pub trait ResolverForSelfCallback {
+pub trait SelfCallback {
     /// Resolver for withdrawing the upvote deposit of a voter
     fn resolve_withdraw_upvote_deposit(
         &mut self,
@@ -114,6 +107,7 @@ pub struct AppchainRegistry {
 enum RegistryDepositMessage {
     RegisterAppchain {
         appchain_id: String,
+        description: String,
         website_url: String,
         function_spec_url: String,
         github_address: String,
@@ -268,6 +262,7 @@ impl AppchainRegistry {
         match deposit_message {
             RegistryDepositMessage::RegisterAppchain {
                 appchain_id,
+                description,
                 website_url,
                 function_spec_url,
                 github_address,
@@ -284,6 +279,7 @@ impl AppchainRegistry {
                 self.register_appchain(
                     sender_id,
                     appchain_id,
+                    description,
                     amount.0,
                     website_url,
                     function_spec_url,
@@ -343,6 +339,7 @@ impl AppchainRegistry {
         &mut self,
         sender_id: AccountId,
         appchain_id: AppchainId,
+        description: String,
         register_deposit: Balance,
         website_url: String,
         function_spec_url: String,
@@ -380,8 +377,7 @@ impl AppchainRegistry {
         );
         assert!(appchain_id.find(".").is_none(), "Invalid 'appchain_id'.");
         assert!(
-            ValidAccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id()))
-                .is_ok(),
+            AccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id())).is_ok(),
             "Invalid 'appchain_id'."
         );
         assert!(
@@ -404,12 +400,6 @@ impl AppchainRegistry {
             !contact_email.trim().is_empty(),
             "Missing necessary field 'contact_email'."
         );
-        assert!(
-            !premined_wrapped_appchain_token_beneficiary
-                .trim()
-                .is_empty(),
-            "Missing necessary field 'premined_wrapped_appchain_token_beneficiary'."
-        );
         fungible_token_metadata.assert_valid();
         assert!(
             !fungible_token_metadata.name.trim().is_empty(),
@@ -426,12 +416,15 @@ impl AppchainRegistry {
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             AppchainMetadata {
+                description,
                 website_url,
                 function_spec_url,
                 github_address,
                 github_release,
                 contact_email,
-                premined_wrapped_appchain_token_beneficiary,
+                premined_wrapped_appchain_token_beneficiary: Some(
+                    premined_wrapped_appchain_token_beneficiary,
+                ),
                 premined_wrapped_appchain_token,
                 initial_supply_of_wrapped_appchain_token,
                 ido_amount_of_wrapped_appchain_token,
@@ -445,14 +438,11 @@ impl AppchainRegistry {
         self.appchain_ids.insert(&appchain_id);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        env::log(
-            format!(
-                "Appchain '{}' is registered by '{}'.",
-                appchain_basedata.id(),
-                appchain_basedata.owner()
-            )
-            .as_bytes(),
-        )
+        log!(
+            "Appchain '{}' is registered by '{}'.",
+            appchain_basedata.id(),
+            appchain_basedata.owner()
+        );
     }
 }
 

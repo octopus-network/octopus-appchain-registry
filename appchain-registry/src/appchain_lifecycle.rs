@@ -6,6 +6,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     fn update_appchain_metadata(
         &mut self,
         appchain_id: AppchainId,
+        description: Option<String>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -22,6 +23,9 @@ impl AppchainLifecycleManager for AppchainRegistry {
         self.assert_appchain_lifecycle_manager();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         let mut metadata = appchain_basedata.metadata();
+        if let Some(description) = description {
+            metadata.description = description;
+        }
         if let Some(website_url) = website_url {
             metadata.website_url = website_url;
         }
@@ -41,7 +45,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
             premined_wrapped_appchain_token_beneficiary
         {
             metadata.premined_wrapped_appchain_token_beneficiary =
-                premined_wrapped_appchain_token_beneficiary;
+                Some(premined_wrapped_appchain_token_beneficiary);
         }
         if let Some(premined_wrapped_appchain_token) = premined_wrapped_appchain_token {
             metadata.premined_wrapped_appchain_token = premined_wrapped_appchain_token;
@@ -68,17 +72,14 @@ impl AppchainLifecycleManager for AppchainRegistry {
         if let Some(custom_metadata) = custom_metadata {
             metadata.custom_metadata = custom_metadata;
         }
-        appchain_basedata.set_metadata(&metadata);
+        appchain_basedata.set_metadata(metadata);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        env::log(
-            format!(
-                "The metadata of appchain '{}' is updated by '{}'.",
-                appchain_basedata.id(),
-                env::predecessor_account_id()
-            )
-            .as_bytes(),
-        )
+        log!(
+            "The metadata of appchain '{}' is updated by '{}'.",
+            appchain_basedata.id(),
+            env::predecessor_account_id()
+        );
     }
     //
     fn start_auditing_appchain(&mut self, appchain_id: AppchainId) {
@@ -88,7 +89,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         appchain_basedata.set_state(AppchainState::Auditing);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        env::log(format!("Appchain '{}' is 'auditing'.", appchain_basedata.id()).as_bytes())
+        log!("Appchain '{}' is 'auditing'.", appchain_basedata.id());
     }
     //
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId) {
@@ -98,7 +99,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         appchain_basedata.set_state(AppchainState::InQueue);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
-        env::log(format!("Appchain '{}' is 'inQueue'.", appchain_basedata.id()).as_bytes())
+        log!("Appchain '{}' is 'inQueue'.", appchain_basedata.id());
     }
     //
     fn reject_appchain(&mut self, appchain_id: AppchainId) {
@@ -122,14 +123,20 @@ impl AppchainLifecycleManager for AppchainRegistry {
             "There is no appchain on the top of queue yet."
         );
         // Set the appchain with the largest voting score to go `staging`
-        let sub_account_id = format!(
+        let sub_account_id = AccountId::try_from(format!(
             "{}.{}",
             &self.top_appchain_id_in_queue,
             env::current_account_id()
+        ));
+        assert!(
+            sub_account_id.is_ok(),
+            "Invalid sub account id of target appchain '{}'.",
+            self.top_appchain_id_in_queue
         );
+        let sub_account_id = sub_account_id.unwrap();
         let mut top_appchain_basedata = self.get_appchain_basedata(&self.top_appchain_id_in_queue);
         top_appchain_basedata.set_state(AppchainState::Staging);
-        top_appchain_basedata.set_anchor_account(&sub_account_id);
+        top_appchain_basedata.set_anchor_account(sub_account_id.clone());
         self.appchain_basedatas
             .insert(top_appchain_basedata.id(), &top_appchain_basedata);
         let registry_settings = self.registry_settings.get().unwrap();
@@ -149,7 +156,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
             }
         }
         self.top_appchain_id_in_queue.clear();
-        Promise::new(sub_account_id)
+        Promise::new(sub_account_id.clone())
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
             .add_full_access_key(self.owner_pk.clone());
@@ -167,18 +174,16 @@ impl AppchainLifecycleManager for AppchainRegistry {
             appchain_basedata.downvote_deposit() == 0,
             "The appchain still has downvote deposit(s)."
         );
-        if !appchain_basedata.anchor().trim().is_empty() {
+        if !appchain_basedata.anchor().is_none() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
-            env::log(
-                format!(
-                    "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
-                    &anchor_account_id, &appchain_id
-                )
-                .as_bytes(),
+            log!(
+                "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
+                &anchor_account_id,
+                &appchain_id
             );
         }
         self.internal_remove_appchain(&appchain_id);
-        env::log(format!("Appchain '{}' is removed from registry.", &appchain_id).as_bytes())
+        log!("Appchain '{}' is removed from registry.", &appchain_id);
     }
 }
 
@@ -188,9 +193,13 @@ impl AppchainRegistry {
     pub fn count_voting_score(&mut self) {
         let registry_settings = self.registry_settings.get().unwrap();
         let registry_roles = self.registry_roles.get().unwrap();
+        assert!(
+            registry_roles.operator_of_counting_voting_score.is_some(),
+            "Operator for counting voting score is not set."
+        );
         assert_eq!(
             env::predecessor_account_id(),
-            registry_roles.operator_of_counting_voting_score,
+            registry_roles.operator_of_counting_voting_score.unwrap(),
             "Only certain operator can call this function."
         );
         assert!(

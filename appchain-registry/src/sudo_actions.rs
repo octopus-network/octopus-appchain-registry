@@ -1,6 +1,4 @@
-use std::convert::TryFrom;
-
-use near_sdk::json_types::Base58PublicKey;
+use std::{convert::TryFrom, str::FromStr};
 
 use crate::{interfaces::SudoActions, *};
 
@@ -9,15 +7,21 @@ impl SudoActions for AppchainRegistry {
     //
     fn set_owner_pk(&mut self, public_key: String) {
         self.assert_owner();
-        let parse_result = Base58PublicKey::try_from(public_key);
+        let parse_result = PublicKey::from_str(public_key.as_str());
         assert!(parse_result.is_ok(), "Invalid public key.");
-        self.owner_pk = parse_result.unwrap().0;
+        self.owner_pk = parse_result.unwrap();
     }
     //
     fn create_anchor_account(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
-        let sub_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
-        Promise::new(sub_account_id)
+        let sub_account_id =
+            AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id()));
+        assert!(
+            sub_account_id.is_ok(),
+            "Invalid sub account id for appchain '{}'.",
+            appchain_id
+        );
+        Promise::new(sub_account_id.unwrap())
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
             .add_full_access_key(self.owner_pk.clone());

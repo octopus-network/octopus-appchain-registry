@@ -1,23 +1,7 @@
-use near_sdk::env;
-
 use crate::{interfaces::VoterActions, types::AppchainId, *};
-
-pub trait VoterActionsResultResolver {
-    /// Resolver for withdrawing the upvote deposit of a voter
-    fn resolve_withdraw_upvote_deposit(
-        &mut self,
-        appchain_id: AppchainId,
-        account_id: AccountId,
-        amount: U128,
-    );
-    /// Resolver for withdrawing the downvote deposit of a voter
-    fn resolve_withdraw_downvote_deposit(
-        &mut self,
-        appchain_id: AppchainId,
-        account_id: AccountId,
-        amount: U128,
-    );
-}
+use near_contract_standards::fungible_token::core::ext_ft_core;
+use near_sdk::{env, Gas};
+use std::ops::Mul;
 
 /// The actions which the voter can perform
 #[near_bindgen]
@@ -48,22 +32,17 @@ impl VoterActions for AppchainRegistry {
                 &(voter_upvote - amount.0),
             );
         }
-        ext_fungible_token::ft_transfer(
-            voter.clone(),
-            amount.into(),
-            None,
-            &self.oct_token,
-            1,
-            GAS_FOR_FT_TRANSFER_CALL,
-        )
-        .then(ext_self::resolve_withdraw_upvote_deposit(
-            appchain_id.clone(),
-            voter.clone(),
-            amount,
-            &env::current_account_id(),
-            NO_DEPOSIT,
-            env::prepaid_gas() / 2,
-        ));
+        ext_ft_core::ext(self.oct_token.clone())
+            .with_attached_deposit(1)
+            .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER))
+            .with_unused_gas_weight(0)
+            .ft_transfer(voter.clone(), amount.into(), None)
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVER_FUNCTION))
+                    .with_unused_gas_weight(0)
+                    .resolve_withdraw_upvote_deposit(appchain_id.clone(), voter.clone(), amount),
+            );
     }
     //
     fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128) {
@@ -91,27 +70,22 @@ impl VoterActions for AppchainRegistry {
                 &(voter_downvote - amount.0),
             );
         }
-        ext_fungible_token::ft_transfer(
-            voter.clone(),
-            amount.into(),
-            None,
-            &self.oct_token,
-            1,
-            GAS_FOR_FT_TRANSFER_CALL,
-        )
-        .then(ext_self::resolve_withdraw_downvote_deposit(
-            appchain_id.clone(),
-            voter.clone(),
-            amount,
-            &env::current_account_id(),
-            NO_DEPOSIT,
-            env::prepaid_gas() / 2,
-        ));
+        ext_ft_core::ext(self.oct_token.clone())
+            .with_attached_deposit(1)
+            .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_FT_TRANSFER))
+            .with_unused_gas_weight(0)
+            .ft_transfer(voter.clone(), amount.into(), None)
+            .then(
+                ext_self::ext(env::current_account_id())
+                    .with_static_gas(Gas::ONE_TERA.mul(T_GAS_FOR_RESOLVER_FUNCTION))
+                    .with_unused_gas_weight(0)
+                    .resolve_withdraw_upvote_deposit(appchain_id.clone(), voter.clone(), amount),
+            );
     }
 }
 
 #[near_bindgen]
-impl VoterActionsResultResolver for AppchainRegistry {
+impl SelfCallback for AppchainRegistry {
     //
     fn resolve_withdraw_upvote_deposit(
         &mut self,
@@ -122,12 +96,11 @@ impl VoterActionsResultResolver for AppchainRegistry {
         assert_self();
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => env::log(
-                format!(
-                    "Upvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
-                    &appchain_id, &account_id, &amount.0
-                )
-                .as_bytes(),
+            PromiseResult::Successful(_) => log!(
+                "Upvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
+                &appchain_id,
+                &account_id,
+                &amount.0
             ),
             PromiseResult::Failed => {}
         }
@@ -142,12 +115,11 @@ impl VoterActionsResultResolver for AppchainRegistry {
         assert_self();
         match env::promise_result(0) {
             PromiseResult::NotReady => unreachable!(),
-            PromiseResult::Successful(_) => env::log(
-                format!(
-                    "Downvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
-                    &appchain_id, &account_id, &amount.0
-                )
-                .as_bytes(),
+            PromiseResult::Successful(_) => log!(
+                "Downvote for appchain '{}' withdrawed by '{}'. Amount: '{}'",
+                &appchain_id,
+                &account_id,
+                &amount.0
             ),
             PromiseResult::Failed => {}
         }
