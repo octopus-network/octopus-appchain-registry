@@ -106,7 +106,7 @@ pub trait SudoActions {
     fn set_owner_pk(&mut self, public_key: String);
     /// Create subaccount for a specific appchain.
     fn create_anchor_account(&mut self, appchain_id: AppchainId);
-    /// Force change state of an appchain
+    /// Force change state of an appchain.
     fn force_change_appchain_state(&mut self, appchain_id: AppchainId, state: AppchainState);
     /// Pause asset transfer in this contract.
     fn pause_asset_transfer(&mut self);
@@ -114,6 +114,8 @@ pub trait SudoActions {
     fn resume_asset_transfer(&mut self);
     /// Set the evm chain id of an appchain.
     fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64);
+    /// Force remove an appchain.
+    fn force_remove_appchain(&mut self, appchain_id: AppchainId);
 }
 
 pub trait VoterActions {

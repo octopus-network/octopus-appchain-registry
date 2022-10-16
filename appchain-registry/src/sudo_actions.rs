@@ -59,4 +59,19 @@ impl SudoActions for AppchainRegistry {
             panic!("Appchain id is not existed.");
         }
     }
+    fn force_remove_appchain(&mut self, appchain_id: AppchainId) {
+        self.assert_owner();
+        self.assert_appchain_state(&appchain_id, AppchainState::Dead);
+        let appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        if !appchain_basedata.anchor().is_none() {
+            let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
+            log!(
+                "The anchor contract '{}' of appchain '{}' needs to be removed manually.",
+                &anchor_account_id,
+                &appchain_id
+            );
+        }
+        self.internal_remove_appchain(&appchain_id);
+        log!("Appchain '{}' is removed from registry.", &appchain_id);
+    }
 }
