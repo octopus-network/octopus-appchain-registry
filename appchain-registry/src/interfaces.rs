@@ -67,6 +67,8 @@ pub trait RegistrySettingsManager {
 
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Show the version of current contract.
+    fn version(&self) -> String;
     /// Get the public key of current owner
     fn get_owner_pk(&self) -> String;
     /// Get account id of OCT token
