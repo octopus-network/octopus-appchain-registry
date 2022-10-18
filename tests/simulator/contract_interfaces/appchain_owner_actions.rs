@@ -1,4 +1,5 @@
 use crate::common;
+use appchain_registry::types::AppchainTemplateType;
 use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_sdk::{
     json_types::U128,
@@ -23,6 +24,7 @@ pub async fn register_appchain(
     registry: &Contract,
     appchain_id: &String,
     description: Option<String>,
+    template_type: Option<AppchainTemplateType>,
     website_url: Option<String>,
     function_spec_url: Option<String>,
     github_address: Option<String>,
@@ -46,6 +48,7 @@ pub async fn register_appchain(
             "RegisterAppchain":{
                 "appchain_id": appchain_id,
                 "description": description,
+                "template_type": template_type,
                 "website_url": website_url,
                 "function_spec_url": function_spec_url,
                 "github_address": github_address,

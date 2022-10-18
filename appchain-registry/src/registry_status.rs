@@ -9,6 +9,10 @@ use crate::{
 #[near_bindgen]
 impl RegistryStatus for AppchainRegistry {
     //
+    fn version(&self) -> String {
+        VERSION.to_string()
+    }
+    //
     fn get_owner_pk(&self) -> String {
         format!("{:?}", self.owner_pk)
     }

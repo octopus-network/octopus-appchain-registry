@@ -10,6 +10,7 @@ impl Default for RegistrySettings {
             minimum_register_deposit: U128::from(DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE),
             voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
             counting_interval_in_seconds: U64::from(SECONDS_OF_A_DAY),
+            latest_evm_chain_id: U64::from(7900),
         }
     }
 }
@@ -40,6 +41,13 @@ impl RegistrySettingsManager for AppchainRegistry {
         assert!(value.0 > 3600, "Too short interval.");
         let mut registry_settings = self.registry_settings.get().unwrap();
         registry_settings.counting_interval_in_seconds = value;
+        self.registry_settings.set(&registry_settings);
+    }
+    //
+    fn change_latest_evm_chain_id(&mut self, value: U64) {
+        self.assert_registry_settings_manager();
+        let mut registry_settings = self.registry_settings.get().unwrap();
+        registry_settings.latest_evm_chain_id = value;
         self.registry_settings.set(&registry_settings);
     }
 }

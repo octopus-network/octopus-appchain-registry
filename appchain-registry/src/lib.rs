@@ -7,7 +7,7 @@ mod registry_roles;
 mod registry_settings;
 mod registry_status;
 mod storage_key;
-mod storage_migration;
+pub mod storage_migration;
 mod sudo_actions;
 pub mod types;
 mod upgrade;
@@ -20,7 +20,7 @@ use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::U128;
+use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
@@ -29,8 +29,12 @@ use near_sdk::{
 
 use appchain_basedata::AppchainBasedata;
 use storage_key::StorageKey;
-use types::{AppchainId, AppchainMetadata, AppchainState, RegistryRoles, RegistrySettings};
+use types::{
+    AppchainId, AppchainMetadata, AppchainState, AppchainTemplateType, RegistryRoles,
+    RegistrySettings,
+};
 
+const VERSION: &str = "v2.1.0";
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
@@ -108,6 +112,7 @@ enum RegistryDepositMessage {
     RegisterAppchain {
         appchain_id: String,
         description: String,
+        template_type: AppchainTemplateType,
         website_url: String,
         function_spec_url: String,
         github_address: String,
@@ -263,6 +268,7 @@ impl AppchainRegistry {
             RegistryDepositMessage::RegisterAppchain {
                 appchain_id,
                 description,
+                template_type,
                 website_url,
                 function_spec_url,
                 github_address,
@@ -280,6 +286,7 @@ impl AppchainRegistry {
                     sender_id,
                     appchain_id,
                     description,
+                    template_type,
                     amount.0,
                     website_url,
                     function_spec_url,
@@ -340,6 +347,7 @@ impl AppchainRegistry {
         sender_id: AccountId,
         appchain_id: AppchainId,
         description: String,
+        template_type: AppchainTemplateType,
         register_deposit: Balance,
         website_url: String,
         function_spec_url: String,
@@ -377,6 +385,10 @@ impl AppchainRegistry {
         );
         assert!(appchain_id.find(".").is_none(), "Invalid 'appchain_id'.");
         assert!(
+            appchain_id.len() <= 20,
+            "Appchain id is too long (max length is 20)."
+        );
+        assert!(
             AccountId::try_from(format!("{}.{}", appchain_id, env::current_account_id())).is_ok(),
             "Invalid 'appchain_id'."
         );
@@ -413,10 +425,22 @@ impl AppchainRegistry {
             initial_supply_of_wrapped_appchain_token.0 >= premined_wrapped_appchain_token.0,
             "The initial supply of wrapped appchain token should not be less than the premined amount."
         );
+        let mut registry_settings = self.registry_settings.get().unwrap();
+        let evm_chain_id = match template_type {
+            AppchainTemplateType::Barnacle => None,
+            AppchainTemplateType::BarnacleEvm => {
+                registry_settings.latest_evm_chain_id =
+                    U64::from(registry_settings.latest_evm_chain_id.0 + 1);
+                self.registry_settings.set(&registry_settings);
+                Some(registry_settings.latest_evm_chain_id)
+            }
+        };
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
+            evm_chain_id,
             AppchainMetadata {
                 description,
+                template_type,
                 website_url,
                 function_spec_url,
                 github_address,

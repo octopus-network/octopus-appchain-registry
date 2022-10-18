@@ -1,9 +1,8 @@
-use near_sdk::json_types::U64;
-
 use crate::{
     types::{AppchainSortingField, AppchainStatus, SortingOrder},
     *,
 };
+use near_sdk::json_types::U64;
 
 /// The callback interface for appchain anchor
 pub trait AppchainAnchorCallback {
@@ -29,6 +28,7 @@ pub trait AppchainLifecycleManager {
         &mut self,
         appchain_id: AppchainId,
         description: Option<String>,
+        template_type: Option<AppchainTemplateType>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -61,10 +61,14 @@ pub trait RegistrySettingsManager {
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
+    /// Change the latest appchain chain id
+    fn change_latest_evm_chain_id(&mut self, value: U64);
 }
 
 /// The interface for querying status of appchain registry
 pub trait RegistryStatus {
+    /// Show the version of current contract.
+    fn version(&self) -> String;
     /// Get the public key of current owner
     fn get_owner_pk(&self) -> String;
     /// Get account id of OCT token
@@ -104,12 +108,16 @@ pub trait SudoActions {
     fn set_owner_pk(&mut self, public_key: String);
     /// Create subaccount for a specific appchain.
     fn create_anchor_account(&mut self, appchain_id: AppchainId);
-    /// Force change state of an appchain
+    /// Force change state of an appchain.
     fn force_change_appchain_state(&mut self, appchain_id: AppchainId, state: AppchainState);
     /// Pause asset transfer in this contract.
     fn pause_asset_transfer(&mut self);
     /// Resume asset transfer in this contract.
     fn resume_asset_transfer(&mut self);
+    /// Set the evm chain id of an appchain.
+    fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64);
+    /// Force remove an appchain.
+    fn force_remove_appchain(&mut self, appchain_id: AppchainId);
 }
 
 pub trait VoterActions {

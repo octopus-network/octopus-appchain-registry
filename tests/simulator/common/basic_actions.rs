@@ -11,7 +11,7 @@ pub async fn initialize_contracts_and_users(
     total_supply: u128,
     with_old_anchor: bool,
 ) -> anyhow::Result<(Account, Contract, Contract, Vec<Account>)> {
-    let root = worker.root_account();
+    let root = worker.root_account().unwrap();
     let mut users: Vec<Account> = Vec::new();
     //
     // deploy OCT token contract
@@ -58,7 +58,7 @@ pub async fn initialize_contracts_and_users(
         true => appchain_registry
             .deploy(
                 worker,
-                &std::fs::read(format!("res/previous_appchain_registry.wasm"))?,
+                &std::fs::read(format!("res/appchain_registry_v2.0.0.wasm"))?,
             )
             .await?
             .unwrap(),
