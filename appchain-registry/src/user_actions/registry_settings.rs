@@ -1,8 +1,15 @@
+use crate::*;
 use core::convert::TryInto;
-
 use near_sdk::json_types::U64;
 
-use crate::{interfaces::RegistrySettingsManager, *};
+pub trait RegistrySettingsManager {
+    /// Change the value of minimum register deposit
+    fn change_minimum_register_deposit(&mut self, value: U128);
+    /// Change the value of reduction percent for voting result of all appchains still in queue
+    fn change_voting_result_reduction_percent(&mut self, value: U64);
+    /// Change the interval for counting voting score of appchains
+    fn change_counting_interval_in_seconds(&mut self, value: U64);
+}
 
 impl Default for RegistrySettings {
     fn default() -> Self {

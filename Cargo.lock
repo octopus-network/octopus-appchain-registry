@@ -96,7 +96,7 @@ checksum = "08f9b8508dccb7687a1d6c4ce66b2b0ecef467c94667de27d8d7fe1f8d2a9cdc"
 
 [[package]]
 name = "appchain-registry"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "hex 0.4.3",
  "near-contract-standards",
@@ -105,7 +105,7 @@ dependencies = [
 
 [[package]]
 name = "appchain-registry-wrapper"
-version = "2.1.0"
+version = "3.0.0"
 dependencies = [
  "anyhow",
  "appchain-registry",

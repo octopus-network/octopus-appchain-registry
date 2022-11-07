@@ -1,5 +1,38 @@
-use crate::{interfaces::AppchainLifecycleManager, types::AppchainId, *};
+use crate::{types::AppchainId, *};
 use near_sdk::AccountId;
+
+pub trait AppchainLifecycleManager {
+    /// Update metadata of an appchain
+    fn update_appchain_metadata(
+        &mut self,
+        appchain_id: AppchainId,
+        description: Option<String>,
+        template_type: Option<AppchainTemplateType>,
+        evm_chain_id: Option<U64>,
+        website_url: Option<String>,
+        function_spec_url: Option<String>,
+        github_address: Option<String>,
+        github_release: Option<String>,
+        contact_email: Option<String>,
+        premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
+        premined_wrapped_appchain_token: Option<U128>,
+        initial_supply_of_wrapped_appchain_token: Option<U128>,
+        ido_amount_of_wrapped_appchain_token: Option<U128>,
+        initial_era_reward: Option<U128>,
+        fungible_token_metadata: Option<FungibleTokenMetadata>,
+        custom_metadata: Option<HashMap<String, String>>,
+    );
+    /// Start auditing of an appchain
+    fn start_auditing_appchain(&mut self, appchain_id: AppchainId);
+    /// Pass auditing of an appchain
+    fn pass_auditing_appchain(&mut self, appchain_id: AppchainId);
+    /// Reject an appchain
+    fn reject_appchain(&mut self, appchain_id: AppchainId);
+    /// Conclude voting score of appchains
+    fn conclude_voting_score(&mut self);
+    /// Remove an appchain from registry
+    fn remove_appchain(&mut self, appchain_id: AppchainId);
+}
 
 #[near_bindgen]
 impl AppchainLifecycleManager for AppchainRegistry {

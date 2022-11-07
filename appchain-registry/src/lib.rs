@@ -1,17 +1,10 @@
-mod appchain_anchor_callback;
 mod appchain_basedata;
-mod appchain_lifecycle;
-mod appchain_owner_actions;
-pub mod interfaces;
-mod registry_roles;
-mod registry_settings;
 mod registry_status;
 mod storage_key;
 pub mod storage_migration;
-mod sudo_actions;
 pub mod types;
 mod upgrade;
-mod voter_actions;
+mod user_actions;
 
 use core::convert::TryFrom;
 use std::collections::HashMap;
@@ -68,6 +61,18 @@ pub trait SelfCallback {
         appchain_id: AppchainId,
         account_id: AccountId,
         amount: U128,
+    );
+}
+
+/// The callback interface for appchain anchor
+pub trait AppchainAnchorCallback {
+    /// Sync state of an appchain to registry
+    fn sync_state_of(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_state: AppchainState,
+        validator_count: u32,
+        total_stake: U128,
     );
 }
 
@@ -479,5 +484,38 @@ impl AppchainRegistry {
         env::storage_remove(&StorageKey::AppchainVotingScore(appchain_id.clone()).into_bytes());
         self.appchain_ids.remove(&appchain_id);
         self.appchain_basedatas.remove(&appchain_id);
+    }
+}
+
+#[near_bindgen]
+impl AppchainAnchorCallback for AppchainRegistry {
+    fn sync_state_of(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_state: AppchainState,
+        validator_count: u32,
+        total_stake: U128,
+    ) {
+        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            appchain_basedata.anchor().is_some(),
+            "Anchor of appchain {} is not set.",
+            appchain_id
+        );
+        assert_eq!(
+            env::predecessor_account_id(),
+            appchain_basedata
+                .anchor()
+                .unwrap_or(AccountId::new_unchecked(String::new())),
+            "Only appchain anchor can call this function."
+        );
+        assert!(
+            appchain_state.is_managed_by_anchor(),
+            "Invalid state to sync."
+        );
+        appchain_basedata.set_state(appchain_state);
+        appchain_basedata.sync_staking_status(validator_count, total_stake.0);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
     }
 }

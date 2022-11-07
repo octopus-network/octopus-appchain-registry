@@ -1,6 +1,11 @@
+use crate::*;
 use near_sdk::{near_bindgen, AccountId};
 
-use crate::{interfaces::AppchainOwnerActions, *};
+/// The actions which the owner of an appchain can perform
+pub trait AppchainOwnerActions {
+    /// Transfer ownership of an appchain to another account
+    fn transfer_appchain_ownership(&mut self, appchain_id: AppchainId, new_owner: AccountId);
+}
 
 #[near_bindgen]
 impl AppchainOwnerActions for AppchainRegistry {

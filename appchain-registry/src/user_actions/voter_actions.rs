@@ -1,7 +1,14 @@
-use crate::{interfaces::VoterActions, types::AppchainId, *};
+use crate::{types::AppchainId, *};
 use near_contract_standards::fungible_token::core::ext_ft_core;
 use near_sdk::{env, Gas};
 use std::ops::Mul;
+
+pub trait VoterActions {
+    /// Withdraw a certain amount of upvote deposit for an appchain
+    fn withdraw_upvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
+    /// Withdraw a certain amount of downvote deposit for an appchain
+    fn withdraw_downvote_deposit_of(&mut self, appchain_id: AppchainId, amount: U128);
+}
 
 /// The actions which the voter can perform
 #[near_bindgen]
