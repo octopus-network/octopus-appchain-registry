@@ -49,16 +49,6 @@ impl SudoActions for AppchainRegistry {
         self.asset_transfer_is_paused = false;
     }
     //
-    fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64) {
-        self.assert_owner();
-        if let Some(mut appchain_basedata) = self.appchain_basedatas.get(&appchain_id) {
-            appchain_basedata.evm_chain_id = Some(evm_chain_id);
-            self.appchain_basedatas
-                .insert(&appchain_id, &appchain_basedata);
-        } else {
-            panic!("Appchain id is not existed.");
-        }
-    }
     fn force_remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
         self.assert_appchain_state(&appchain_id, AppchainState::Dead);

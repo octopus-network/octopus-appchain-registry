@@ -113,10 +113,11 @@ enum RegistryDepositMessage {
         appchain_id: String,
         description: String,
         template_type: AppchainTemplateType,
+        evm_chain_id: Option<U64>,
         website_url: String,
-        function_spec_url: String,
+        function_spec_url: Option<String>,
         github_address: String,
-        github_release: String,
+        github_release: Option<String>,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -269,6 +270,7 @@ impl AppchainRegistry {
                 appchain_id,
                 description,
                 template_type,
+                evm_chain_id,
                 website_url,
                 function_spec_url,
                 github_address,
@@ -287,6 +289,7 @@ impl AppchainRegistry {
                     appchain_id,
                     description,
                     template_type,
+                    evm_chain_id,
                     amount.0,
                     website_url,
                     function_spec_url,
@@ -348,11 +351,12 @@ impl AppchainRegistry {
         appchain_id: AppchainId,
         description: String,
         template_type: AppchainTemplateType,
+        evm_chain_id: Option<U64>,
         register_deposit: Balance,
         website_url: String,
-        function_spec_url: String,
+        function_spec_url: Option<String>,
         github_address: String,
-        github_release: String,
+        github_release: Option<String>,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -397,16 +401,8 @@ impl AppchainRegistry {
             "Missing necessary field 'website_url'."
         );
         assert!(
-            !function_spec_url.trim().is_empty(),
-            "Missing necessary field 'function_spec_url'."
-        );
-        assert!(
             !github_address.trim().is_empty(),
             "Missing necessary field 'github_address'."
-        );
-        assert!(
-            !github_release.trim().is_empty(),
-            "Missing necessary field 'github_release'."
         );
         assert!(
             !contact_email.trim().is_empty(),
@@ -425,16 +421,7 @@ impl AppchainRegistry {
             initial_supply_of_wrapped_appchain_token.0 >= premined_wrapped_appchain_token.0,
             "The initial supply of wrapped appchain token should not be less than the premined amount."
         );
-        let mut registry_settings = self.registry_settings.get().unwrap();
-        let evm_chain_id = match template_type {
-            AppchainTemplateType::Barnacle => None,
-            AppchainTemplateType::BarnacleEvm => {
-                registry_settings.latest_evm_chain_id =
-                    U64::from(registry_settings.latest_evm_chain_id.0 + 1);
-                self.registry_settings.set(&registry_settings);
-                Some(registry_settings.latest_evm_chain_id)
-            }
-        };
+        //
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             evm_chain_id,
@@ -442,9 +429,9 @@ impl AppchainRegistry {
                 description,
                 template_type,
                 website_url,
-                function_spec_url,
+                function_spec_url: function_spec_url.unwrap_or(String::new()),
                 github_address,
-                github_release,
+                github_release: github_release.unwrap_or(String::new()),
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary: Some(
                     premined_wrapped_appchain_token_beneficiary,

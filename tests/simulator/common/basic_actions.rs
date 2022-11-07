@@ -58,7 +58,7 @@ pub async fn initialize_contracts_and_users(
         true => appchain_registry
             .deploy(
                 worker,
-                &std::fs::read(format!("res/appchain_registry_v2.0.0.wasm"))?,
+                &std::fs::read(format!("res/appchain_registry_v2.1.0.wasm"))?,
             )
             .await?
             .unwrap(),
@@ -134,20 +134,6 @@ pub async fn initialize_contracts_and_users(
     users.push(eve);
     // Return initialized UserAccounts
     Ok((root, oct_token, appchain_registry, users))
-}
-
-pub async fn deploy_new_appchain_registry(
-    worker: &Worker<Sandbox>,
-    registry: &Contract,
-) -> anyhow::Result<()> {
-    registry
-        .as_account()
-        .deploy(
-            worker,
-            &std::fs::read(format!("res/appchain_registry.wasm"))?,
-        )
-        .await?;
-    Ok(())
 }
 
 // Register the given `user` to fungible token contract

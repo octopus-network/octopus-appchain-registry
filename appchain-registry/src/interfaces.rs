@@ -29,6 +29,7 @@ pub trait AppchainLifecycleManager {
         appchain_id: AppchainId,
         description: Option<String>,
         template_type: Option<AppchainTemplateType>,
+        evm_chain_id: Option<U64>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -61,8 +62,6 @@ pub trait RegistrySettingsManager {
     fn change_voting_result_reduction_percent(&mut self, value: U64);
     /// Change the interval for counting voting score of appchains
     fn change_counting_interval_in_seconds(&mut self, value: U64);
-    /// Change the latest appchain chain id
-    fn change_latest_evm_chain_id(&mut self, value: U64);
 }
 
 /// The interface for querying status of appchain registry
@@ -114,8 +113,6 @@ pub trait SudoActions {
     fn pause_asset_transfer(&mut self);
     /// Resume asset transfer in this contract.
     fn resume_asset_transfer(&mut self);
-    /// Set the evm chain id of an appchain.
-    fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64);
     /// Force remove an appchain.
     fn force_remove_appchain(&mut self, appchain_id: AppchainId);
 }

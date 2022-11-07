@@ -1,15 +1,11 @@
 use crate::common;
 use appchain_registry::{
-    storage_migration::{OldAppchainMetadata, OldRegistrySettings},
-    types::{
-        AppchainId, AppchainSortingField, AppchainState, AppchainStatus, RegistryRoles,
-        RegistrySettings, SortingOrder,
-    },
+    storage_migration::OldRegistrySettings,
+    types::{AppchainSortingField, AppchainStatus, RegistryRoles, RegistrySettings, SortingOrder},
 };
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{
-    json_types::{I128, U128, U64},
-    serde::{Deserialize, Serialize},
+    json_types::{U128, U64},
     serde_json::{self, json},
     AccountId,
 };
@@ -18,24 +14,6 @@ use std::collections::HashMap;
 use workspaces::{network::Sandbox, result::ViewResultDetails, Contract, Worker};
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
-
-#[derive(Clone, Serialize, Deserialize)]
-#[serde(crate = "near_sdk::serde")]
-pub struct OldAppchainStatus {
-    pub appchain_id: AppchainId,
-    pub appchain_metadata: OldAppchainMetadata,
-    pub appchain_anchor: Option<AccountId>,
-    pub appchain_owner: AccountId,
-    pub register_deposit: U128,
-    pub appchain_state: AppchainState,
-    pub upvote_deposit: U128,
-    pub downvote_deposit: U128,
-    pub voting_score: I128,
-    pub registered_time: U64,
-    pub go_live_time: U64,
-    pub validator_count: u32,
-    pub total_stake: U128,
-}
 
 #[tokio::test]
 async fn test_case9() -> anyhow::Result<()> {
@@ -128,7 +106,7 @@ async fn test_case9() -> anyhow::Result<()> {
         }))?
         .view()
         .await;
-    print_view_result_details::<Vec<OldAppchainStatus>>("get_appchains_with_state_of", &result);
+    print_view_result_details::<Vec<AppchainStatus>>("get_appchains_with_state_of", &result);
     //
     let result = registry
         .call(&worker, "get_appchain_status_of")
@@ -137,7 +115,7 @@ async fn test_case9() -> anyhow::Result<()> {
         }))?
         .view()
         .await;
-    print_view_result_details::<OldAppchainStatus>("get_appchain_status_of", &result);
+    print_view_result_details::<AppchainStatus>("get_appchain_status_of", &result);
     //
     // perform migration
     //

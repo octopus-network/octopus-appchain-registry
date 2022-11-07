@@ -17,8 +17,6 @@ pub struct RegistrySettings {
     /// The interval for calling function `count_voting_score`,
     /// in the interval this function can only be called once.
     pub counting_interval_in_seconds: U64,
-    ///
-    pub latest_evm_chain_id: U64,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]

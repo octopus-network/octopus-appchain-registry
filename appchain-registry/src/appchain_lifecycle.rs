@@ -9,6 +9,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         appchain_id: AppchainId,
         description: Option<String>,
         template_type: Option<AppchainTemplateType>,
+        evm_chain_id: Option<U64>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -38,6 +39,13 @@ impl AppchainLifecycleManager for AppchainRegistry {
                 "The template type is not changed."
             );
             metadata.template_type = template_type;
+        }
+        if let Some(evm_chain_id) = evm_chain_id {
+            assert!(
+                !appchain_basedata.evm_chain_id.unwrap_or(U64::from(0)).0 == evm_chain_id.0,
+                "The evm chain id is not changed."
+            );
+            appchain_basedata.evm_chain_id = Some(evm_chain_id);
         }
         if let Some(website_url) = website_url {
             assert!(
