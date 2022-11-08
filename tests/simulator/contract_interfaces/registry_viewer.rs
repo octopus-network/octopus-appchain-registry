@@ -2,15 +2,14 @@ use appchain_registry::types::{
     AppchainSortingField, AppchainState, AppchainStatus, RegistryRoles, RegistrySettings,
     SortingOrder,
 };
-use near_sdk::{json_types::U128, serde_json::json};
-use workspaces::{network::Sandbox, Account, Contract, Worker};
+use near_sdk::serde_json::json;
+use workspaces::Contract;
 
 pub async fn get_registry_settings(
-    worker: &Worker<Sandbox>,
     registry: &Contract,
-) -> anyhow::Result<RegistrySettings> {
+) -> Result<RegistrySettings, workspaces::error::Error> {
     registry
-        .call(worker, "get_registry_settings")
+        .call("get_registry_settings")
         .view()
         .await
         .expect("Failed in calling 'get_registry_settings'")
@@ -18,11 +17,10 @@ pub async fn get_registry_settings(
 }
 
 pub async fn get_registry_roles(
-    worker: &Worker<Sandbox>,
     registry: &Contract,
-) -> anyhow::Result<RegistryRoles> {
+) -> Result<RegistryRoles, workspaces::error::Error> {
     registry
-        .call(worker, "get_registry_roles")
+        .call("get_registry_roles")
         .view()
         .await
         .expect("Failed in calling 'get_registry_roles'")
@@ -30,7 +28,6 @@ pub async fn get_registry_roles(
 }
 
 pub async fn print_appchains(
-    worker: &Worker<Sandbox>,
     registry: &Contract,
     appchain_state: Option<Vec<AppchainState>>,
     page_number: u16,
@@ -39,14 +36,14 @@ pub async fn print_appchains(
     sorting_order: SortingOrder,
 ) -> anyhow::Result<usize> {
     let result = registry
-        .call(worker, "get_appchains_with_state_of")
+        .call("get_appchains_with_state_of")
         .args_json(json!({
             "appchain_state": appchain_state,
             "page_number": page_number,
             "page_size": page_size,
             "sorting_field": sorting_field,
             "sorting_order": sorting_order,
-        }))?
+        }))
         .view()
         .await
         .expect("Failed in calling 'get_appchains_with_state_of'")
@@ -62,13 +59,12 @@ pub async fn print_appchains(
 }
 
 pub async fn get_appchain_status_of(
-    worker: &Worker<Sandbox>,
     registry: &Contract,
     appchain_id: &String,
 ) -> anyhow::Result<AppchainStatus> {
     let result = registry
-        .call(worker, "get_appchain_status_of")
-        .args_json(json!({ "appchain_id": appchain_id }))?
+        .call("get_appchain_status_of")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .view()
         .await
         .expect("Failed in calling 'get_appchain_status_of'")
@@ -79,40 +75,4 @@ pub async fn get_appchain_status_of(
         near_sdk::serde_json::ser::to_string(&result).unwrap()
     );
     Ok(result)
-}
-
-pub async fn get_upvote_deposit_of(
-    worker: &Worker<Sandbox>,
-    registry: &Contract,
-    appchain_id: &String,
-    user: &Account,
-) -> anyhow::Result<U128> {
-    registry
-        .call(worker, "get_upvote_deposit_for")
-        .args_json(json!({
-            "appchain_id": appchain_id,
-            "account_id": user.id()
-        }))?
-        .view()
-        .await
-        .expect("Failed in calling 'get_upvote_deposit_for'")
-        .json::<U128>()
-}
-
-pub async fn get_downvote_deposit_of(
-    worker: &Worker<Sandbox>,
-    registry: &Contract,
-    appchain_id: &String,
-    user: &Account,
-) -> anyhow::Result<U128> {
-    registry
-        .call(worker, "get_downvote_deposit_for")
-        .args_json(json!({
-            "appchain_id": appchain_id,
-            "account_id": user.id()
-        }))?
-        .view()
-        .await
-        .expect("Failed in calling 'get_downvote_deposit_for'")
-        .json::<U128>()
 }

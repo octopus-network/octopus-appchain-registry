@@ -26,8 +26,8 @@ pub struct RegistryRoles {
     pub appchain_lifecycle_manager: AccountId,
     /// The account that manages the settings of appchain registry.
     pub registry_settings_manager: AccountId,
-    /// The only account that can call function `count_voting_score`.
-    pub operator_of_counting_voting_score: Option<AccountId>,
+    /// The account of octopus council (DAO contract)
+    pub octopus_council: Option<AccountId>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, PartialEq)]
@@ -62,8 +62,8 @@ pub struct AppchainMetadata {
 #[serde(crate = "near_sdk::serde")]
 pub enum AppchainState {
     Registered,
-    Auditing,
-    InQueue,
+    Audited,
+    Voting,
     Staging,
     Booting,
     Active,
@@ -113,8 +113,8 @@ impl AppchainState {
     pub fn is_managed_by_anchor(&self) -> bool {
         match self {
             AppchainState::Registered => false,
-            AppchainState::Auditing => false,
-            AppchainState::InQueue => false,
+            AppchainState::Audited => false,
+            AppchainState::Voting => false,
             AppchainState::Staging => true,
             AppchainState::Booting => true,
             AppchainState::Active => true,
@@ -128,8 +128,8 @@ impl Display for AppchainState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AppchainState::Registered => write!(f, "registered"),
-            AppchainState::Auditing => write!(f, "auditing"),
-            AppchainState::InQueue => write!(f, "inQueue"),
+            AppchainState::Audited => write!(f, "audited"),
+            AppchainState::Voting => write!(f, "voting"),
             AppchainState::Staging => write!(f, "staging"),
             AppchainState::Booting => write!(f, "booting"),
             AppchainState::Active => write!(f, "active"),

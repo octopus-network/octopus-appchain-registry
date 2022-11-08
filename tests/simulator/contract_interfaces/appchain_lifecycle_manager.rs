@@ -1,10 +1,9 @@
 use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
 use near_sdk::{json_types::U128, serde_json::json, AccountId};
 use std::collections::HashMap;
-use workspaces::{network::Sandbox, result::CallExecutionDetails, Account, Contract, Worker};
+use workspaces::{result::ExecutionFinalResult, Account, Contract};
 
 pub async fn update_appchain_metadata(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
@@ -20,9 +19,9 @@ pub async fn update_appchain_metadata(
     initial_era_reward: Option<U128>,
     fungible_token_metadata: Option<FungibleTokenMetadata>,
     custom_metadata: Option<HashMap<String, String>>,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "update_appchain_metadata")
+        .call(registry.id(), "update_appchain_metadata")
         .args_json(json!({
             "appchain_id": appchain_id,
             "website_url": website_url,
@@ -37,91 +36,75 @@ pub async fn update_appchain_metadata(
             "initial_era_reward": initial_era_reward,
             "fungible_token_metadata": fungible_token_metadata,
             "custom_metadata": custom_metadata,
-        }))?
+        }))
         .gas(200_000_000_000_000)
         .transact()
         .await
 }
 
-pub async fn start_auditing_appchain(
-    worker: &Worker<Sandbox>,
+pub async fn start_voting_appchain(
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "start_auditing_appchain")
-        .args_json(json!({ "appchain_id": appchain_id }))?
+        .call(registry.id(), "start_voting_appchain")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await
 }
 
 pub async fn pass_auditing_appchain(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "pass_auditing_appchain")
-        .args_json(json!({ "appchain_id": appchain_id }))?
+        .call(registry.id(), "pass_auditing_appchain")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await
 }
 
 pub async fn reject_appchain(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "reject_appchain")
-        .args_json(json!({ "appchain_id": appchain_id }))?
+        .call(registry.id(), "reject_appchain")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await
 }
 
-pub async fn count_voting_score(
-    worker: &Worker<Sandbox>,
+pub async fn start_staging_appchain(
     signer: &Account,
     registry: &Contract,
-) -> anyhow::Result<CallExecutionDetails> {
+    appchain_id: &String,
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     let result = signer
-        .call(worker, registry.id(), "count_voting_score")
-        .gas(200_000_000_000_000)
-        .transact()
-        .await;
-    if result.is_ok() {
-        println!("{:?}", result.as_ref().unwrap());
-    }
-    result
-}
-
-pub async fn conclude_voting_score(
-    worker: &Worker<Sandbox>,
-    signer: &Account,
-    registry: &Contract,
-) -> anyhow::Result<CallExecutionDetails> {
-    signer
-        .call(worker, registry.id(), "conclude_voting_score")
+        .call(registry.id(), "start_staging_appchain")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await
+        .unwrap();
+    println!("Result of 'start_staging_appchain': {:?}", result);
+    Ok(result)
 }
 
 pub async fn remove_appchain(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "remove_appchain")
-        .args_json(json!({ "appchain_id": appchain_id }))?
+        .call(registry.id(), "remove_appchain")
+        .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await

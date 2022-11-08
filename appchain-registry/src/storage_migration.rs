@@ -19,6 +19,17 @@ pub struct OldRegistrySettings {
     pub latest_evm_chain_id: U64,
 }
 
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OldRegistryRoles {
+    /// The account that manages the lifecycle of appchains.
+    pub appchain_lifecycle_manager: AccountId,
+    /// The account that manages the settings of appchain registry.
+    pub registry_settings_manager: AccountId,
+    /// The only account that can call function `count_voting_score`.
+    pub operator_of_counting_voting_score: Option<AccountId>,
+}
+
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]
 pub struct OldAppchainRegistry {
@@ -49,7 +60,7 @@ pub struct OldAppchainRegistry {
     /// The time of the last calling of function `count_voting_score`
     time_of_last_count_voting_score: Timestamp,
     /// The roles of appchain registry
-    registry_roles: LazyOption<RegistryRoles>,
+    registry_roles: LazyOption<OldRegistryRoles>,
     /// Whether the asset transfer is paused
     asset_transfer_is_paused: bool,
 }
@@ -64,6 +75,7 @@ impl AppchainRegistry {
         assert_self();
         //
         let old_registry_settings = old_contract.registry_settings.get().unwrap();
+        let old_registry_roles = old_contract.registry_roles.get().unwrap();
         // Create the new contract using the data from the old contract.
         let new_appchain_registry = AppchainRegistry {
             owner: old_contract.owner.clone(),
@@ -79,10 +91,11 @@ impl AppchainRegistry {
             appchain_basedatas: old_contract.appchain_basedatas,
             upvote_deposits: old_contract.upvote_deposits,
             downvote_deposits: old_contract.downvote_deposits,
-            top_appchain_id_in_queue: old_contract.top_appchain_id_in_queue,
             total_stake: old_contract.total_stake,
-            time_of_last_count_voting_score: old_contract.time_of_last_count_voting_score,
-            registry_roles: old_contract.registry_roles,
+            registry_roles: LazyOption::new(
+                StorageKey::RegistryRoles.into_bytes(),
+                Some(&RegistryRoles::from_old_version(old_registry_roles)),
+            ),
             asset_transfer_is_paused: old_contract.asset_transfer_is_paused,
         };
         //
@@ -97,6 +110,16 @@ impl RegistrySettings {
             minimum_register_deposit: old_version.minimum_register_deposit,
             voting_result_reduction_percent: old_version.voting_result_reduction_percent,
             counting_interval_in_seconds: old_version.counting_interval_in_seconds,
+        }
+    }
+}
+
+impl RegistryRoles {
+    pub fn from_old_version(old_version: OldRegistryRoles) -> Self {
+        Self {
+            appchain_lifecycle_manager: old_version.appchain_lifecycle_manager,
+            registry_settings_manager: old_version.registry_settings_manager,
+            octopus_council: None,
         }
     }
 }

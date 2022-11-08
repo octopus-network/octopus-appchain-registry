@@ -99,12 +99,8 @@ pub struct AppchainRegistry {
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     /// The map from pair (appchain id, account id) to their downvote deposit
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    /// The appchain id with the highest voting score at a certain time
-    top_appchain_id_in_queue: AppchainId,
     /// The total stake of OCT token in all appchains
     total_stake: Balance,
-    /// The time of the last calling of function `count_voting_score`
-    time_of_last_count_voting_score: Timestamp,
     /// The roles of appchain registry
     registry_roles: LazyOption<RegistryRoles>,
     /// Whether the asset transfer is paused
@@ -132,12 +128,6 @@ enum RegistryDepositMessage {
         fungible_token_metadata: FungibleTokenMetadata,
         custom_metadata: HashMap<String, String>,
     },
-    UpvoteAppchain {
-        appchain_id: String,
-    },
-    DownvoteAppchain {
-        appchain_id: String,
-    },
 }
 
 #[near_bindgen]
@@ -160,9 +150,7 @@ impl AppchainRegistry {
             appchain_basedatas: LookupMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
-            top_appchain_id_in_queue: String::new(),
             total_stake: 0,
-            time_of_last_count_voting_score: 0,
             registry_roles: LazyOption::new(
                 StorageKey::RegistryRoles.into_bytes(),
                 Some(&RegistryRoles::default()),
@@ -309,42 +297,6 @@ impl AppchainRegistry {
                     fungible_token_metadata,
                     custom_metadata,
                 );
-                PromiseOrValue::Value(0.into())
-            }
-            RegistryDepositMessage::UpvoteAppchain { appchain_id } => {
-                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-                assert_eq!(
-                    &appchain_basedata.state(),
-                    &AppchainState::InQueue,
-                    "Voting appchain must be 'inQueue'."
-                );
-                let voter_upvote = self
-                    .upvote_deposits
-                    .get(&(appchain_id.clone(), sender_id.clone()))
-                    .unwrap_or_default();
-                appchain_basedata.increase_upvote_deposit(amount.0);
-                self.appchain_basedatas
-                    .insert(&appchain_id, &appchain_basedata);
-                self.upvote_deposits
-                    .insert(&(appchain_id, sender_id), &(voter_upvote + amount.0));
-                PromiseOrValue::Value(0.into())
-            }
-            RegistryDepositMessage::DownvoteAppchain { appchain_id } => {
-                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-                assert_eq!(
-                    &appchain_basedata.state(),
-                    &AppchainState::InQueue,
-                    "Downvoting appchain must be 'inQueue'."
-                );
-                let voter_downvote = self
-                    .downvote_deposits
-                    .get(&(appchain_id.clone(), sender_id.clone()))
-                    .unwrap_or_default();
-                appchain_basedata.increase_downvote_deposit(amount.0);
-                self.appchain_basedatas
-                    .insert(&appchain_id, &appchain_basedata);
-                self.downvote_deposits
-                    .insert(&(appchain_id, sender_id), &(voter_downvote + amount.0));
                 PromiseOrValue::Value(0.into())
             }
         }

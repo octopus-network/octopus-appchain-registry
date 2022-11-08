@@ -8,7 +8,7 @@ use near_sdk::{
     AccountId,
 };
 use std::collections::HashMap;
-use workspaces::{network::Sandbox, result::CallExecutionDetails, Account, Contract, Worker};
+use workspaces::{result::ExecutionFinalResult, Account, Contract};
 
 #[derive(Deserialize, Serialize)]
 #[serde(crate = "near_sdk::serde")]
@@ -18,7 +18,6 @@ struct ParamOfUpdateAppchainCustomMetadata {
 }
 
 pub async fn register_appchain(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     oct_token: &Contract,
     registry: &Contract,
@@ -38,9 +37,8 @@ pub async fn register_appchain(
     fungible_token_metadata: Option<FungibleTokenMetadata>,
     custom_metadata: Option<HashMap<String, String>>,
     amount: u128,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     common::call_ft_transfer_call(
-        worker,
         signer,
         &registry.as_account(),
         amount,
@@ -69,18 +67,17 @@ pub async fn register_appchain(
 }
 
 pub async fn transfer_appchain_ownership(
-    worker: &Worker<Sandbox>,
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
     new_owner: &Account,
-) -> anyhow::Result<CallExecutionDetails> {
+) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
-        .call(worker, registry.id(), "transfer_appchain_ownership")
+        .call(registry.id(), "transfer_appchain_ownership")
         .args_json(json!({
             "appchain_id": appchain_id,
             "new_owner": new_owner.id()
-        }))?
+        }))
         .gas(200_000_000_000_000)
         .transact()
         .await
