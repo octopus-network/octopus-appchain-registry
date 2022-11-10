@@ -108,8 +108,6 @@ impl RegistrySettings {
     pub fn from_old_version(old_version: OldRegistrySettings) -> Self {
         Self {
             minimum_register_deposit: old_version.minimum_register_deposit,
-            voting_result_reduction_percent: old_version.voting_result_reduction_percent,
-            counting_interval_in_seconds: old_version.counting_interval_in_seconds,
         }
     }
 }

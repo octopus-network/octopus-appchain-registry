@@ -1,5 +1,4 @@
 use crate::*;
-use near_sdk::json_types::U64;
 
 pub trait RegistrySettingsManager {
     /// Change the value of minimum register deposit
@@ -10,8 +9,6 @@ impl Default for RegistrySettings {
     fn default() -> Self {
         Self {
             minimum_register_deposit: U128::from(DEFAULT_REGISTER_DEPOSIT * OCT_DECIMALS_BASE),
-            voting_result_reduction_percent: DEFAULT_VOTING_RESULT_REDUCTION_PERCENT,
-            counting_interval_in_seconds: U64::from(SECONDS_OF_A_DAY),
         }
     }
 }

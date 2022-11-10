@@ -27,7 +27,7 @@ use types::{
     RegistrySettings,
 };
 
-const VERSION: &str = "v2.1.0";
+const VERSION: &str = "v3.0.0";
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
@@ -37,12 +37,8 @@ const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
 /// Multiple of nano seconds for a second
 const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
-/// Seconds of a day
-const SECONDS_OF_A_DAY: u64 = 86400;
 /// Default staging duration of contract code for upgrade
 const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
-/// Default value of voting_result_reduction_percent
-const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
