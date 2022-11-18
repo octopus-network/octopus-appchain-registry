@@ -58,11 +58,10 @@ pub enum AppchainState {
     Registered,
     Audited,
     Voting,
-    Staging,
     Booting,
     Active,
-    Broken,
-    Dead,
+    Closing,
+    Closed,
 }
 
 /// Appchain status
@@ -109,11 +108,10 @@ impl AppchainState {
             AppchainState::Registered => false,
             AppchainState::Audited => false,
             AppchainState::Voting => false,
-            AppchainState::Staging => true,
             AppchainState::Booting => true,
             AppchainState::Active => true,
-            AppchainState::Broken => true,
-            AppchainState::Dead => false,
+            AppchainState::Closing => true,
+            AppchainState::Closed => false,
         }
     }
 }
@@ -124,11 +122,10 @@ impl Display for AppchainState {
             AppchainState::Registered => write!(f, "registered"),
             AppchainState::Audited => write!(f, "audited"),
             AppchainState::Voting => write!(f, "voting"),
-            AppchainState::Staging => write!(f, "staging"),
             AppchainState::Booting => write!(f, "booting"),
             AppchainState::Active => write!(f, "active"),
-            AppchainState::Broken => write!(f, "broken"),
-            AppchainState::Dead => write!(f, "dead"),
+            AppchainState::Closing => write!(f, "closing"),
+            AppchainState::Closed => write!(f, "closed"),
         }
     }
 }

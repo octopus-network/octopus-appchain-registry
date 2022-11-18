@@ -92,7 +92,7 @@ async fn test_case3() -> anyhow::Result<()> {
     assert_eq!(
         registry_viewer::print_appchains(
             &registry,
-            Option::Some([AppchainState::Voting, AppchainState::Staging].to_vec()),
+            Option::Some([AppchainState::Voting, AppchainState::Booting].to_vec()),
             1,
             50,
             AppchainSortingField::RegisteredTime,

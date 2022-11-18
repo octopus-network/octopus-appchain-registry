@@ -9,6 +9,7 @@ pub trait AppchainLifecycleManager {
         description: Option<String>,
         template_type: Option<AppchainTemplateType>,
         evm_chain_id: Option<U64>,
+        dao_proposal_url: Option<String>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -27,10 +28,10 @@ pub trait AppchainLifecycleManager {
     /// Reject an appchain
     fn reject_appchain(&mut self, appchain_id: AppchainId);
     /// Start voting of an appchain
-    fn start_voting_appchain(&mut self, appchain_id: AppchainId);
-    /// Change the state of a given appchain to 'staging',
+    fn start_voting_appchain(&mut self, appchain_id: AppchainId, dao_proposal_url: String);
+    /// Change the state of a given appchain to 'booting',
     /// create sub-account for the appchain and transfer the initial deposit
-    fn start_staging_appchain(&mut self, appchain_id: AppchainId);
+    fn start_booting_appchain(&mut self, appchain_id: AppchainId);
     /// Remove an appchain from registry
     fn remove_appchain(&mut self, appchain_id: AppchainId);
 }
@@ -44,6 +45,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
         description: Option<String>,
         template_type: Option<AppchainTemplateType>,
         evm_chain_id: Option<U64>,
+        dao_proposal_url: Option<String>,
         website_url: Option<String>,
         function_spec_url: Option<String>,
         github_address: Option<String>,
@@ -80,6 +82,16 @@ impl AppchainLifecycleManager for AppchainRegistry {
                 "The evm chain id is not changed."
             );
             appchain_basedata.evm_chain_id = Some(evm_chain_id);
+        }
+        if let Some(dao_proposal_url) = dao_proposal_url {
+            assert!(
+                !appchain_basedata
+                    .dao_proposal_url
+                    .unwrap_or(String::new())
+                    .eq(&dao_proposal_url),
+                "The website url is not changed."
+            );
+            appchain_basedata.dao_proposal_url = Some(dao_proposal_url);
         }
         if let Some(website_url) = website_url {
             assert!(
@@ -208,23 +220,28 @@ impl AppchainLifecycleManager for AppchainRegistry {
             AppchainState::Audited,
             AppchainState::Voting,
         );
-        appchain_basedata.set_state(AppchainState::Dead);
+        appchain_basedata.set_state(AppchainState::Closed);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         log_appchain_state(&appchain_basedata);
     }
     //
-    fn start_voting_appchain(&mut self, appchain_id: AppchainId) {
+    fn start_voting_appchain(&mut self, appchain_id: AppchainId, dao_proposal_url: String) {
         self.assert_appchain_lifecycle_manager();
         self.assert_appchain_state(&appchain_id, AppchainState::Audited);
+        assert!(
+            !dao_proposal_url.trim().is_empty(),
+            "The DAO proposal url can not be blank."
+        );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::Voting);
+        appchain_basedata.dao_proposal_url = Some(dao_proposal_url);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         log_appchain_state(&appchain_basedata);
     }
     //
-    fn start_staging_appchain(&mut self, appchain_id: AppchainId) {
+    fn start_booting_appchain(&mut self, appchain_id: AppchainId) {
         let registry_roles = self.registry_roles.get().unwrap();
         assert!(
             registry_roles
@@ -244,7 +261,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
                 .as_str(),
             );
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        appchain_basedata.set_state(AppchainState::Staging);
+        appchain_basedata.set_state(AppchainState::Booting);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         log_appchain_state(&appchain_basedata);
@@ -257,7 +274,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     //
     fn remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_appchain_lifecycle_manager();
-        self.assert_appchain_state(&appchain_id, AppchainState::Dead);
+        self.assert_appchain_state(&appchain_id, AppchainState::Closed);
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert!(
             appchain_basedata.upvote_deposit() == 0,

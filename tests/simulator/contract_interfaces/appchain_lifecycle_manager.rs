@@ -49,7 +49,10 @@ pub async fn start_voting_appchain(
 ) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     signer
         .call(registry.id(), "start_voting_appchain")
-        .args_json(json!({ "appchain_id": appchain_id }))
+        .args_json(json!({
+            "appchain_id": appchain_id,
+            "dao_proposal_url": "http://dao/proposal"
+        }))
         .gas(200_000_000_000_000)
         .transact()
         .await
@@ -81,19 +84,19 @@ pub async fn reject_appchain(
         .await
 }
 
-pub async fn start_staging_appchain(
+pub async fn start_booting_appchain(
     signer: &Account,
     registry: &Contract,
     appchain_id: &String,
 ) -> Result<ExecutionFinalResult, workspaces::error::Error> {
     let result = signer
-        .call(registry.id(), "start_staging_appchain")
+        .call(registry.id(), "start_booting_appchain")
         .args_json(json!({ "appchain_id": appchain_id }))
         .gas(200_000_000_000_000)
         .transact()
         .await
         .unwrap();
-    println!("Result of 'start_staging_appchain': {:?}", result);
+    println!("Result of 'start_booting_appchain': {:?}", result);
     Ok(result)
 }
 

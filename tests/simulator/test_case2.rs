@@ -247,12 +247,12 @@ async fn test_case2() -> anyhow::Result<()> {
         .is_success());
     //
     assert!(
-        appchain_lifecycle_manager::start_staging_appchain(&root, &registry, &appchain_id3)
+        appchain_lifecycle_manager::start_booting_appchain(&root, &registry, &appchain_id3)
             .await
             .unwrap()
             .is_failure()
     );
-    assert!(appchain_lifecycle_manager::start_staging_appchain(
+    assert!(appchain_lifecycle_manager::start_booting_appchain(
         &users[4],
         &registry,
         &appchain_id3
@@ -260,7 +260,7 @@ async fn test_case2() -> anyhow::Result<()> {
     .await
     .unwrap()
     .is_failure());
-    assert!(appchain_lifecycle_manager::start_staging_appchain(
+    assert!(appchain_lifecycle_manager::start_booting_appchain(
         &users[5],
         &registry,
         &appchain_id3
@@ -274,7 +274,7 @@ async fn test_case2() -> anyhow::Result<()> {
             .unwrap()
             .is_success()
     );
-    assert!(appchain_lifecycle_manager::start_staging_appchain(
+    assert!(appchain_lifecycle_manager::start_booting_appchain(
         &users[5],
         &registry,
         &appchain_id3
@@ -283,7 +283,7 @@ async fn test_case2() -> anyhow::Result<()> {
     .unwrap()
     .is_success());
     let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id3).await?;
-    assert_eq!(&appchain.appchain_state, &AppchainState::Staging);
+    assert_eq!(&appchain.appchain_state, &AppchainState::Booting);
     //
     assert_eq!(
         registry_viewer::print_appchains(
@@ -300,7 +300,7 @@ async fn test_case2() -> anyhow::Result<()> {
     assert_eq!(
         registry_viewer::print_appchains(
             &registry,
-            Option::Some([AppchainState::Staging].to_vec()),
+            Option::Some([AppchainState::Booting].to_vec()),
             1,
             5,
             AppchainSortingField::RegisteredTime,
