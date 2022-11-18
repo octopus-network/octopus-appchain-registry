@@ -115,6 +115,7 @@ impl AppchainBasedata {
             go_live_time: self.go_live_time.into(),
             validator_count: self.validator_count,
             total_stake: self.total_stake.into(),
+            dao_proposal_url: self.dao_proposal_url.clone(),
         }
     }
     /// Change owner

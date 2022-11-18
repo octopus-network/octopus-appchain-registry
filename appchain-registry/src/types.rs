@@ -84,6 +84,7 @@ pub struct AppchainStatus {
     pub go_live_time: U64,
     pub validator_count: u32,
     pub total_stake: U128,
+    pub dao_proposal_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
