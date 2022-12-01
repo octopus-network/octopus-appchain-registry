@@ -1,17 +1,10 @@
-mod appchain_anchor_callback;
 mod appchain_basedata;
-mod appchain_lifecycle;
-mod appchain_owner_actions;
-pub mod interfaces;
-mod registry_roles;
-mod registry_settings;
 mod registry_status;
 mod storage_key;
 pub mod storage_migration;
-mod sudo_actions;
 pub mod types;
 mod upgrade;
-mod voter_actions;
+mod user_actions;
 
 use core::convert::TryFrom;
 use std::collections::HashMap;
@@ -34,7 +27,7 @@ use types::{
     RegistrySettings,
 };
 
-const VERSION: &str = "v2.1.0";
+const VERSION: &str = "v3.0.0";
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
@@ -44,12 +37,8 @@ const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
 /// Multiple of nano seconds for a second
 const NANO_SECONDS_MULTIPLE: u64 = 1_000_000_000;
-/// Seconds of a day
-const SECONDS_OF_A_DAY: u64 = 86400;
 /// Default staging duration of contract code for upgrade
 const DEFAULT_CONTRACT_CODE_STAGING_DURATION: u64 = 3600 * 24;
-/// Default value of voting_result_reduction_percent
-const DEFAULT_VOTING_RESULT_REDUCTION_PERCENT: u16 = 50;
 
 const APPCHAIN_NOT_FOUND: &'static str = "Appchain not found.";
 
@@ -68,6 +57,18 @@ pub trait SelfCallback {
         appchain_id: AppchainId,
         account_id: AccountId,
         amount: U128,
+    );
+}
+
+/// The callback interface for appchain anchor
+pub trait AppchainAnchorCallback {
+    /// Sync state of an appchain to registry
+    fn sync_state_of(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_state: AppchainState,
+        validator_count: u32,
+        total_stake: U128,
     );
 }
 
@@ -94,12 +95,8 @@ pub struct AppchainRegistry {
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     /// The map from pair (appchain id, account id) to their downvote deposit
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    /// The appchain id with the highest voting score at a certain time
-    top_appchain_id_in_queue: AppchainId,
     /// The total stake of OCT token in all appchains
     total_stake: Balance,
-    /// The time of the last calling of function `count_voting_score`
-    time_of_last_count_voting_score: Timestamp,
     /// The roles of appchain registry
     registry_roles: LazyOption<RegistryRoles>,
     /// Whether the asset transfer is paused
@@ -113,10 +110,9 @@ enum RegistryDepositMessage {
         appchain_id: String,
         description: String,
         template_type: AppchainTemplateType,
+        evm_chain_id: Option<U64>,
         website_url: String,
-        function_spec_url: String,
         github_address: String,
-        github_release: String,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -125,12 +121,6 @@ enum RegistryDepositMessage {
         initial_era_reward: U128,
         fungible_token_metadata: FungibleTokenMetadata,
         custom_metadata: HashMap<String, String>,
-    },
-    UpvoteAppchain {
-        appchain_id: String,
-    },
-    DownvoteAppchain {
-        appchain_id: String,
     },
 }
 
@@ -154,9 +144,7 @@ impl AppchainRegistry {
             appchain_basedatas: LookupMap::new(StorageKey::AppchainBasedatas.into_bytes()),
             upvote_deposits: LookupMap::new(StorageKey::UpvoteDeposits.into_bytes()),
             downvote_deposits: LookupMap::new(StorageKey::DownvoteDeposits.into_bytes()),
-            top_appchain_id_in_queue: String::new(),
             total_stake: 0,
-            time_of_last_count_voting_score: 0,
             registry_roles: LazyOption::new(
                 StorageKey::RegistryRoles.into_bytes(),
                 Some(&RegistryRoles::default()),
@@ -269,10 +257,9 @@ impl AppchainRegistry {
                 appchain_id,
                 description,
                 template_type,
+                evm_chain_id,
                 website_url,
-                function_spec_url,
                 github_address,
-                github_release,
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary,
                 premined_wrapped_appchain_token,
@@ -287,11 +274,10 @@ impl AppchainRegistry {
                     appchain_id,
                     description,
                     template_type,
+                    evm_chain_id,
                     amount.0,
                     website_url,
-                    function_spec_url,
                     github_address,
-                    github_release,
                     contact_email,
                     premined_wrapped_appchain_token_beneficiary,
                     premined_wrapped_appchain_token,
@@ -303,42 +289,6 @@ impl AppchainRegistry {
                 );
                 PromiseOrValue::Value(0.into())
             }
-            RegistryDepositMessage::UpvoteAppchain { appchain_id } => {
-                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-                assert_eq!(
-                    &appchain_basedata.state(),
-                    &AppchainState::InQueue,
-                    "Voting appchain must be 'inQueue'."
-                );
-                let voter_upvote = self
-                    .upvote_deposits
-                    .get(&(appchain_id.clone(), sender_id.clone()))
-                    .unwrap_or_default();
-                appchain_basedata.increase_upvote_deposit(amount.0);
-                self.appchain_basedatas
-                    .insert(&appchain_id, &appchain_basedata);
-                self.upvote_deposits
-                    .insert(&(appchain_id, sender_id), &(voter_upvote + amount.0));
-                PromiseOrValue::Value(0.into())
-            }
-            RegistryDepositMessage::DownvoteAppchain { appchain_id } => {
-                let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-                assert_eq!(
-                    &appchain_basedata.state(),
-                    &AppchainState::InQueue,
-                    "Downvoting appchain must be 'inQueue'."
-                );
-                let voter_downvote = self
-                    .downvote_deposits
-                    .get(&(appchain_id.clone(), sender_id.clone()))
-                    .unwrap_or_default();
-                appchain_basedata.increase_downvote_deposit(amount.0);
-                self.appchain_basedatas
-                    .insert(&appchain_id, &appchain_basedata);
-                self.downvote_deposits
-                    .insert(&(appchain_id, sender_id), &(voter_downvote + amount.0));
-                PromiseOrValue::Value(0.into())
-            }
         }
     }
     //
@@ -348,11 +298,10 @@ impl AppchainRegistry {
         appchain_id: AppchainId,
         description: String,
         template_type: AppchainTemplateType,
+        evm_chain_id: Option<U64>,
         register_deposit: Balance,
         website_url: String,
-        function_spec_url: String,
         github_address: String,
-        github_release: String,
         contact_email: String,
         premined_wrapped_appchain_token_beneficiary: AccountId,
         premined_wrapped_appchain_token: U128,
@@ -397,16 +346,8 @@ impl AppchainRegistry {
             "Missing necessary field 'website_url'."
         );
         assert!(
-            !function_spec_url.trim().is_empty(),
-            "Missing necessary field 'function_spec_url'."
-        );
-        assert!(
             !github_address.trim().is_empty(),
             "Missing necessary field 'github_address'."
-        );
-        assert!(
-            !github_release.trim().is_empty(),
-            "Missing necessary field 'github_release'."
         );
         assert!(
             !contact_email.trim().is_empty(),
@@ -425,16 +366,7 @@ impl AppchainRegistry {
             initial_supply_of_wrapped_appchain_token.0 >= premined_wrapped_appchain_token.0,
             "The initial supply of wrapped appchain token should not be less than the premined amount."
         );
-        let mut registry_settings = self.registry_settings.get().unwrap();
-        let evm_chain_id = match template_type {
-            AppchainTemplateType::Barnacle => None,
-            AppchainTemplateType::BarnacleEvm => {
-                registry_settings.latest_evm_chain_id =
-                    U64::from(registry_settings.latest_evm_chain_id.0 + 1);
-                self.registry_settings.set(&registry_settings);
-                Some(registry_settings.latest_evm_chain_id)
-            }
-        };
+        //
         let appchain_basedata = AppchainBasedata::new(
             appchain_id.clone(),
             evm_chain_id,
@@ -442,9 +374,9 @@ impl AppchainRegistry {
                 description,
                 template_type,
                 website_url,
-                function_spec_url,
+                function_spec_url: String::new(),
                 github_address,
-                github_release,
+                github_release: String::new(),
                 contact_email,
                 premined_wrapped_appchain_token_beneficiary: Some(
                     premined_wrapped_appchain_token_beneficiary,
@@ -492,5 +424,38 @@ impl AppchainRegistry {
         env::storage_remove(&StorageKey::AppchainVotingScore(appchain_id.clone()).into_bytes());
         self.appchain_ids.remove(&appchain_id);
         self.appchain_basedatas.remove(&appchain_id);
+    }
+}
+
+#[near_bindgen]
+impl AppchainAnchorCallback for AppchainRegistry {
+    fn sync_state_of(
+        &mut self,
+        appchain_id: AppchainId,
+        appchain_state: AppchainState,
+        validator_count: u32,
+        total_stake: U128,
+    ) {
+        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        assert!(
+            appchain_basedata.anchor().is_some(),
+            "Anchor of appchain {} is not set.",
+            appchain_id
+        );
+        assert_eq!(
+            env::predecessor_account_id(),
+            appchain_basedata
+                .anchor()
+                .unwrap_or(AccountId::new_unchecked(String::new())),
+            "Only appchain anchor can call this function."
+        );
+        assert!(
+            appchain_state.is_managed_by_anchor(),
+            "Invalid state to sync."
+        );
+        appchain_basedata.set_state(appchain_state);
+        appchain_basedata.sync_staking_status(validator_count, total_stake.0);
+        self.appchain_basedatas
+            .insert(&appchain_id, &appchain_basedata);
     }
 }

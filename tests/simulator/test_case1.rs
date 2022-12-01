@@ -2,7 +2,7 @@ use crate::{
     common,
     contract_interfaces::{
         appchain_lifecycle_manager, appchain_owner_actions, registry_settings, registry_viewer,
-        sudo_actions, voter_actions,
+        sudo_actions,
     },
 };
 use appchain_registry::types::{
@@ -14,7 +14,7 @@ use std::{collections::HashMap, str::FromStr};
 
 const TOTAL_SUPPLY: u128 = 100_000_000;
 
-/// Test 'register', 'update metadata', 'start auditing', 'reject' and 'remove' actions.
+/// Test 'register', 'update metadata', 'reject' and 'remove' actions.
 #[tokio::test]
 async fn test_case1() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
@@ -23,21 +23,27 @@ async fn test_case1() -> anyhow::Result<()> {
         common::basic_actions::initialize_contracts_and_users(&worker, total_supply, false).await?;
     //
     assert_eq!(
-        registry_viewer::get_registry_settings(&worker, &registry)
+        registry_viewer::get_registry_settings(&registry)
             .await?
             .minimum_register_deposit
             .0,
         common::to_oct_amount(1000)
     );
     let amount = common::to_oct_amount(1200);
-    registry_settings::change_minimum_register_deposit(&worker, &users[0], &registry, amount)
-        .await
-        .expect_err("Should fail");
-    registry_settings::change_minimum_register_deposit(&worker, &root, &registry, amount)
-        .await
-        .expect("Failed in calling 'change_minimum_register_deposit'");
+    assert!(
+        registry_settings::change_minimum_register_deposit(&users[0], &registry, amount)
+            .await
+            .unwrap()
+            .is_failure()
+    );
+    assert!(
+        registry_settings::change_minimum_register_deposit(&root, &registry, amount)
+            .await
+            .unwrap()
+            .is_success()
+    );
     assert_eq!(
-        registry_viewer::get_registry_settings(&worker, &registry)
+        registry_viewer::get_registry_settings(&registry)
             .await?
             .minimum_register_deposit
             .0,
@@ -45,23 +51,20 @@ async fn test_case1() -> anyhow::Result<()> {
     );
     //
     assert_eq!(
-        common::get_ft_balance_of(&worker, &registry.as_account(), &oct_token)
+        common::get_ft_balance_of(&registry.as_account(), &oct_token)
             .await?
             .0,
         0
     );
     //
     assert_eq!(
-        common::get_ft_balance_of(&worker, &users[0], &oct_token)
-            .await?
-            .0,
+        common::get_ft_balance_of(&users[0], &oct_token).await?.0,
         total_supply / 10
     );
     //
     let appchain_id = String::from("test_appchain");
     let amount = common::to_oct_amount(1000);
-    appchain_owner_actions::register_appchain(
-        &worker,
+    assert!(appchain_owner_actions::register_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -69,9 +72,7 @@ async fn test_case1() -> anyhow::Result<()> {
         Some("appchain1 description".to_string()),
         Some(AppchainTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
-        Some("https://testchain.org/function_spec".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
-        Some("v1.0.0".to_string()),
         Some("joe@lksdf.com".to_string()),
         Some(AccountId::from_str(users[1].id().as_str()).unwrap()),
         Some(U128::from(10000000)),
@@ -91,10 +92,10 @@ async fn test_case1() -> anyhow::Result<()> {
         amount,
     )
     .await
-    .expect("Failed in calling 'register_appchain'");
+    .unwrap()
+    .is_success());
     assert_eq!(
         registry_viewer::print_appchains(
-            &worker,
             &registry,
             Option::None,
             1,
@@ -106,18 +107,16 @@ async fn test_case1() -> anyhow::Result<()> {
         0
     );
     assert_eq!(
-        common::get_ft_balance_of(&worker, &users[0], &oct_token)
-            .await?
-            .0,
+        common::get_ft_balance_of(&users[0], &oct_token).await?.0,
         total_supply / 10
     );
     //
     let amount = common::to_oct_amount(1200);
-    sudo_actions::pause_asset_transfer(&worker, &root, &registry)
+    assert!(sudo_actions::pause_asset_transfer(&root, &registry)
         .await
-        .expect("Failed in calling 'pause_asset_transfer'");
-    appchain_owner_actions::register_appchain(
-        &worker,
+        .unwrap()
+        .is_success());
+    assert!(appchain_owner_actions::register_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -125,9 +124,7 @@ async fn test_case1() -> anyhow::Result<()> {
         Some("appchain1 description".to_string()),
         Some(AppchainTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
-        Some("https://testchain.org/function_spec".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
-        Some("v1.0.0".to_string()),
         Some("joe@lksdf.com".to_string()),
         Some(AccountId::from_str(users[1].id().as_str()).unwrap()),
         Some(U128::from(10000000)),
@@ -147,10 +144,10 @@ async fn test_case1() -> anyhow::Result<()> {
         amount,
     )
     .await
-    .expect("Failed in calling 'register_appchain'");
+    .unwrap()
+    .is_success());
     assert_eq!(
         registry_viewer::print_appchains(
-            &worker,
             &registry,
             Option::None,
             1,
@@ -162,17 +159,15 @@ async fn test_case1() -> anyhow::Result<()> {
         0
     );
     assert_eq!(
-        common::get_ft_balance_of(&worker, &users[0], &oct_token)
-            .await?
-            .0,
+        common::get_ft_balance_of(&users[0], &oct_token).await?.0,
         total_supply / 10
     );
     //
-    sudo_actions::resume_asset_transfer(&worker, &root, &registry)
+    assert!(sudo_actions::resume_asset_transfer(&root, &registry)
         .await
-        .expect("Failed in calling 'resume_asset_transfer'");
-    appchain_owner_actions::register_appchain(
-        &worker,
+        .unwrap()
+        .is_success());
+    assert!(appchain_owner_actions::register_appchain(
         &users[0],
         &oct_token,
         &registry,
@@ -180,9 +175,7 @@ async fn test_case1() -> anyhow::Result<()> {
         Some("appchain1 description".to_string()),
         Some(AppchainTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
-        Some("https://testchain.org/function_spec".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
-        Some("v1.0.0".to_string()),
         Some("joe@lksdf.com".to_string()),
         Some(AccountId::from_str(users[1].id().as_str()).unwrap()),
         Some(U128::from(10000000)),
@@ -202,43 +195,40 @@ async fn test_case1() -> anyhow::Result<()> {
         amount,
     )
     .await
-    .expect("Failed in calling 'register_appchain'");
+    .unwrap()
+    .is_success());
     assert_eq!(
-        common::get_ft_balance_of(&worker, &users[0], &oct_token)
-            .await?
-            .0,
+        common::get_ft_balance_of(&users[0], &oct_token).await?.0,
         common::to_oct_amount(TOTAL_SUPPLY / 10 - 1200)
     );
     assert_eq!(
-        common::get_ft_balance_of(&worker, &registry.as_account(), &oct_token)
+        common::get_ft_balance_of(&registry.as_account(), &oct_token)
             .await?
             .0,
         common::to_oct_amount(1200)
     );
-    let appchain =
-        registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
+    let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
     assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
     //
-    appchain_owner_actions::transfer_appchain_ownership(
-        &worker,
+    assert!(appchain_owner_actions::transfer_appchain_ownership(
         &users[1],
         &registry,
         &appchain_id,
         &users[1],
     )
     .await
-    .expect_err("Should fail");
-    appchain_owner_actions::transfer_appchain_ownership(
-        &worker,
+    .unwrap()
+    .is_failure());
+    assert!(appchain_owner_actions::transfer_appchain_ownership(
         &users[0],
         &registry,
         &appchain_id,
         &users[1],
     )
     .await
-    .expect("Failed in calling 'transfer_appchain_ownership'");
-    let appchain =
-        registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
+    .unwrap()
+    .is_success());
+    let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
     assert_eq!(
         &appchain.appchain_owner,
         &AccountId::from_str(users[1].id().as_str()).unwrap()
@@ -251,8 +241,7 @@ async fn test_case1() -> anyhow::Result<()> {
     //
     custom_metadata.clear();
     custom_metadata.insert("key3".to_string(), "value3".to_string());
-    appchain_lifecycle_manager::update_appchain_metadata(
-        &worker,
+    assert!(appchain_lifecycle_manager::update_appchain_metadata(
         &users[0],
         &registry,
         &appchain_id,
@@ -270,9 +259,9 @@ async fn test_case1() -> anyhow::Result<()> {
         Option::from(custom_metadata.clone()),
     )
     .await
-    .expect_err("Should fail");
-    appchain_lifecycle_manager::update_appchain_metadata(
-        &worker,
+    .unwrap()
+    .is_failure());
+    assert!(appchain_lifecycle_manager::update_appchain_metadata(
         &root,
         &registry,
         &appchain_id,
@@ -290,9 +279,9 @@ async fn test_case1() -> anyhow::Result<()> {
         Option::from(custom_metadata.clone()),
     )
     .await
-    .expect("Failed in calling 'update_appchain_metadata'");
-    let appchain =
-        registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
+    .unwrap()
+    .is_success());
+    let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
     assert!(appchain
         .appchain_metadata
         .website_url
@@ -303,105 +292,43 @@ async fn test_case1() -> anyhow::Result<()> {
         .eq("yangzhen@oct.network"));
     assert!(appchain.appchain_metadata.custom_metadata.keys().len() == 1);
     //
-    appchain_lifecycle_manager::start_auditing_appchain(
-        &worker,
-        &users[1],
-        &registry,
-        &appchain_id,
-    )
-    .await
-    .expect_err("Should fail");
-    appchain_lifecycle_manager::start_auditing_appchain(&worker, &root, &registry, &appchain_id)
-        .await
-        .expect("Failed in calling 'start_auditing_appchain'");
-    let appchain =
-        registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
-    assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-    voter_actions::upvote_appchain(
-        &worker,
-        &users[2],
-        &oct_token,
-        &registry,
-        &appchain_id,
-        common::to_oct_amount(300),
-    )
-    .await
-    .expect("Failed in calling 'upvote_appchain'");
-    assert_eq!(
-        registry_viewer::get_upvote_deposit_of(&worker, &registry, &appchain_id, &users[2])
-            .await?
-            .0,
-        0
+    assert!(
+        appchain_lifecycle_manager::reject_appchain(&users[4], &registry, &appchain_id)
+            .await
+            .unwrap()
+            .is_failure()
+    );
+    assert!(
+        appchain_lifecycle_manager::reject_appchain(&root, &registry, &appchain_id)
+            .await
+            .unwrap()
+            .is_success()
     );
     assert_eq!(
-        common::get_ft_balance_of(&worker, &users[2], &oct_token)
-            .await?
-            .0,
+        common::get_ft_balance_of(&users[1], &oct_token).await?.0,
         common::to_oct_amount(TOTAL_SUPPLY / 10)
     );
     assert_eq!(
-        common::get_ft_balance_of(&worker, &registry.as_account(), &oct_token)
-            .await?
-            .0,
-        common::to_oct_amount(1200)
-    );
-    voter_actions::downvote_appchain(
-        &worker,
-        &users[3],
-        &oct_token,
-        &registry,
-        &appchain_id,
-        common::to_oct_amount(200),
-    )
-    .await
-    .expect("Failed in calling 'downvote_appchain'");
-    assert_eq!(
-        registry_viewer::get_downvote_deposit_of(&worker, &registry, &appchain_id, &users[3])
-            .await?
-            .0,
-        0
-    );
-    assert_eq!(
-        common::get_ft_balance_of(&worker, &users[3], &oct_token)
-            .await?
-            .0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10)
-    );
-    assert_eq!(
-        common::get_ft_balance_of(&worker, &registry.as_account(), &oct_token)
+        common::get_ft_balance_of(&registry.as_account(), &oct_token)
             .await?
             .0,
         common::to_oct_amount(1200)
     );
     //
-    appchain_lifecycle_manager::reject_appchain(&worker, &users[4], &registry, &appchain_id)
-        .await
-        .expect_err("Should faile");
-    appchain_lifecycle_manager::reject_appchain(&worker, &root, &registry, &appchain_id)
-        .await
-        .expect("Failed in calling 'reject_appchain'");
-    assert_eq!(
-        common::get_ft_balance_of(&worker, &users[1], &oct_token)
-            .await?
-            .0,
-        common::to_oct_amount(TOTAL_SUPPLY / 10)
+    assert!(
+        appchain_lifecycle_manager::remove_appchain(&users[2], &registry, &appchain_id)
+            .await
+            .unwrap()
+            .is_failure()
     );
-    assert_eq!(
-        common::get_ft_balance_of(&worker, &registry.as_account(), &oct_token)
-            .await?
-            .0,
-        common::to_oct_amount(1200)
+    assert!(
+        appchain_lifecycle_manager::remove_appchain(&root, &registry, &appchain_id)
+            .await
+            .unwrap()
+            .is_success()
     );
-    //
-    appchain_lifecycle_manager::remove_appchain(&worker, &users[2], &registry, &appchain_id)
-        .await
-        .expect_err("Should fail");
-    appchain_lifecycle_manager::remove_appchain(&worker, &root, &registry, &appchain_id)
-        .await
-        .expect("Failed to call 'remove_appchain'");
     assert_eq!(
         registry_viewer::print_appchains(
-            &worker,
             &registry,
             Option::None,
             1,

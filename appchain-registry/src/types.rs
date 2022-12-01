@@ -11,14 +11,6 @@ pub type AppchainId = String;
 pub struct RegistrySettings {
     /// The minimum deposit amount for registering an appchain.
     pub minimum_register_deposit: U128,
-    /// The reduction percent of voting score of all appchain `inQueue` after each time
-    /// the owner conclude the voting score.
-    pub voting_result_reduction_percent: u16,
-    /// The interval for calling function `count_voting_score`,
-    /// in the interval this function can only be called once.
-    pub counting_interval_in_seconds: U64,
-    ///
-    pub latest_evm_chain_id: U64,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
@@ -28,8 +20,8 @@ pub struct RegistryRoles {
     pub appchain_lifecycle_manager: AccountId,
     /// The account that manages the settings of appchain registry.
     pub registry_settings_manager: AccountId,
-    /// The only account that can call function `count_voting_score`.
-    pub operator_of_counting_voting_score: Option<AccountId>,
+    /// The account of octopus council (DAO contract)
+    pub octopus_council: Option<AccountId>,
 }
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, PartialEq)]
@@ -64,13 +56,12 @@ pub struct AppchainMetadata {
 #[serde(crate = "near_sdk::serde")]
 pub enum AppchainState {
     Registered,
-    Auditing,
-    InQueue,
-    Staging,
+    Audited,
+    Voting,
     Booting,
     Active,
-    Broken,
-    Dead,
+    Closing,
+    Closed,
 }
 
 /// Appchain status
@@ -93,6 +84,7 @@ pub struct AppchainStatus {
     pub go_live_time: U64,
     pub validator_count: u32,
     pub total_stake: U128,
+    pub dao_proposal_url: Option<String>,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -115,13 +107,12 @@ impl AppchainState {
     pub fn is_managed_by_anchor(&self) -> bool {
         match self {
             AppchainState::Registered => false,
-            AppchainState::Auditing => false,
-            AppchainState::InQueue => false,
-            AppchainState::Staging => true,
+            AppchainState::Audited => false,
+            AppchainState::Voting => false,
             AppchainState::Booting => true,
             AppchainState::Active => true,
-            AppchainState::Broken => true,
-            AppchainState::Dead => false,
+            AppchainState::Closing => true,
+            AppchainState::Closed => false,
         }
     }
 }
@@ -130,13 +121,12 @@ impl Display for AppchainState {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             AppchainState::Registered => write!(f, "registered"),
-            AppchainState::Auditing => write!(f, "auditing"),
-            AppchainState::InQueue => write!(f, "inQueue"),
-            AppchainState::Staging => write!(f, "staging"),
+            AppchainState::Audited => write!(f, "audited"),
+            AppchainState::Voting => write!(f, "voting"),
             AppchainState::Booting => write!(f, "booting"),
             AppchainState::Active => write!(f, "active"),
-            AppchainState::Broken => write!(f, "broken"),
-            AppchainState::Dead => write!(f, "dead"),
+            AppchainState::Closing => write!(f, "closing"),
+            AppchainState::Closed => write!(f, "closed"),
         }
     }
 }

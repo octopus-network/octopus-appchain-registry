@@ -1,5 +1,20 @@
-use crate::{interfaces::SudoActions, *};
+use crate::*;
 use std::{convert::TryFrom, str::FromStr};
+
+pub trait SudoActions {
+    /// Set public key of owner.
+    fn set_owner_pk(&mut self, public_key: String);
+    /// Create subaccount for a specific appchain.
+    fn create_anchor_account(&mut self, appchain_id: AppchainId);
+    /// Force change state of an appchain.
+    fn force_change_appchain_state(&mut self, appchain_id: AppchainId, state: AppchainState);
+    /// Pause asset transfer in this contract.
+    fn pause_asset_transfer(&mut self);
+    /// Resume asset transfer in this contract.
+    fn resume_asset_transfer(&mut self);
+    /// Force remove an appchain.
+    fn force_remove_appchain(&mut self, appchain_id: AppchainId);
+}
 
 #[near_bindgen]
 impl SudoActions for AppchainRegistry {
@@ -49,19 +64,9 @@ impl SudoActions for AppchainRegistry {
         self.asset_transfer_is_paused = false;
     }
     //
-    fn set_evm_chain_id_of_appchain(&mut self, appchain_id: String, evm_chain_id: U64) {
-        self.assert_owner();
-        if let Some(mut appchain_basedata) = self.appchain_basedatas.get(&appchain_id) {
-            appchain_basedata.evm_chain_id = Some(evm_chain_id);
-            self.appchain_basedatas
-                .insert(&appchain_id, &appchain_basedata);
-        } else {
-            panic!("Appchain id is not existed.");
-        }
-    }
     fn force_remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
-        self.assert_appchain_state(&appchain_id, AppchainState::Dead);
+        self.assert_appchain_state(&appchain_id, AppchainState::Closed);
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         if !appchain_basedata.anchor().is_none() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());

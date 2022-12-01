@@ -21,6 +21,7 @@ pub struct AppchainBasedata {
     pub go_live_time: Timestamp,
     pub validator_count: u32,
     pub total_stake: Balance,
+    pub dao_proposal_url: Option<String>,
 }
 
 impl AppchainBasedata {
@@ -49,6 +50,7 @@ impl AppchainBasedata {
             go_live_time: 0,
             validator_count: 0,
             total_stake: 0,
+            dao_proposal_url: None,
         }
     }
     /// Get appchain id
@@ -113,6 +115,7 @@ impl AppchainBasedata {
             go_live_time: self.go_live_time.into(),
             validator_count: self.validator_count,
             total_stake: self.total_stake.into(),
+            dao_proposal_url: self.dao_proposal_url.clone(),
         }
     }
     /// Change owner

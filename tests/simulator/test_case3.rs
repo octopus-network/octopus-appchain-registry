@@ -1,9 +1,6 @@
 use crate::{
     common,
-    contract_interfaces::{
-        appchain_lifecycle_manager, appchain_owner_actions, registry_roles, registry_viewer,
-        voter_actions,
-    },
+    contract_interfaces::{appchain_lifecycle_manager, appchain_owner_actions, registry_viewer},
 };
 use appchain_registry::types::{
     AppchainSortingField, AppchainState, AppchainTemplateType, SortingOrder,
@@ -25,8 +22,7 @@ async fn test_case3() -> anyhow::Result<()> {
     while i <= 50 {
         let appchain_id = format!("test_appchain{}", i);
         let amount = common::to_oct_amount(1000);
-        appchain_owner_actions::register_appchain(
-            &worker,
+        assert!(appchain_owner_actions::register_appchain(
             &users[1],
             &oct_token,
             &registry,
@@ -34,9 +30,7 @@ async fn test_case3() -> anyhow::Result<()> {
             Some("appchain1 description".to_string()),
             Some(AppchainTemplateType::Barnacle),
             Some("http://ddfs.dsdfs".to_string()),
-            Some("https://testchain.org/function_spec".to_string()),
             Some("https://jldfs.yoasdfasd".to_string()),
-            Some("v1.await?.0.await?.0".to_string()),
             Some("joe@lksdf.com".to_string()),
             Some(AccountId::from_str(users[1].id().as_str()).unwrap()),
             Some(U128::from(10000000)),
@@ -56,45 +50,32 @@ async fn test_case3() -> anyhow::Result<()> {
             amount,
         )
         .await
-        .expect("Failed in calling 'register_appchain'");
-        let appchain =
-            registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
+        .unwrap()
+        .is_success());
+        let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
         assert_eq!(&appchain.appchain_state, &AppchainState::Registered);
         //
-        appchain_lifecycle_manager::start_auditing_appchain(
-            &worker,
-            &root,
-            &registry,
-            &appchain_id,
-        )
-        .await
-        .expect("Failed in calling 'start_auditing_appchain'");
-        let appchain =
-            registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
-        assert_eq!(&appchain.appchain_state, &AppchainState::Auditing);
-        appchain_lifecycle_manager::pass_auditing_appchain(&worker, &root, &registry, &appchain_id)
-            .await
-            .expect("Failed in calling 'pass_auditing_appchain'");
-        let appchain =
-            registry_viewer::get_appchain_status_of(&worker, &registry, &appchain_id).await?;
-        assert_eq!(&appchain.appchain_state, &AppchainState::InQueue);
-        //
-        voter_actions::upvote_appchain(
-            &worker,
-            &users[0],
-            &oct_token,
-            &registry,
-            &appchain_id,
-            common::to_oct_amount(i * 10),
-        )
-        .await
-        .expect("Failed in calling 'upvote_appchain'");
+        assert!(
+            appchain_lifecycle_manager::pass_auditing_appchain(&root, &registry, &appchain_id)
+                .await
+                .unwrap()
+                .is_success()
+        );
+        let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
+        assert_eq!(&appchain.appchain_state, &AppchainState::Audited);
+        assert!(
+            appchain_lifecycle_manager::start_voting_appchain(&root, &registry, &appchain_id)
+                .await
+                .unwrap()
+                .is_success()
+        );
+        let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id).await?;
+        assert_eq!(&appchain.appchain_state, &AppchainState::Voting);
         i += 1;
     }
     //
     assert_eq!(
         registry_viewer::print_appchains(
-            &worker,
             &registry,
             Option::None,
             1,
@@ -106,35 +87,10 @@ async fn test_case3() -> anyhow::Result<()> {
         50
     );
     //
-    registry_roles::change_operator_of_counting_voting_score(&worker, &root, &registry, &users[3])
-        .await
-        .expect("Failed in calling 'change_operator_of_counting_voting_score'");
-    //
-    appchain_lifecycle_manager::count_voting_score(&worker, &users[3], &registry)
-        .await
-        .expect("Failed in calling 'count_voting_score'");
-    // pass a day for performing next count voting score
-    worker.fast_forward(86400).await?;
-    //
-    appchain_lifecycle_manager::count_voting_score(&worker, &users[3], &registry)
-        .await
-        .expect("Failed in calling 'count_voting_score'");
-    // pass a day for performing next count voting score
-    worker.fast_forward(86400).await?;
-    //
-    appchain_lifecycle_manager::count_voting_score(&worker, &users[3], &registry)
-        .await
-        .expect("Failed in calling 'count_voting_score'");
-    //
-    appchain_lifecycle_manager::conclude_voting_score(&worker, &root, &registry)
-        .await
-        .expect("Failed in calling 'conclude_voting_score'");
-    //
     assert_eq!(
         registry_viewer::print_appchains(
-            &worker,
             &registry,
-            Option::Some([AppchainState::InQueue, AppchainState::Staging].to_vec()),
+            Option::Some([AppchainState::Voting, AppchainState::Booting].to_vec()),
             1,
             50,
             AppchainSortingField::RegisteredTime,
