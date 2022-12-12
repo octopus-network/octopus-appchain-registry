@@ -1,6 +1,5 @@
 use crate::common;
 use appchain_registry::{
-    storage_migration::OldRegistrySettings,
     types::{AppchainSortingField, AppchainStatus, RegistryRoles, RegistrySettings, SortingOrder},
 };
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
@@ -76,7 +75,7 @@ async fn test_case9() -> anyhow::Result<()> {
     print_view_result_details::<AccountId>("get_oct_token", &result);
     //
     let result = registry.call("get_registry_settings").view().await;
-    print_view_result_details::<OldRegistrySettings>("get_registry_settings", &result);
+    print_view_result_details::<RegistrySettings>("get_registry_settings", &result);
     //
     let result = registry.call("get_registry_roles").view().await;
     print_view_result_details::<RegistryRoles>("get_registry_roles", &result);

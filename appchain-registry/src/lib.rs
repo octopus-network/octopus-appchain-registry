@@ -27,7 +27,7 @@ use types::{
     RegistrySettings,
 };
 
-const VERSION: &str = "v3.0.0";
+const VERSION: &str = "v3.1.0";
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
