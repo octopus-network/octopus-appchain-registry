@@ -37,7 +37,7 @@ pub async fn call_ft_transfer_call(
             "memo": Option::<String>::None,
             "msg": msg.clone(),
         }))
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .deposit(1)
         .transact()
         .await

@@ -17,7 +17,7 @@ use near_sdk::json_types::{U128, U64};
 use near_sdk::serde::{Deserialize, Serialize};
 use near_sdk::{
     assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
-    PanicOnDefault, Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
+    Gas, PanicOnDefault, Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
 };
 
 use appchain_basedata::AppchainBasedata;
@@ -32,6 +32,7 @@ const VERSION: &str = "v3.0.0";
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
 const T_GAS_FOR_FT_TRANSFER: u64 = 20;
+const T_GAS_FOR_CALLING_ANCHOR_FUNCTION: u64 = 150;
 const OCT_DECIMALS_BASE: u128 = 1000_000_000_000_000_000;
 /// Default register deposit amount
 const DEFAULT_REGISTER_DEPOSIT: u128 = 1000;
@@ -185,6 +186,17 @@ impl AppchainRegistry {
             "Function can only be called by registry settings manager."
         );
     }
+    //
+    fn assert_octopus_council(&self) {
+        let registry_roles = self.registry_roles.get().unwrap();
+        assert!(
+            registry_roles
+                .octopus_council
+                .expect("Octopus council account is not setup.")
+                .eq(&env::predecessor_account_id()),
+            "Only octopus council account can call this function."
+        );
+    }
     // Assert that the given account has no role in this contract.
     fn assert_account_has_no_role(&self, account: &AccountId) {
         let registry_roles = self.registry_roles.get().unwrap();
@@ -203,13 +215,12 @@ impl AppchainRegistry {
         );
     }
     // Assert that the state of the given appchain is equal to the given AppchainState.
-    fn assert_appchain_state(&self, appchain_id: &AppchainId, appchain_state: AppchainState) {
+    fn assert_appchain_state(&self, appchain_id: &AppchainId, appchain_states: Vec<AppchainState>) {
         let appchain_basedata = self.get_appchain_basedata(appchain_id);
-        assert_eq!(
-            appchain_basedata.state().clone(),
-            appchain_state,
-            "Appchain state must be '{}'.",
-            appchain_state,
+        assert!(
+            appchain_states.contains(&appchain_basedata.state()),
+            "Appchain state can NOT be '{}'.",
+            appchain_basedata.state(),
         );
     }
     // Get AppchainBasedata from storage
@@ -400,6 +411,28 @@ impl AppchainRegistry {
             appchain_basedata.owner()
         );
     }
+    //
+    pub fn call_anchor_function(
+        &mut self,
+        appchain_id: String,
+        function_name: String,
+        args: String,
+    ) {
+        self.assert_octopus_council();
+        self.assert_appchain_state(
+            &appchain_id,
+            [AppchainState::Booting, AppchainState::Active].to_vec(),
+        );
+        //
+        let anchor_account_id =
+            AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id())).unwrap();
+        Promise::new(anchor_account_id).function_call(
+            function_name,
+            args.into_bytes(),
+            0,
+            Gas::ONE_TERA * T_GAS_FOR_CALLING_ANCHOR_FUNCTION,
+        );
+    }
 }
 
 #[near_bindgen]
@@ -429,6 +462,7 @@ impl AppchainRegistry {
 
 #[near_bindgen]
 impl AppchainAnchorCallback for AppchainRegistry {
+    //
     fn sync_state_of(
         &mut self,
         appchain_id: AppchainId,

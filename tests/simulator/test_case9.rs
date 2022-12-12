@@ -19,7 +19,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 async fn test_case9() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) =
+    let (root, oct_token, registry, _council, users) =
         common::basic_actions::initialize_contracts_and_users(&worker, total_supply, true).await?;
     let amount = common::to_oct_amount(1000);
     //
@@ -120,7 +120,7 @@ async fn test_case9() -> anyhow::Result<()> {
     //
     root.call(registry.id(), "store_wasm_of_self")
         .args(std::fs::read(format!("res/appchain_registry.wasm"))?)
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .deposit(parse_near!("6 N"))
         .transact()
         .await
@@ -137,7 +137,7 @@ async fn test_case9() -> anyhow::Result<()> {
         .unwrap();
     let result = registry
         .call("update_self")
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .transact()
         .await?;
     println!("Result of calling 'update_self': {:?}", result);

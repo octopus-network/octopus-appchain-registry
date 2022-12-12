@@ -10,7 +10,7 @@ pub async fn initialize_contracts_and_users(
     worker: &Worker<Sandbox>,
     total_supply: u128,
     with_old_anchor: bool,
-) -> anyhow::Result<(Account, Contract, Contract, Vec<Account>)> {
+) -> anyhow::Result<(Account, Contract, Contract, Account, Vec<Account>)> {
     let root = worker.root_account().unwrap();
     let mut users: Vec<Account> = Vec::new();
     //
@@ -42,7 +42,7 @@ pub async fn initialize_contracts_and_users(
             "total_supply": U128::from(total_supply),
             "metadata": oct_ft_metadata
         }))
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .transact()
         .await
         .expect("Failed to call function 'new' of oct token contract.")
@@ -52,7 +52,7 @@ pub async fn initialize_contracts_and_users(
     //
     let appchain_registry = root
         .create_subaccount("appchain_registry")
-        .initial_balance(parse_near!("50 N"))
+        .initial_balance(parse_near!("500 N"))
         .transact()
         .await?
         .unwrap();
@@ -73,7 +73,7 @@ pub async fn initialize_contracts_and_users(
         .args_json(json!({
             "oct_token": oct_token.id(),
         }))
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .transact()
         .await
         .expect("Failed to call function 'new' of registry contract.")
@@ -150,13 +150,8 @@ pub async fn initialize_contracts_and_users(
         .transact()
         .await?
         .unwrap();
-    register_user_to_ft_contract(&council, &oct_token).await?;
-    super::call_ft_transfer(&root, &council, total_supply / 10, &oct_token)
-        .await?
-        .unwrap();
-    users.push(council);
     // Return initialized UserAccounts
-    Ok((root, oct_token, appchain_registry, users))
+    Ok((root, oct_token, appchain_registry, council, users))
 }
 
 // Register the given `user` to fungible token contract

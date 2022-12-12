@@ -19,7 +19,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 async fn test_case2() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) =
+    let (root, oct_token, registry, council, users) =
         common::basic_actions::initialize_contracts_and_users(&worker, total_supply, false).await?;
     //
     let appchain_id1 = "test_appchain1".to_string();
@@ -254,28 +254,24 @@ async fn test_case2() -> anyhow::Result<()> {
     .await
     .unwrap()
     .is_failure());
-    assert!(appchain_lifecycle_manager::start_booting_appchain(
-        &users[5],
-        &registry,
-        &appchain_id3
-    )
-    .await
-    .unwrap()
-    .is_failure());
     assert!(
-        registry_roles::change_octopus_council(&root, &registry, &users[5])
+        appchain_lifecycle_manager::start_booting_appchain(&council, &registry, &appchain_id3)
+            .await
+            .unwrap()
+            .is_failure()
+    );
+    assert!(
+        registry_roles::change_octopus_council(&root, &registry, &council)
             .await
             .unwrap()
             .is_success()
     );
-    assert!(appchain_lifecycle_manager::start_booting_appchain(
-        &users[5],
-        &registry,
-        &appchain_id3
-    )
-    .await
-    .unwrap()
-    .is_success());
+    assert!(
+        appchain_lifecycle_manager::start_booting_appchain(&council, &registry, &appchain_id3)
+            .await
+            .unwrap()
+            .is_success()
+    );
     let appchain = registry_viewer::get_appchain_status_of(&registry, &appchain_id3).await?;
     assert_eq!(&appchain.appchain_state, &AppchainState::Booting);
     //
