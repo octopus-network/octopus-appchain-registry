@@ -15,7 +15,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 async fn test_case3() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) =
+    let (root, oct_token, registry, _council, users) =
         common::basic_actions::initialize_contracts_and_users(&worker, total_supply, false).await?;
     //
     let mut i = 1;

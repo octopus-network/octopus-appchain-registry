@@ -1,6 +1,5 @@
 use crate::common;
 use appchain_registry::{
-    storage_migration::OldRegistrySettings,
     types::{AppchainSortingField, AppchainStatus, RegistryRoles, RegistrySettings, SortingOrder},
 };
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
@@ -19,7 +18,7 @@ const TOTAL_SUPPLY: u128 = 100_000_000;
 async fn test_case9() -> anyhow::Result<()> {
     let worker = workspaces::sandbox().await?;
     let total_supply = common::to_oct_amount(TOTAL_SUPPLY);
-    let (root, oct_token, registry, users) =
+    let (root, oct_token, registry, _council, users) =
         common::basic_actions::initialize_contracts_and_users(&worker, total_supply, true).await?;
     let amount = common::to_oct_amount(1000);
     //
@@ -76,7 +75,7 @@ async fn test_case9() -> anyhow::Result<()> {
     print_view_result_details::<AccountId>("get_oct_token", &result);
     //
     let result = registry.call("get_registry_settings").view().await;
-    print_view_result_details::<OldRegistrySettings>("get_registry_settings", &result);
+    print_view_result_details::<RegistrySettings>("get_registry_settings", &result);
     //
     let result = registry.call("get_registry_roles").view().await;
     print_view_result_details::<RegistryRoles>("get_registry_roles", &result);
@@ -120,7 +119,7 @@ async fn test_case9() -> anyhow::Result<()> {
     //
     root.call(registry.id(), "store_wasm_of_self")
         .args(std::fs::read(format!("res/appchain_registry.wasm"))?)
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .deposit(parse_near!("6 N"))
         .transact()
         .await
@@ -137,7 +136,7 @@ async fn test_case9() -> anyhow::Result<()> {
         .unwrap();
     let result = registry
         .call("update_self")
-        .gas(300_000_000_000_000)
+        .gas(200_000_000_000_000)
         .transact()
         .await?;
     println!("Result of calling 'update_self': {:?}", result);

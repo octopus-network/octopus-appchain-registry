@@ -200,7 +200,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     //
     fn pass_auditing_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_appchain_lifecycle_manager();
-        self.assert_appchain_state(&appchain_id, AppchainState::Registered);
+        self.assert_appchain_state(&appchain_id, [AppchainState::Registered].to_vec());
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::Audited);
         self.appchain_basedatas
@@ -210,16 +210,16 @@ impl AppchainLifecycleManager for AppchainRegistry {
     //
     fn reject_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_appchain_lifecycle_manager();
-        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
-        assert!(
-            appchain_basedata.state().eq(&AppchainState::Registered)
-                || appchain_basedata.state().eq(&AppchainState::Audited)
-                || appchain_basedata.state().eq(&AppchainState::Voting),
-            "Appchain state must be '{}', '{}' or '{}'.",
-            AppchainState::Registered,
-            AppchainState::Audited,
-            AppchainState::Voting,
+        self.assert_appchain_state(
+            &appchain_id,
+            [
+                AppchainState::Registered,
+                AppchainState::Audited,
+                AppchainState::Voting,
+            ]
+            .to_vec(),
         );
+        let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::Closed);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
@@ -228,7 +228,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     //
     fn start_voting_appchain(&mut self, appchain_id: AppchainId, dao_proposal_url: String) {
         self.assert_appchain_lifecycle_manager();
-        self.assert_appchain_state(&appchain_id, AppchainState::Audited);
+        self.assert_appchain_state(&appchain_id, [AppchainState::Audited].to_vec());
         assert!(
             !dao_proposal_url.trim().is_empty(),
             "The DAO proposal url can not be blank."
@@ -242,24 +242,11 @@ impl AppchainLifecycleManager for AppchainRegistry {
     }
     //
     fn start_booting_appchain(&mut self, appchain_id: AppchainId) {
-        let registry_roles = self.registry_roles.get().unwrap();
-        assert!(
-            registry_roles
-                .octopus_council
-                .expect("Octopus council account is not setup.")
-                .eq(&env::predecessor_account_id()),
-            "Only octopus council account can call this function."
-        );
-        self.assert_appchain_state(&appchain_id, AppchainState::Voting);
+        self.assert_octopus_council();
+        self.assert_appchain_state(&appchain_id, [AppchainState::Voting].to_vec());
         //
         let sub_account_id =
-            AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id())).expect(
-                format!(
-                    "Invalid sub account id of target appchain '{}'.",
-                    appchain_id
-                )
-                .as_str(),
-            );
+            AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id())).unwrap();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
         appchain_basedata.set_state(AppchainState::Booting);
         self.appchain_basedatas
@@ -274,7 +261,7 @@ impl AppchainLifecycleManager for AppchainRegistry {
     //
     fn remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_appchain_lifecycle_manager();
-        self.assert_appchain_state(&appchain_id, AppchainState::Closed);
+        self.assert_appchain_state(&appchain_id, [AppchainState::Closed].to_vec());
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         assert!(
             appchain_basedata.upvote_deposit() == 0,

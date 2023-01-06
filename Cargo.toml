@@ -1,6 +1,6 @@
 [package]
 name = "appchain-registry-wrapper"
-version = "3.0.0"
+version = "3.1.0"
 authors = ["Octopus Network"]
 edition = "2021"
 
@@ -13,6 +13,7 @@ hex = "0.4.2"
 num-format = "0.4.0"
 # remember to include related mock contracts
 appchain-registry = { path = "./appchain-registry" }
+appchain-anchor = { git = "https://github.com/octopus-network/octopus-appchain-anchor", branch = "v2.5.0" }
 mock-oct-token = { path = "./mock-oct-token" }
 mock-appchain-anchor = { path = "./mock-appchain-anchor" }
 tokio = { version = "1.14", features = ["full"] }

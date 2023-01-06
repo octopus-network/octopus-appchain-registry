@@ -66,7 +66,7 @@ impl SudoActions for AppchainRegistry {
     //
     fn force_remove_appchain(&mut self, appchain_id: AppchainId) {
         self.assert_owner();
-        self.assert_appchain_state(&appchain_id, AppchainState::Closed);
+        self.assert_appchain_state(&appchain_id, [AppchainState::Closed].to_vec());
         let appchain_basedata = self.get_appchain_basedata(&appchain_id);
         if !appchain_basedata.anchor().is_none() {
             let anchor_account_id = format!("{}.{}", &appchain_id, env::current_account_id());
