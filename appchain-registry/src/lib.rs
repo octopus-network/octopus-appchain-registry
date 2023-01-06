@@ -214,7 +214,7 @@ impl AppchainRegistry {
             "Function can only be called by appchain owner."
         );
     }
-    // Assert that the state of the given appchain is equal to the given AppchainState.
+    // Assert that the state of the given appchain is one of the given `AppchainState`s.
     fn assert_appchain_state(&self, appchain_id: &AppchainId, appchain_states: Vec<AppchainState>) {
         let appchain_basedata = self.get_appchain_basedata(appchain_id);
         assert!(
