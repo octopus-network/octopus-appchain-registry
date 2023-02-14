@@ -4,7 +4,7 @@ set -e
 export NEAR_ENV=testnet
 export REGISTRY_ACCOUNT_ID=registry.test_oct.testnet
 #
-near deploy --keyPath . --accountId $REGISTRY_ACCOUNT_ID --initFunction 'migrate_state' --initArgs '{}' --wasmFile res/appchain_registry.wasm
+near deploy --accountId $REGISTRY_ACCOUNT_ID --initFunction 'migrate_state' --initArgs '{}' --wasmFile res/appchain_registry.wasm --force
 #
 # view functions
 #

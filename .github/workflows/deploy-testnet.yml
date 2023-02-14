@@ -21,9 +21,11 @@ jobs:
       - run: rustup target add wasm32-unknown-unknown
       - name: Build
         run: ./build.sh
+      - run: mkdir ~/.near-credentials
+      - run: mkdir ~/.near-credentials/testnet
       - name: Retrieve the pk of registry contract and save it to near credentials folder
         env:
           REGISTRY_PK: ${{ secrets.REGISTRY_PK }}
-        run: echo $REGISTRY_PK > ./registry.test_oct.testnet.json
+        run: echo $REGISTRY_PK > ~/.near-credentials/testnet/registry.test_oct.testnet.json
       - name: Deploy registry contract to testnet
         run: ./scripts/ci/deploy_testnet.sh
