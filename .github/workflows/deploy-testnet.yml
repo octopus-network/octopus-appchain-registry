@@ -32,6 +32,8 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     steps:
+      - name: Create folder for near credentials
+        run: mkdir ~/.near-credentials | mkdir ~/.near-credentials/testnet
       - name: Retrieve the pk of registry contract and save it to near credentials folder
         env:
           REGISTRY_PK: ${{ secrets.REGISTRY_PK }}
