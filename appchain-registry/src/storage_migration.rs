@@ -26,12 +26,8 @@ pub struct OldAppchainRegistry {
     upvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
     /// The map from pair (appchain id, account id) to their downvote deposit
     downvote_deposits: LookupMap<(AppchainId, AccountId), Balance>,
-    /// The appchain id with the highest voting score at a certain time
-    top_appchain_id_in_queue: AppchainId,
     /// The total stake of OCT token in all appchains
     total_stake: Balance,
-    /// The time of the last calling of function `count_voting_score`
-    time_of_last_count_voting_score: Timestamp,
     /// The roles of appchain registry
     registry_roles: LazyOption<RegistryRoles>,
     /// Whether the asset transfer is paused
