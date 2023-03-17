@@ -1,0 +1,31 @@
+name: Appchain registry contract deployment on testnet
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v3
+        with:
+          node-version: "18"
+      - run: npm install -g near-cli
+      - run: rustup target add wasm32-unknown-unknown
+      - name: Build
+        run: ./build.sh
+      - run: mkdir ~/.near-credentials
+      - run: mkdir ~/.near-credentials/testnet
+      - name: Retrieve the pk of registry contract and save it to near credentials folder
+        env:
+          REGISTRY_PK: ${{ secrets.REGISTRY_PK }}
+        run: echo $REGISTRY_PK > ~/.near-credentials/testnet/registry.test_oct.testnet.json
+      - name: Deploy registry contract to testnet
+        run: ./scripts/ci/deploy_testnet.sh
