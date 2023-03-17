@@ -10,7 +10,6 @@ use core::convert::TryFrom;
 use std::collections::HashMap;
 
 use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
-use near_contract_standards::upgrade::Ownable;
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
 use near_sdk::json_types::{U128, U64};
@@ -27,7 +26,7 @@ use types::{
     RegistrySettings,
 };
 
-const VERSION: &str = "v3.1.0";
+const VERSION: &str = "v3.1.1";
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
 const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
@@ -436,13 +435,13 @@ impl AppchainRegistry {
 }
 
 #[near_bindgen]
-impl Ownable for AppchainRegistry {
+impl AppchainRegistry {
     //
-    fn get_owner(&self) -> AccountId {
+    pub fn get_owner(&self) -> AccountId {
         self.owner.clone()
     }
     //
-    fn set_owner(&mut self, owner: AccountId) {
+    pub fn set_owner(&mut self, owner: AccountId) {
         self.assert_owner();
         assert_ne!(owner, self.owner, "The account is the same.");
         self.owner = owner;
