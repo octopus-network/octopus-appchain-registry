@@ -74,7 +74,7 @@ dependencies = [
 
 [[package]]
 name = "appchain-registry"
-version = "3.1.0"
+version = "3.1.1"
 dependencies = [
  "hex 0.4.3",
  "near-contract-standards",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "appchain-registry-wrapper"
-version = "3.1.0"
+version = "3.1.1"
 dependencies = [
  "anyhow",
  "appchain-anchor",

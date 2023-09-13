@@ -248,12 +248,13 @@ impl AppchainLifecycleManager for AppchainRegistry {
         let sub_account_id =
             AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id())).unwrap();
         let mut appchain_basedata = self.get_appchain_basedata(&appchain_id);
+        appchain_basedata.set_anchor_account(sub_account_id.clone());
         appchain_basedata.set_state(AppchainState::Booting);
         self.appchain_basedatas
             .insert(&appchain_id, &appchain_basedata);
         log_appchain_state(&appchain_basedata);
         //
-        Promise::new(sub_account_id.clone())
+        Promise::new(sub_account_id)
             .create_account()
             .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
             .add_full_access_key(self.owner_pk.clone());

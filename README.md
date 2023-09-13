@@ -15,7 +15,7 @@ Contents:
   * [View functions](#view-functions)
 * [Registry roles](#registry-roles)
 * [Auditing](#auditing)
-* [Build and test](#build-and-test)
+* [Building and Testing](#building-and-testing)
 
 ## Terminology
 
@@ -117,8 +117,8 @@ resume_asset_transfer | allowed |  |  |
 
 This contract (`v1.1.0`) had been audited by [Halborn](https://halborn.com). Here is the [report](https://github.com/octopus-network/octopus-appchain-registry/blob/main/Octopus_Network_NEAR_Smart_Contract_Security_Audit_Report_Halborn_Final.pdf).
 
-## Build and test
+## Building and testing
 
-Simply run `.build.sh` to build the project. The script will create folder `out` and `res`.
+It is recommended to use [contract-builder](contract-builder/README.md) to build this contract.
 
 Run `./build.sh test` to build and run all test code.
