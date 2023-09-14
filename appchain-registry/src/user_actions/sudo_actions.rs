@@ -1,11 +1,11 @@
 use crate::*;
-use std::{convert::TryFrom, str::FromStr};
+use core::{convert::TryFrom, str::FromStr};
 
 pub trait SudoActions {
     /// Set public key of owner.
     fn set_owner_pk(&mut self, public_key: String);
     /// Create subaccount for a specific appchain.
-    fn create_anchor_account(&mut self, appchain_id: AppchainId);
+    fn create_anchor_account(&mut self, appchain_id: AppchainId, appchain_type: AppchainType);
     /// Force change state of an appchain.
     fn force_change_appchain_state(&mut self, appchain_id: AppchainId, state: AppchainState);
     /// Pause asset transfer in this contract.
@@ -26,7 +26,7 @@ impl SudoActions for AppchainRegistry {
         self.owner_pk = parse_result.unwrap();
     }
     //
-    fn create_anchor_account(&mut self, appchain_id: AppchainId) {
+    fn create_anchor_account(&mut self, appchain_id: AppchainId, appchain_type: AppchainType) {
         self.assert_owner();
         let sub_account_id =
             AccountId::try_from(format!("{}.{}", &appchain_id, env::current_account_id()));
@@ -35,9 +35,13 @@ impl SudoActions for AppchainRegistry {
             "Invalid sub account id for appchain '{}'.",
             appchain_id
         );
+        let init_deposit = match appchain_type {
+            AppchainType::Substrate(_) => SUBSTRATE_ANCHOR_INIT_BALANCE,
+            AppchainType::Cosmos => IBC_ANCHOR_INIT_BALANCE,
+        };
         Promise::new(sub_account_id.unwrap())
             .create_account()
-            .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
+            .transfer(init_deposit)
             .add_full_access_key(self.owner_pk.clone());
     }
     //

@@ -1,7 +1,26 @@
-use crate::*;
+use crate::{types::SubstrateTemplateType, *};
 use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
 use near_sdk::collections::{LazyOption, LookupMap};
 use near_sdk::{env, near_bindgen, AccountId, Balance, Duration, PublicKey, Timestamp};
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone)]
+#[serde(crate = "near_sdk::serde")]
+pub struct OldAppchainMetadata {
+    pub description: String,
+    pub template_type: SubstrateTemplateType,
+    pub website_url: String,
+    pub function_spec_url: String,
+    pub github_address: String,
+    pub github_release: String,
+    pub contact_email: String,
+    pub premined_wrapped_appchain_token_beneficiary: Option<AccountId>,
+    pub premined_wrapped_appchain_token: U128,
+    pub initial_supply_of_wrapped_appchain_token: U128,
+    pub ido_amount_of_wrapped_appchain_token: U128,
+    pub initial_era_reward: U128,
+    pub fungible_token_metadata: FungibleTokenMetadata,
+    pub custom_metadata: HashMap<String, String>,
+}
 
 #[near_bindgen]
 #[derive(BorshDeserialize, BorshSerialize)]

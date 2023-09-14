@@ -1,6 +1,5 @@
 use crate::*;
-use near_sdk::json_types::Base58CryptoHash;
-use near_sdk::{env, Gas};
+use near_sdk::{env, json_types::Base58CryptoHash, Gas};
 
 const GAS_FOR_UPGRADE_SELF_DEPLOY: Gas = Gas(15_000_000_000_000);
 

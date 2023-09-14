@@ -1,8 +1,6 @@
-use std::{collections::HashMap, fmt::Display};
-
-use near_sdk::json_types::{I128, U64};
-
 use crate::*;
+use core::fmt::Display;
+use near_sdk::json_types::{I128, U64};
 
 pub type AppchainId = String;
 
@@ -26,9 +24,16 @@ pub struct RegistryRoles {
 
 #[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(crate = "near_sdk::serde")]
-pub enum AppchainTemplateType {
+pub enum SubstrateTemplateType {
     Barnacle,
     BarnacleEvm,
+}
+
+#[derive(BorshDeserialize, BorshSerialize, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(crate = "near_sdk::serde")]
+pub enum AppchainType {
+    Cosmos,
+    Substrate(SubstrateTemplateType),
 }
 
 /// Appchain metadata
@@ -36,7 +41,7 @@ pub enum AppchainTemplateType {
 #[serde(crate = "near_sdk::serde")]
 pub struct AppchainMetadata {
     pub description: String,
-    pub template_type: AppchainTemplateType,
+    pub appchain_type: AppchainType,
     pub website_url: String,
     pub function_spec_url: String,
     pub github_address: String,
@@ -118,7 +123,7 @@ impl AppchainState {
 }
 
 impl Display for AppchainState {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
         match self {
             AppchainState::Registered => write!(f, "registered"),
             AppchainState::Audited => write!(f, "audited"),

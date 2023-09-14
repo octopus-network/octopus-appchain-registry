@@ -6,7 +6,7 @@ use crate::{
     },
 };
 use appchain_registry::types::{
-    AppchainSortingField, AppchainState, AppchainTemplateType, SortingOrder,
+    AppchainSortingField, AppchainState, SubstrateTemplateType, SortingOrder,
 };
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{json_types::U128, AccountId};
@@ -30,7 +30,7 @@ async fn test_case2() -> anyhow::Result<()> {
         &registry,
         &appchain_id1,
         Some("appchain1 description".to_string()),
-        Some(AppchainTemplateType::Barnacle),
+        Some(SubstrateTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
         Some("joe@lksdf.com".to_string()),
@@ -65,7 +65,7 @@ async fn test_case2() -> anyhow::Result<()> {
         &registry,
         &appchain_id2,
         Some("appchain2 description".to_string()),
-        Some(AppchainTemplateType::Barnacle),
+        Some(SubstrateTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
         Some("joe@lksdf.com".to_string()),
@@ -100,7 +100,7 @@ async fn test_case2() -> anyhow::Result<()> {
         &registry,
         &appchain_id3,
         Some("appchain3 description".to_string()),
-        Some(AppchainTemplateType::Barnacle),
+        Some(SubstrateTemplateType::Barnacle),
         Some("http://ddfs.dsdfs".to_string()),
         Some("https://jldfs.yoasdfasd".to_string()),
         Some("joe@lksdf.com".to_string()),

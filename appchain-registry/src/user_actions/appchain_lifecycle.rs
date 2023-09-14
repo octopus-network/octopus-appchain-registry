@@ -7,7 +7,6 @@ pub trait AppchainLifecycleManager {
         &mut self,
         appchain_id: AppchainId,
         description: Option<String>,
-        template_type: Option<AppchainTemplateType>,
         evm_chain_id: Option<U64>,
         dao_proposal_url: Option<String>,
         website_url: Option<String>,
@@ -43,7 +42,6 @@ impl AppchainLifecycleManager for AppchainRegistry {
         &mut self,
         appchain_id: AppchainId,
         description: Option<String>,
-        template_type: Option<AppchainTemplateType>,
         evm_chain_id: Option<U64>,
         dao_proposal_url: Option<String>,
         website_url: Option<String>,
@@ -68,13 +66,6 @@ impl AppchainLifecycleManager for AppchainRegistry {
                 "The description is not changed."
             );
             metadata.description = description;
-        }
-        if let Some(template_type) = template_type {
-            assert!(
-                !metadata.template_type.eq(&template_type),
-                "The template type is not changed."
-            );
-            metadata.template_type = template_type;
         }
         if let Some(evm_chain_id) = evm_chain_id {
             assert!(
@@ -254,9 +245,13 @@ impl AppchainLifecycleManager for AppchainRegistry {
             .insert(&appchain_id, &appchain_basedata);
         log_appchain_state(&appchain_basedata);
         //
+        let init_deposit = match appchain_basedata.metadata().appchain_type {
+            AppchainType::Substrate(_) => SUBSTRATE_ANCHOR_INIT_BALANCE,
+            AppchainType::Cosmos => IBC_ANCHOR_INIT_BALANCE,
+        };
         Promise::new(sub_account_id)
             .create_account()
-            .transfer(APPCHAIN_ANCHOR_INIT_BALANCE)
+            .transfer(init_deposit)
             .add_full_access_key(self.owner_pk.clone());
     }
     //

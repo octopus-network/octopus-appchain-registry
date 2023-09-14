@@ -60,8 +60,8 @@ checksum = "224afbd727c3d6e4b90103ece64b8d1b67fbb1973b1046c2281eed3f3803f800"
 
 [[package]]
 name = "appchain-anchor"
-version = "2.5.0"
-source = "git+https://github.com/octopus-network/octopus-appchain-anchor?branch=v2.5.0#8ee1984a9971a4a8bd37214737decb01736c2783"
+version = "2.5.1"
+source = "git+https://github.com/octopus-network/octopus-appchain-anchor?branch=v2.5.1#03f93a86829338889c9f1bfaa5f18c48b6185372"
 dependencies = [
  "beefy-light-client",
  "ed25519-dalek",
@@ -74,7 +74,7 @@ dependencies = [
 
 [[package]]
 name = "appchain-registry"
-version = "3.1.1"
+version = "4.0.0"
 dependencies = [
  "hex 0.4.3",
  "near-contract-standards",
@@ -83,7 +83,7 @@ dependencies = [
 
 [[package]]
 name = "appchain-registry-wrapper"
-version = "3.1.1"
+version = "4.0.0"
 dependencies = [
  "anyhow",
  "appchain-anchor",
