@@ -14,12 +14,12 @@ extern crate std;
 
 mod appchain_basedata;
 mod preclude;
-mod registry_status;
 mod storage_key;
 pub mod storage_migration;
 pub mod types;
 mod upgrade;
 mod user_actions;
+mod registry_viewer;
 
 use crate::preclude::*;
 use appchain_basedata::AppchainBasedata;

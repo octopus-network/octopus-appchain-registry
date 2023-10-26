@@ -5,7 +5,7 @@ use crate::{
 use near_sdk::json_types::U64;
 
 /// The interface for querying status of appchain registry
-pub trait RegistryStatus {
+pub trait RegistryViewer {
     /// Show the version of current contract.
     fn version(&self) -> String;
     /// Get the public key of current owner
@@ -43,7 +43,7 @@ pub trait RegistryStatus {
 }
 
 #[near_bindgen]
-impl RegistryStatus for AppchainRegistry {
+impl RegistryViewer for AppchainRegistry {
     //
     fn version(&self) -> String {
         VERSION.to_string()
