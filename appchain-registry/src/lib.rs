@@ -45,7 +45,7 @@ const VERSION: &str = "v4.0.0";
 /// Initial balance for the Substrate Appchain Anchor contract to cover storage and related.
 const SUBSTRATE_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const IBC_ANCHOR_INIT_BALANCE: Balance = 4_000_000_000_000_000_000_000_000;
+const IBC_ANCHOR_INIT_BALANCE: Balance = 5_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
 const T_GAS_FOR_FT_TRANSFER: u64 = 20;
 const T_GAS_FOR_CALLING_ANCHOR_FUNCTION: u64 = 150;

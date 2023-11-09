@@ -14,6 +14,8 @@ pub trait SudoActions {
     fn resume_asset_transfer(&mut self);
     /// Force remove an appchain.
     fn force_remove_appchain(&mut self, appchain_id: AppchainId);
+    /// Force start booting an appchain.
+    fn force_start_booting_appchain(&mut self, appchain_id: AppchainId);
 }
 
 #[near_bindgen]
@@ -82,5 +84,14 @@ impl SudoActions for AppchainRegistry {
         }
         self.internal_remove_appchain(&appchain_id);
         log!("Appchain '{}' is removed from registry.", &appchain_id);
+    }
+    //
+    fn force_start_booting_appchain(&mut self, appchain_id: AppchainId) {
+        self.assert_owner();
+        self.assert_appchain_state(
+            &appchain_id,
+            [AppchainState::Audited, AppchainState::Voting].to_vec(),
+        );
+        self.internal_start_booting_appchain(appchain_id);
     }
 }
