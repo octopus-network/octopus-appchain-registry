@@ -1,7 +1,7 @@
 use crate::{types::AppchainId, *};
+use core::ops::Mul;
 use near_contract_standards::fungible_token::core::ext_ft_core;
 use near_sdk::{env, Gas};
-use std::ops::Mul;
 
 pub trait VoterActions {
     /// Withdraw a certain amount of upvote deposit for an appchain

@@ -3,7 +3,7 @@ use crate::{
     contract_interfaces::{appchain_lifecycle_manager, appchain_owner_actions, registry_viewer},
 };
 use appchain_registry::types::{
-    AppchainSortingField, AppchainState, AppchainTemplateType, SortingOrder,
+    AppchainSortingField, AppchainState, SubstrateTemplateType, SortingOrder,
 };
 use near_contract_standards::fungible_token::metadata::{FungibleTokenMetadata, FT_METADATA_SPEC};
 use near_sdk::{json_types::U128, AccountId};
@@ -28,7 +28,7 @@ async fn test_case3() -> anyhow::Result<()> {
             &registry,
             &appchain_id,
             Some("appchain1 description".to_string()),
-            Some(AppchainTemplateType::Barnacle),
+            Some(SubstrateTemplateType::Barnacle),
             Some("http://ddfs.dsdfs".to_string()),
             Some("https://jldfs.yoasdfasd".to_string()),
             Some("joe@lksdf.com".to_string()),

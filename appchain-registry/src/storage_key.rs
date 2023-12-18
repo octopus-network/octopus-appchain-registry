@@ -1,4 +1,4 @@
-use crate::AppchainId;
+use crate::*;
 
 /// Storage keys for collections of sub-struct in main contract
 pub enum StorageKey {

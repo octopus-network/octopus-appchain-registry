@@ -1,34 +1,51 @@
+#![no_std]
+#![deny(
+    warnings,
+    trivial_casts,
+    trivial_numeric_casts,
+    unused_import_braces,
+    unused_qualifications,
+    rust_2018_idioms
+)]
+
+extern crate alloc;
+#[cfg(any(test, feature = "std"))]
+extern crate std;
+
 mod appchain_basedata;
-mod registry_status;
+mod preclude;
 mod storage_key;
 pub mod storage_migration;
 pub mod types;
 mod upgrade;
 mod user_actions;
+mod registry_viewer;
 
-use core::convert::TryFrom;
-use std::collections::HashMap;
-
-use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
-use near_sdk::borsh::{self, BorshDeserialize, BorshSerialize};
-use near_sdk::collections::{LazyOption, LookupMap, UnorderedSet};
-use near_sdk::json_types::{U128, U64};
-use near_sdk::serde::{Deserialize, Serialize};
-use near_sdk::{
-    assert_self, env, ext_contract, log, near_bindgen, serde_json, AccountId, Balance, Duration,
-    Gas, PanicOnDefault, Promise, PromiseOrValue, PromiseResult, PublicKey, Timestamp,
-};
-
+use crate::preclude::*;
 use appchain_basedata::AppchainBasedata;
+use core::convert::TryFrom;
+use near_contract_standards::fungible_token::metadata::FungibleTokenMetadata;
+use near_sdk::{
+    assert_self,
+    borsh::{self, maybestd::collections::HashMap, BorshDeserialize, BorshSerialize},
+    collections::{LazyOption, LookupMap, UnorderedSet},
+    env, ext_contract,
+    json_types::{U128, U64},
+    log, near_bindgen,
+    serde::{Deserialize, Serialize},
+    serde_json, AccountId, Balance, Duration, Gas, PanicOnDefault, Promise, PromiseOrValue,
+    PromiseResult, PublicKey, Timestamp,
+};
 use storage_key::StorageKey;
 use types::{
-    AppchainId, AppchainMetadata, AppchainState, AppchainTemplateType, RegistryRoles,
-    RegistrySettings,
+    AppchainId, AppchainMetadata, AppchainState, AppchainType, RegistryRoles, RegistrySettings,
 };
 
-const VERSION: &str = "v3.1.1";
+const VERSION: &str = "v4.0.0";
+/// Initial balance for the Substrate Appchain Anchor contract to cover storage and related.
+const SUBSTRATE_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
 /// Initial balance for the AppchainAnchor contract to cover storage and related.
-const APPCHAIN_ANCHOR_INIT_BALANCE: Balance = 26_000_000_000_000_000_000_000_000;
+const IBC_ANCHOR_INIT_BALANCE: Balance = 5_000_000_000_000_000_000_000_000;
 const T_GAS_FOR_RESOLVER_FUNCTION: u64 = 10;
 const T_GAS_FOR_FT_TRANSFER: u64 = 20;
 const T_GAS_FOR_CALLING_ANCHOR_FUNCTION: u64 = 150;
@@ -109,7 +126,7 @@ enum RegistryDepositMessage {
     RegisterAppchain {
         appchain_id: String,
         description: String,
-        template_type: AppchainTemplateType,
+        appchain_type: AppchainType,
         evm_chain_id: Option<U64>,
         website_url: String,
         github_address: String,
@@ -266,7 +283,7 @@ impl AppchainRegistry {
             RegistryDepositMessage::RegisterAppchain {
                 appchain_id,
                 description,
-                template_type,
+                appchain_type,
                 evm_chain_id,
                 website_url,
                 github_address,
@@ -283,7 +300,7 @@ impl AppchainRegistry {
                     sender_id,
                     appchain_id,
                     description,
-                    template_type,
+                    appchain_type,
                     evm_chain_id,
                     amount.0,
                     website_url,
@@ -307,7 +324,7 @@ impl AppchainRegistry {
         sender_id: AccountId,
         appchain_id: AppchainId,
         description: String,
-        template_type: AppchainTemplateType,
+        appchain_type: AppchainType,
         evm_chain_id: Option<U64>,
         register_deposit: Balance,
         website_url: String,
@@ -382,7 +399,7 @@ impl AppchainRegistry {
             evm_chain_id,
             AppchainMetadata {
                 description,
-                template_type,
+                appchain_type,
                 website_url,
                 function_spec_url: String::new(),
                 github_address,
