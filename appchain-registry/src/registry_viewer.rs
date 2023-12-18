@@ -17,7 +17,7 @@ pub trait RegistryViewer {
     /// Get registry roles
     fn get_registry_roles(&self) -> RegistryRoles;
     /// Get total stake of all appchains in 'staging', 'booting' and 'active' state
-    fn get_total_stake(&self) -> U128;
+    fn get_total_stake(&self, token_symbol: String) -> U128;
     /// Get appchain ids
     fn get_appchain_ids(&self) -> Vec<String>;
     /// Get appchains whose state is equal to the given AppchainState
@@ -65,13 +65,26 @@ impl RegistryViewer for AppchainRegistry {
         self.registry_roles.get().unwrap()
     }
     //
-    fn get_total_stake(&self) -> U128 {
+    fn get_total_stake(&self, token_symbol: String) -> U128 {
         let mut total_stake: u128 = 0;
-        self.appchain_ids.to_vec().iter().for_each(|appchain_id| {
-            if let Some(appchain_basedata) = self.appchain_basedatas.get(appchain_id) {
-                total_stake += appchain_basedata.status().total_stake.0;
-            }
-        });
+        self.appchain_ids
+            .to_vec()
+            .iter()
+            .filter(|appchain_id| {
+                if let Some(appchain_basedata) = self.appchain_basedatas.get(appchain_id) {
+                    match appchain_basedata.metadata().appchain_type {
+                        AppchainType::Cosmos => token_symbol.eq("NEAR"),
+                        AppchainType::Substrate(_) => token_symbol.eq("OCT"),
+                    }
+                } else {
+                    false
+                }
+            })
+            .for_each(|appchain_id| {
+                if let Some(appchain_basedata) = self.appchain_basedatas.get(appchain_id) {
+                    total_stake += appchain_basedata.status().total_stake.0;
+                }
+            });
         U128::from(total_stake)
     }
     //
